@@ -1,0 +1,52 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Course extends Model
+{
+    use HasFactory, SoftDeletes;
+    protected $fillable = [
+        'name',
+        'slug',
+        'about',
+        'path_trailer',
+        'thumbnail',
+        'price',
+        'trainer',
+        'category_id',
+        'trainer_id'
+    ];
+
+    public function category(){
+        return $this->belongsTo(Category::class);
+     
+    }
+    public function trainer(){
+            return $this->belongsTo(Trainer::class);
+    }
+
+    public function course_videos(){
+        return $this->hasMany(CourseVideo::class);
+    }
+
+    public function course_keypoints(){
+        return $this->hasMany(CourseKeypoint::class);
+    }
+
+    // App\Models\Course.php
+
+public function trainees()
+{
+    return $this->belongsToMany(User::class, 'course_trainees', 'course_id', 'user_id');
+}
+
+public function subscribeTransactions()
+{
+    return $this->hasMany(SubscribeTransaction::class);
+}
+
+}
