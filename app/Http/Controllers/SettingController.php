@@ -524,7 +524,12 @@ class SettingController extends Controller
 
     function phrase_import($lan_id)
     {
-        $english_lan_id = Language::where('name', 'like', 'English')->first()->id;
+        $english_lan = Language::where('name', 'like', 'English')->first();
+        if (!$english_lan) {
+            return redirect(route('admin.language.phrase.edit', ['lan_id' => $lan_id]))->with('error', 'English language not found in database. Please create an English language entry first.');
+        }
+
+        $english_lan_id = $english_lan->id;
         foreach (Language_phrase::where('language_id', $english_lan_id)->get() as $en_lan_phrase) {
             if (Language_phrase::where('language_id', $lan_id)->where('phrase', $en_lan_phrase->phrase)->count() == 0) {
                 Language_phrase::insert(['language_id' => $lan_id, 'phrase' => $en_lan_phrase->phrase, 'translated' => $en_lan_phrase->translated, 'created_at' => date('Y-m-d H:i:s')]);
@@ -539,10 +544,12 @@ class SettingController extends Controller
         if (Language::where('name', 'like', $request->language)->count() == 0) {
             $new_lan_id = Language::insertGetId(['name' => $request->language, 'direction' => 'ltr']);
 
-            $english_lan_id = Language::where('name', 'like', 'English')->first()->id;
-
-            foreach (Language_phrase::where('language_id', $english_lan_id)->get() as $en_lan_phrase) {
-                Language_phrase::insert(['language_id' => $new_lan_id, 'phrase' => $en_lan_phrase->phrase, 'translated' => $en_lan_phrase->translated, 'created_at' => date('Y-m-d H:i:s')]);
+            $english_lan = Language::where('name', 'like', 'English')->first();
+            if ($english_lan) {
+                $english_lan_id = $english_lan->id;
+                foreach (Language_phrase::where('language_id', $english_lan_id)->get() as $en_lan_phrase) {
+                    Language_phrase::insert(['language_id' => $new_lan_id, 'phrase' => $en_lan_phrase->phrase, 'translated' => $en_lan_phrase->translated, 'created_at' => date('Y-m-d H:i:s')]);
+                }
             }
             Session::flash('success', get_phrase('Language added successfully'));
         } else {

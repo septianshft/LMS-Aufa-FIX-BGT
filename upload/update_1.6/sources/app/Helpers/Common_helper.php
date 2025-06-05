@@ -402,7 +402,7 @@ if (!function_exists('duration_to_seconds')) {
         if($duration == '') {
             $duration = "00:00:00:";
         }
-        
+
         $time_array        = explode(':', $duration);
         $hour_to_seconds   = $time_array[0] * 60 * 60;
         $minute_to_seconds = $time_array[1] * 60;
@@ -505,7 +505,7 @@ if (!function_exists('removeScripts')) {
     function removeScripts($text)
     {
         if(!$text) return;
-        
+
         // Remove <script> tags and their content
         $pattern_script = '/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/is';
         $cleanText = preg_replace($pattern_script, '', $text);
@@ -617,7 +617,7 @@ if (!function_exists('remove_file')) {
     function remove_file($url = null)
     {
         if(!$url) return;
-        
+
         $url = str_replace('public/', '', $url);
 
         $url       = public_path($url);
@@ -655,7 +655,7 @@ if (!function_exists('get_phrase')) {
         } else {
             $translated  = $phrase;
             $english_lan = DB::table('languages')->where('name', 'like', 'english')->first();
-            if (DB::table('language_phrases')->where('language_id', $english_lan->id)->where('phrase', $phrase)->count() == 0) {
+            if ($english_lan && DB::table('language_phrases')->where('language_id', $english_lan->id)->where('phrase', $phrase)->count() == 0) {
                 DB::table('language_phrases')->insert(['language_id' => $english_lan->id, 'phrase' => $phrase, 'translated' => $translated]);
             }
         }
@@ -1400,7 +1400,7 @@ if(! function_exists('total_booked_schedule_by_tutor_id')) {
     function total_booked_schedule_by_tutor_id($tutor_id = null)
     {
         $todayStart = strtotime('today');
-        
+
         $total_schedule = App\Models\TutorBooking::where('tutor_id', $tutor_id)->where('start_time', '>=', $todayStart)->count();
         return $total_schedule;
     }
