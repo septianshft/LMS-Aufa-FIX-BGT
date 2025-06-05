@@ -20,6 +20,267 @@ A comprehensive Learning Management System built with Laravel, designed for educ
 - PHP >= 8.0
 - Composer
 - Node.js >= 16.x
+- MySQL >= 5.7 or MariaDB >= 10.3
+- Web server (Apache/Nginx)
+
+## Quick Setup (Automated)
+
+### For Windows (PowerShell)
+```powershell
+.\setup_academy_lms.ps1
+```
+
+### For Linux/Mac (Bash)
+```bash
+chmod +x setup_academy_lms.sh
+./setup_academy_lms.sh
+```
+
+## Manual Installation
+
+### 1. Clone or Download
+```bash
+git clone <repository-url>
+cd Academy-LMS
+```
+
+### 2. Install Dependencies
+```bash
+# Install PHP dependencies
+composer install
+
+# Install Node.js dependencies
+npm install
+```
+
+### 3. Environment Configuration
+```bash
+# Copy environment file
+cp .env.example .env
+
+# Generate application key
+php artisan key:generate
+```
+
+### 4. Database Configuration
+Edit `.env` file with your database credentials:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=academy_lms
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+```
+
+### 5. Database Setup
+```bash
+# Run migrations
+php artisan migrate
+
+# Seed initial data
+php artisan db:seed
+```
+
+### 6. Storage Setup
+```bash
+# Create storage symlink
+php artisan storage:link
+```
+
+### 7. Start Development Server
+```bash
+php artisan serve
+```
+
+Visit: http://127.0.0.1:8000
+
+## Default Login Credentials
+
+After running the seeders, you can log in with these default accounts:
+
+- **Admin**: admin@academylms.com (password: password123)
+- **Instructor**: instructor@academylms.com (password: password123)
+- **Student**: student@academylms.com (password: password123)
+
+⚠️ **Important**: Change these passwords immediately in production!
+
+## Configuration
+
+### Email Configuration
+Configure your email settings in `.env`:
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=your-smtp-host
+MAIL_PORT=587
+MAIL_USERNAME=your-email
+MAIL_PASSWORD=your-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="${APP_NAME}"
+```
+
+### Payment Gateway Configuration
+Configure payment gateways in the admin panel or `.env`:
+
+#### Stripe
+```env
+STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
+STRIPE_SECRET_KEY=your_stripe_secret_key
+```
+
+#### Razorpay
+```env
+RAZORPAY_KEY=your_razorpay_key
+RAZORPAY_SECRET=your_razorpay_secret
+```
+
+## Production Deployment
+
+### 1. Server Requirements
+- PHP 8.0+ with required extensions
+- MySQL/MariaDB database
+- Web server with SSL certificate
+- Sufficient disk space for file uploads
+
+### 2. Optimization
+```bash
+# Cache configurations
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Optimize autoloader
+composer install --optimize-autoloader --no-dev
+```
+
+### 3. Security Checklist
+- [ ] Change all default passwords
+- [ ] Set secure `APP_KEY`
+- [ ] Configure proper file permissions
+- [ ] Enable HTTPS/SSL
+- [ ] Set up regular backups
+- [ ] Configure firewall rules
+- [ ] Update all dependencies
+
+### 4. File Permissions (Linux/Mac)
+```bash
+chmod -R 755 storage/
+chmod -R 755 bootstrap/cache/
+```
+
+## Development
+
+### Building Assets
+```bash
+# Development build
+npm run dev
+
+# Production build
+npm run build
+
+# Watch for changes
+npm run dev -- --watch
+```
+
+### Running Tests
+```bash
+# Run all tests
+php artisan test
+
+# Run specific test
+php artisan test --filter ExampleTest
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### Migration Errors
+If you encounter migration errors:
+```bash
+# Reset migrations (⚠️ This will drop all tables!)
+php artisan migrate:fresh --seed
+
+# Or fix specific migrations manually
+php fix_migrations.php
+```
+
+#### Permission Errors
+```bash
+# Fix storage permissions
+chmod -R 775 storage/
+chmod -R 775 bootstrap/cache/
+```
+
+#### Cache Issues
+```bash
+# Clear all caches
+php artisan cache:clear
+php artisan config:clear
+php artisan view:clear
+php artisan route:clear
+```
+
+### Database Connection Issues
+1. Verify database credentials in `.env`
+2. Ensure database server is running
+3. Check if database exists
+4. Verify user permissions
+
+## Project Structure
+
+```
+Academy-LMS/
+├── app/                    # Application core files
+│   ├── Http/Controllers/   # Controllers
+│   ├── Models/            # Eloquent models
+│   ├── Helpers/           # Helper functions
+│   └── ...
+├── database/              # Database files
+│   ├── migrations/        # Database migrations
+│   └── seeders/          # Database seeders
+├── public/               # Web accessible files
+├── resources/            # Views, assets, lang files
+│   ├── views/            # Blade templates
+│   ├── css/              # Stylesheets
+│   └── js/               # JavaScript files
+├── routes/               # Route definitions
+├── storage/              # File storage
+└── vendor/               # Composer dependencies
+```
+
+## API Documentation
+
+The application includes API endpoints for mobile apps and third-party integrations. 
+API documentation is available at `/api/documentation` when the application is running.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Support
+
+For support and questions:
+- Check the troubleshooting section above
+- Review existing issues in the repository
+- Create a new issue with detailed information
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Laravel Framework
+- Vue.js for frontend interactivity
+- Bootstrap for responsive design
+- All contributing developers and the open-source community
+- Node.js >= 16.x
 - NPM or Yarn
 - MySQL >= 5.7 or MariaDB >= 10.3
 - Apache or Nginx web server

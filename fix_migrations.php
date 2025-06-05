@@ -132,31 +132,31 @@ echo "📝 Found " . count($incompleteFiles) . " migration files to fix...\n\n";
 
 foreach ($incompleteFiles as $filePath => $config) {
     $fullPath = __DIR__ . '/' . $filePath;
-    
+
     if (!file_exists($fullPath)) {
         echo "❌ File not found: $filePath\n";
         continue;
     }
-    
+
     $tableName = $config['type'];
     $columns = $config['columns'];
-    
+
     // Read current file content
     $content = file_get_contents($fullPath);
-    
+
     // Create the new up() method
     $newUpMethod = "    public function up(): void\n    {\n        Schema::create('$tableName', function (Blueprint \$table) {\n            \$table->id();\n";
-    
+
     foreach ($columns as $column) {
         $newUpMethod .= "            $column\n";
     }
-    
+
     $newUpMethod .= "            \$table->timestamps();\n        });\n    }";
-    
+
     // Replace the old up() method
     $pattern = '/public function up\(\): void\s*\{[^}]*Schema::create\([^}]*\}\s*\}\);?\s*\}/s';
     $newContent = preg_replace($pattern, $newUpMethod, $content);
-    
+
     if ($newContent && $newContent !== $content) {
         file_put_contents($fullPath, $newContent);
         echo "✅ Fixed: $filePath\n";

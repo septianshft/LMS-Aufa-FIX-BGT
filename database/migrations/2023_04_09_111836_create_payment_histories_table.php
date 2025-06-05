@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('payment_histories', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id')->nullable();
-            $table->integer('course_id', 255)->nullable();
+            $table->integer('course_id')->nullable();
             $table->string('payment_type', 255)->nullable();
             $table->float('amount', 10, 2)->nullable();
             $table->float('admin_revenue', 10, 2)->nullable();
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->float('tax', 10, 2)->nullable();
             $table->string('coupon', 255)->nullable();
             $table->string('invoice', 255)->nullable();
-            $table->integer('instructor_payment_status', 255)->nullable();
+            $table->integer('instructor_payment_status')->nullable();
             $table->string('transaction_id', 255)->nullable();
             $table->string('session_id', 255)->nullable();
             $table->timestamps();
