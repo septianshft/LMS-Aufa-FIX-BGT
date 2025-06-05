@@ -21,9 +21,10 @@ class StoreSubscribeTransactionRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            //
-            'proof' => 'required|string|max:255',
-        ];
+    return [
+        'proof' => 'required|file|mimes:jpg,jpeg,png,pdf|max:20480',
+        'course_id' => 'required|exists:courses,id',
+    ];
+
     }
 }

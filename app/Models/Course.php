@@ -49,4 +49,10 @@ public function subscribeTransactions()
     return $this->hasMany(SubscribeTransaction::class);
 }
 
+public function finalQuizzes()
+{
+    return $this->hasMany(FinalQuiz::class);
+}
+
+
 }

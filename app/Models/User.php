@@ -62,19 +62,20 @@ class User extends Authenticatable
     }
 
     public function hasActiveSubscription(?Course $course = null)
-{
-    $query = SubscribeTransaction::where('user_id', $this->id)
-        ->where('is_paid', true);
-
-    if ($course) {
-        $query->where(function ($q) use ($course) {
-            $q->whereNull('course_id') // langganan semua course
-              ->orWhere('course_id', $course->id); // atau course spesifik
-        });
+    {
+        $query = SubscribeTransaction::where('user_id', $this->id)
+            ->where('is_paid', true);
+    
+        if ($course) {
+            $query->where('course_id', $course->id); // hanya boleh akses kelas yang dibayarkan
+        }
+    
+        return $query->exists();
     }
-
-    return $query->exists();
+    
+    public function trainer()
+{
+    return $this->hasOne(Trainer::class);
 }
-
 
 }

@@ -58,58 +58,53 @@
         </nav>
     </div>
 
-    <!-- SECTION: PAID COURSE ONLY -->
-    <section class="max-w-[1100px] w-full mx-auto mt-[100px]">
-        <div class="flex flex-col gap-[30px] items-center text-center">
+        <section class="max-w-[1100px] w-full mx-auto absolute -translate-x-1/2 left-1/2 top-[170px]">
+        <div class="flex flex-col gap-[30px] items-center">
+        <div class="gradient-badge w-fit p-[8px_16px] rounded-full border border-[#FED6AD] flex items-center gap-[6px]">
+            <img src="{{ asset('assets/icon/medal-star.svg') }}" alt="icon">
+            <p class="font-medium text-sm text-[#FF6129]">Better Pricing For You</p>
+        </div>
+        <div class="flex flex-col text-white text-center">
+            <h2 class="font-bold text-[40px] leading-[60px]">Invest & Get Bigger Return</h2>
+            <p class="text-lg -tracking-[2%]">Catching up the on demand skills and high paying career this year</p>
+        </div>
 
-            <!-- Badge -->
-            <div class="gradient-badge w-fit p-[8px_16px] rounded-full border border-[#FED6AD] flex items-center gap-[6px]">
-                <img src="{{ asset('assets/icon/medal-star.svg') }}" alt="icon">
-                <p class="font-medium text-sm text-[#FF6129]">Better Pricing For You</p>
-            </div>
-
-            <!-- Headline -->
-            <div class="flex flex-col text-[#1D2939]">
-                <h2 class="font-bold text-[40px] leading-[60px]">Invest & Get Bigger Return</h2>
-                <p class="text-lg -tracking-[2%]">Catching up the on demand skills and high paying career this year</p>
-            </div>
-
-            <!-- Paid Course Card -->
-            <div class="flex justify-center">
-                <div class="flex flex-col w-[500px] rounded-3xl p-8 gap-[30px] bg-white shadow-lg">
-                    <div class="flex flex-col gap-5">
-                        <div class="flex flex-col gap-4">
-                            <p class="font-semibold text-4xl leading-[54px]">{{ $course->name }}</p>
-                            <p class="text-[#475466] text-lg">{{ $course->description }}</p>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                            <p class="font-semibold text-4xl leading-[54px]">Rp {{ number_format($course->price, 0, ',', '.') }}</p>
-                            <p class="text-[#475466] text-lg">Monthly</p>
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-4">
-                        <div class="flex gap-3">
-                            <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 object-cover" alt="icon">
-                            <p class="text-[#475466]">Access all course materials including videos, docs, career guidance, etc</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 object-cover" alt="icon">
-                            <p class="text-[#475466]">Unlock all course badges to enhance career profile to apply a job after completed</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 object-cover" alt="icon">
-                            <p class="text-[#475466]">Receive premium rewards such as templates</p>
-                        </div>
-                        <div class="flex gap-3">
-                            <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 object-cover" alt="icon">
-                            <p class="text-[#475466]">Access jobs portal and exclusive interview</p>
-                        </div>
-                    </div>
-                    <a href="checkout.html" class="p-[20px_32px] bg-[#FF6129] text-white rounded-full text-center font-semibold text-xl transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980]">Subscribe Now</a>
+        <div class="max-w-[600px] w-full">
+            <div class="flex flex-col rounded-3xl p-8 gap-[30px] bg-white h-fit">
+            <div class="flex flex-col gap-5">
+                <div class="flex flex-col gap-4">
+                <p class="font-semibold text-4xl leading-[54px]">{{ $course->name }}</p>
+                <p class="text-[#475466] text-lg">{{ $course->about }}</p>
+                </div>
+                <div class="flex flex-col gap-1">
+                <p class="font-semibold text-4xl leading-[54px]">Rp {{ number_format($course->price, 0, ',', '.') }}</p>
+                <p class="text-[#475466] text-lg">All Time Access</p>
+                </div>
+                <div class="flex flex-col gap-4">
+                <div class="flex gap-3">
+                    <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 shrink-0" alt="icon">
+                    <p class="text-[#475466]">Access all course materials including videos, docs, career guidance, etc</p>
+                </div>
+                <div class="flex gap-3">
+                    <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 shrink-0" alt="icon">
+                    <p class="text-[#475466]">Unlock all course badges to enhance career profile to apply a job after completed</p>
+                </div>
+                <div class="flex gap-3">
+                    <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 shrink-0" alt="icon">
+                    <p class="text-[#475466]">Receive premium rewards such as templates</p>
+                </div>
+                <div class="flex gap-3">
+                    <img src="{{ asset('assets/icon/tick-circle.svg') }}" class="w-6 h-6 shrink-0" alt="icon">
+                    <p class="text-[#475466]">Access jobs portal and exclusive interview</p>
+                </div>
                 </div>
             </div>
+            <a href="{{route('front.checkout', $course->slug)}}" class="p-[20px_32px] bg-[#FF6129] text-white rounded-full text-center font-semibold text-xl transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980]">Subscribe Now</a>
+            </div>
+        </div>
         </div>
     </section>
+
     <section id="Zero-to-Success" class="h-[885px] mt-[264px] max-w-[1200px] mx-auto flex flex-col justify-end py-[70px] px-[50px] gap-[30px] bg-[#F5F8FA] rounded-[32px]">
         <div class="flex flex-col gap-[30px] items-center text-center">
             <div class="gradient-badge w-fit p-[8px_16px] rounded-full border border-[#FED6AD] flex items-center gap-[6px]">
@@ -190,7 +185,7 @@
                         <p class="text-sm text-[#475466]">Alqowy has helped me to grow from zero to perfect career, thank you!</p>
                         <div class="flex gap-[2px]">
                             <div>
-                                <img src="{{asset('assets/icon/star.svg')}}" alt="star">
+                                <img src="{{asset('assets/icon/star.svg')}}" alt="star">subs
                             </div>
                             <div>
                                 <img src="{{asset('assets/icon/star.svg')}}" alt="star">

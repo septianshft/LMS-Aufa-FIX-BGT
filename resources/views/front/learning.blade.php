@@ -125,6 +125,7 @@
             <div class="max-w-[1100px] w-full mx-auto mt-10 tablink-container flex gap-3 px-4 sm:p-0 no-scrollbar overflow-x-scroll">
                 <div class="tablink font-semibold text-lg h-[47px] cursor-pointer hover:text-[#FF6129]" onclick="openPage('About', this)" id="defaultOpen">About</div>
                 <div class="tablink font-semibold text-lg h-[47px] cursor-pointer hover:text-[#FF6129]" onclick="openPage('Rewards', this)">Rewards</div>
+                <div class="tablink font-semibold text-lg h-[47px] cursor-pointer hover:text-[#FF6129]" onclick="openPage('Quiz', this)">Quiz</div>
             </div>
 
             <div class="w-full bg-[#F5F8FA] py-[50px]">
@@ -149,6 +150,17 @@
                             <div class="flex flex-col gap-5">
                                 <h3 class="font-bold text-2xl">Rewards</h3>
                                 <p class="font-medium leading-[30px]">Rewards detail placeholder content</p>
+                            </div>
+                        </div>
+
+                        <div id="Quiz" class="tabcontent hidden">
+                            <div class="flex flex-col gap-5">
+                                <h3 class="font-bold text-2xl">Test Your Knowledge</h3>
+                                <p class="font-medium leading-[30px]">
+                                    Quiz content will be displayed here. This section will contain questions related to the current lesson or course.
+                                </p>
+                                <!-- Placeholder for quiz elements -->
+                                <a href="{{ route('front.quiz', $course) }}" class="text-white font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980] w-fit">Start Quiz</a>
                             </div>
                         </div>
                     </div>

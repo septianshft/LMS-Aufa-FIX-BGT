@@ -33,6 +33,13 @@
                         {{ __('Manage Subsription') }}
                     </x-nav-link>
                     @endrole
+                    @role('admin|trainer')
+                    <x-nav-link :href="route('admin.course_quiz.index')" :active="request()->routeIs('admin.course_quiz.index')">
+                        {{ __('Manage Final Quiz') }}
+                    </x-nav-link>
+
+                    @endrole
+
                 </div>
         
 

@@ -90,15 +90,15 @@
                 </div>
                 <p class="font-bold text-lg">Web Development</p>
             </a>
-            <a href="{{route('front.category', 'software-development')}}" class="card flex items-center p-4 gap-3 ring-1 ring-[#DADEE4] rounded-2xl hover:ring-2 hover:ring-[#FF6129] transition-all duration-300">
+            <a href="{{route('front.category', 'inteligent-sensing')}}" class="card flex items-center p-4 gap-3 ring-1 ring-[#DADEE4] rounded-2xl hover:ring-2 hover:ring-[#FF6129] transition-all duration-300">
                 <div class="w-[70px] h-[70px] flex shrink-0">
-                    <img src="assets/icon/Web Development 1-1.svg" class="object-contain" alt="icon">
+                    <img src="assets/icon/Web Development 1.svg" class="object-contain" alt="icon">
                 </div>
                 <p class="font-bold text-lg">Intelligent Sensing</p>
             </a>
-            <a href="{{route('front.category', 'inteligent-sensing')}}" class="card flex items-center p-4 gap-3 ring-1 ring-[#DADEE4] rounded-2xl hover:ring-2 hover:ring-[#FF6129] transition-all duration-300">
+            <a href="{{route('front.category', 'internet-of-things')}}" class="card flex items-center p-4 gap-3 ring-1 ring-[#DADEE4] rounded-2xl hover:ring-2 hover:ring-[#FF6129] transition-all duration-300">
                 <div class="w-[70px] h-[70px] flex shrink-0">
-                    <img src="assets/icon/Web Development 1-2.svg" class="object-contain" alt="icon">
+                    <img src="assets/icon/Web Development 1.svg" class="object-contain" alt="icon">
                 </div>
                 <p class="font-bold text-lg">Internet of Things</p>
             </a>

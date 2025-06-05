@@ -7,37 +7,77 @@ use App\Models\Course;
 use App\Models\CourseTrainee;
 use App\Models\SubscribeTransaction;
 use App\Models\Trainer;
+use App\Models\User; // Pastikan User model di-import jika belum
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    //
-    public function index(){
+    public function index()
+    {
         $user = Auth::user();
-        $coursesQuery = Course::query();
 
-        if($user->hasRole('trainer')) {
-            $coursesQuery->whereHas('trainer', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
+        $title = 'Dashboard';
+        $roles = '';
+        $assignedKelas = []; // Penting: Inisialisasi sebagai array kosong
+        $trainees = 0; 
+        $trainers = 0; 
+        $courses = 0; 
 
-            });
-            $trainees = CourseTrainee::whereIn('course_id', $coursesQuery->select('id'))
-            ->distinct('user_id')
-            ->count('user_id');
+        if ($user->roles_id == 1) { // Admin
+            $roles = 'Admin';
+            $trainees = CourseTrainee::distinct('user_id')->count('user_id');
+            $trainers = Trainer::count();
+            $courses = Course::count();
+        } elseif ($user->roles_id == 2) { // Trainer (Pengajar)
+            $roles = 'Trainer';
+            $trainerInstance = Trainer::where('user_id', $user->id)->first();
+            $trainerCourses = collect();
 
-        } else {
-            $trainees = CourseTrainee::distinct('user_id')
-            ->count('user_id');
+            if ($trainerInstance) {
+                // Ambil kursus yang dimiliki oleh trainer ini
+                $trainerCourses = Course::where('trainer_id', $trainerInstance->id)->get();
+                if ($trainerCourses->isNotEmpty()) {
+                    foreach ($trainerCourses as $course) {
+                        $assignedKelas[] = [
+                            'mapel' => $course, 
+                            'kelas' => [$course] 
+                        ];
+                    }
+                } // else: $assignedKelas akan tetap kosong jika trainer tidak punya kursus
+                
+                $courseIdsForTrainer = $trainerCourses->pluck('id');
+                $trainees = CourseTrainee::whereIn('course_id', $courseIdsForTrainer)
+                                    ->distinct('user_id')
+                                    ->count('user_id');
+            } else {
+                $trainees = 0; 
+            }
+            $trainers = Trainer::count(); 
+            $courses = $trainerCourses->count();
+
+        } elseif ($user->roles_id == 3) { // Trainee (Siswa)
+            $roles = 'Trainee';
+            // Pastikan relasi 'courses' ada di model User dan berfungsi
+            $traineeCourses = $user->courses()->get(); 
+            
+            if ($traineeCourses->isNotEmpty()) {
+                foreach ($traineeCourses as $course) {
+                    $assignedKelas[] = [
+                        'mapel' => $course,
+                        'kelas' => [$course]
+                    ];
+                }
+            } // else: $assignedKelas akan tetap kosong jika trainee tidak terdaftar di kursus manapun
+            
+            $trainees = CourseTrainee::distinct('user_id')->count('user_id'); 
+            $trainers = Trainer::count(); 
+            $courses = $traineeCourses->count(); 
         }
-
-        $courses = $coursesQuery->count();
 
         $categories = Category::count();
         $transactions = SubscribeTransaction::count();
-        $trainers = Trainer::count();
 
-        return view('dashboard', compact('categories', 'courses', 'transactions', 'trainees', 'trainers'));
-
+        return view('dashboard', compact('title', 'roles', 'assignedKelas', 'categories', 'courses', 'transactions', 'trainees', 'trainers'));
     }
 }

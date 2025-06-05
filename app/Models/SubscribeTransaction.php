@@ -14,6 +14,7 @@ class SubscribeTransaction extends Model
         'total_amount',
         'is_paid',
         'user_id',
+        'course_id',
         'proof',
         'subscription_start_date'
     ];

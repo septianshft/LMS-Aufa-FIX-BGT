@@ -15,9 +15,6 @@ use Spatie\Permission\Traits\HasRoles;
 
 class CourseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $user = Auth::user();
@@ -34,18 +31,12 @@ class CourseController extends Controller
         return view('admin.courses.index', compact('courses'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         $categories = Category::all();
         return view('admin.courses.create', compact('categories'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreCourseRequest $request)
 {
     $trainer = Trainer::where('user_id', Auth::id())->first();
@@ -63,12 +54,16 @@ class CourseController extends Controller
             $validated['thumbnail'] = $request->file('thumbnail')->store('thumbnails', 'public');
         }
 
+        // Generate unique slug
+        $slug = Str::slug($validated['name']);
+        $count = Course::where('slug', 'like', "{$slug}%")->count();
+        $slug = $count ? "{$slug}-{$count}" : $slug;
+
         $validatedData = array_merge($validated, [
-            'slug' => Str::slug($validated['name']),
+            'slug' => $slug,
             'trainer_id' => $trainer->id,
             'price' => $validated['price'] ?? 0,
         ]);
-        
 
         // Create course
         $course = Course::create($validatedData);
@@ -89,30 +84,24 @@ class CourseController extends Controller
 }
 
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Course $course)
     {
-        $categories = Category::all();
         return view('admin.courses.show', compact('course'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Course $course)
     {
+        $user = Auth::user();
+        if ($user->hasRole('trainer') && $course->trainer->user_id !== $user->id) {
+            abort(403);
+        }
+
         $categories = Category::all();
         return view('admin.courses.edit', compact('course', 'categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateCourseRequest $request, Course $course)
 {
-    // Optional: add validation/update logic here
     DB::transaction(function () use ($request, $course) {
         $validated = $request->validated();
 
@@ -121,13 +110,18 @@ class CourseController extends Controller
             $validated['thumbnail'] = $request->file('thumbnail')->store('thumbnails', 'public');
         }
 
+        // Generate unique slug, excluding current course ID
+        $slug = Str::slug($validated['name']);
+        $count = Course::where('slug', 'like', "{$slug}%")->where('id', '!=', $course->id)->count();
+        $slug = $count ? "{$slug}-{$count}" : $slug;
+
         $validatedData = array_merge($validated, [
-            'slug' => Str::slug($validated['name']),
+            'slug' => $slug,
         ]);
 
-        $course->update($validatedData); // ← tambahkan titik koma di sini
+        $course->update($validatedData);
 
-        // Insert course keypoints if available
+        // Update course keypoints
         if (!empty($validated['course_keypoints'])) {
             $course->course_keypoints()->delete();
             foreach ($validated['course_keypoints'] as $keypointText) {
@@ -143,21 +137,23 @@ class CourseController extends Controller
     return redirect()->route('admin.courses.show', $course);
 }
 
-    /**
-     * Remove the specified resource from storage.
-     */
+
     public function destroy(Course $course)
     {
+        $user = Auth::user();
+        if ($user->hasRole('trainer') && $course->trainer->user_id !== $user->id) {
+            abort(403);
+        }
+
         DB::beginTransaction();
 
         try {
             $course->delete();
             DB::commit();
-
-            return redirect()->route('admin.courses.index');
+            return redirect()->route('admin.courses.index')->with('success', 'Course deleted successfully.');
         } catch(\Exception $e){
             DB::rollBack();
-            return redirect()->route('admin.courses.index')->with('error', 'terjadinya sebuah error');
+            return redirect()->route('admin.courses.index')->with('error', 'An error occurred while deleting the course.');
+        }
     }
-}
 }

@@ -148,6 +148,7 @@
             <div class="max-w-[1100px] w-full mx-auto mt-10 tablink-container flex gap-3 px-4 sm:p-0 no-scrollbar overflow-x-scroll">
                 <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('About', this)" id="defaultOpen">About</div>
                 <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('Rewards', this)">Rewards</div>
+                <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('Quiz', this)">Quiz</div>
             </div>
 
             <!-- TAB CONTENT SECTION -->
@@ -186,7 +187,7 @@
                                 </p>
                             </div>
                         </div>
-                    </div>
+
 
                     <!-- SIDEBAR TRAINER -->
                     <div class="mentor-sidebar w-full max-w-[100px] flex flex-col gap-[30px] z-10">
