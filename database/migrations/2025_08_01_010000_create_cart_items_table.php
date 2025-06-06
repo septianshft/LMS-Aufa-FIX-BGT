@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->foreignId('course_id')->constrained()->onDelete('cascade');
             $table->unsignedInteger('quantity')->default(1);
             $table->timestamps();
+            $table->unique(['user_id', 'course_id']);
         });
     }
 
