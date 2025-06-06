@@ -51,7 +51,7 @@
                     @endif
                 </div>
                 <div class="w-[56px] h-[56px] overflow-hidden rounded-full flex shrink-0">
-                <a href="{{ route(name: 'dashboard') }}">
+                <a href="{{ route('dashboard') }}">
                         <img src="{{Storage::url(Auth::user()->avatar)}}" class="w-full h-full object-cover" alt="photo">
                     </a>
                 </div>
