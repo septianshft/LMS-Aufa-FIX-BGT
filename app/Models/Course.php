@@ -18,7 +18,9 @@ class Course extends Model
         'price',
         'trainer',
         'category_id',
-        'trainer_id'
+        'trainer_id',
+        'course_mode_id',
+        'course_level_id'
     ];
 
     public function category(){
@@ -27,6 +29,16 @@ class Course extends Model
     }
     public function trainer(){
             return $this->belongsTo(Trainer::class);
+    }
+
+    public function mode()
+    {
+        return $this->belongsTo(CourseMode::class, 'course_mode_id');
+    }
+
+    public function level()
+    {
+        return $this->belongsTo(CourseLevel::class, 'course_level_id');
     }
 
     public function course_videos(){

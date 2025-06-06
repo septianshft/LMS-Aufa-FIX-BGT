@@ -27,6 +27,8 @@ class UpdateCourseRequest extends FormRequest
             'path_trailer' => 'required|string|max:255',
             'about' => 'required|string|max:255',
             'category_id' => 'required|string|max:255',
+            'course_mode_id' => 'required|exists:course_modes,id',
+            'course_level_id' => 'required|exists:course_levels,id',
             'thumbnail' => 'sometimes|string|max:255',
             'price' => 'required|numeric|min:0',
             'course_keypoints.*' => 'required|string|max:255',

@@ -13,9 +13,7 @@ class Category extends Model
         'name',
         'slug',
         'icon',
-        'email',
-        'course_type',
-        'level'
+        'email'
     ];
 
     protected $guarded =[

@@ -62,6 +62,28 @@
                     </div>
 
                     <div class="mt-4">
+                        <x-input-label for="course_mode_id" :value="__('Mode')" />
+                        <select name="course_mode_id" id="course_mode_id" class="py-3 rounded-lg pl-3 w-full border border-slate-300">
+                            <option value="">Choose mode</option>
+                            @foreach($modes as $mode)
+                                <option value="{{ $mode->id }}" {{ $course->course_mode_id == $mode->id ? 'selected' : '' }}>{{ $mode->name }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('course_mode_id')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label for="course_level_id" :value="__('Level')" />
+                        <select name="course_level_id" id="course_level_id" class="py-3 rounded-lg pl-3 w-full border border-slate-300">
+                            <option value="">Choose level</option>
+                            @foreach($levels as $level)
+                                <option value="{{ $level->id }}" {{ $course->course_level_id == $level->id ? 'selected' : '' }}>{{ $level->name }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('course_level_id')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
                         <x-input-label for="about" :value="__('About')" />
                         <textarea name="about" id="about" cols="30" rows="5" class="border border-slate-300 rounded-xl w-full">{{ $course->about }}</textarea>
                         <x-input-error :messages="$errors->get('about')" class="mt-2" />

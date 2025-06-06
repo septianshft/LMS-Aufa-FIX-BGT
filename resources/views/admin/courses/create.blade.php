@@ -46,7 +46,7 @@
 
                     <div class="mt-4">
                         <x-input-label for="category" :value="__('category')" />
-                        
+
                         <select name="category_id" id="category_id" class="py-3 rounded-lg pl-3 w-full border border-slate-300">
                             <option value="">Choose category</option>
                             @forelse($categories as $category)
@@ -56,6 +56,28 @@
                         </select>
 
                         <x-input-error :messages="$errors->get('category')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label for="course_mode_id" :value="__('Mode')" />
+                        <select name="course_mode_id" id="course_mode_id" class="py-3 rounded-lg pl-3 w-full border border-slate-300">
+                            <option value="">Choose mode</option>
+                            @foreach($modes as $mode)
+                                <option value="{{$mode->id}}">{{$mode->name}}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('course_mode_id')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label for="course_level_id" :value="__('Level')" />
+                        <select name="course_level_id" id="course_level_id" class="py-3 rounded-lg pl-3 w-full border border-slate-300">
+                            <option value="">Choose level</option>
+                            @foreach($levels as $level)
+                                <option value="{{$level->id}}">{{$level->name}}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('course_level_id')" class="mt-2" />
                     </div>
 
                     <div class="mt-4">
