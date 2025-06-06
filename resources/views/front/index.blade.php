@@ -115,6 +115,20 @@
                 <h2 class="font-bold text-[40px] leading-[60px]">Don’t Missed It, Learn Now</h2>
                 <p class="text-[#6D7786] text-lg -tracking-[2%]">Catching up the on demand skills and high paying career this year</p>
             </div>
+            <form method="GET" class="flex gap-4 mt-4">
+                <select name="course_type" class="border rounded p-2">
+                    <option value="">All Types</option>
+                    <option value="online" {{ request('course_type')=='online'?'selected':'' }}>Online</option>
+                    <option value="onsite" {{ request('course_type')=='onsite'?'selected':'' }}>Onsite</option>
+                </select>
+                <select name="level" class="border rounded p-2">
+                    <option value="">All Levels</option>
+                    <option value="beginner" {{ request('level')=='beginner'?'selected':'' }}>Beginner</option>
+                    <option value="intermediate" {{ request('level')=='intermediate'?'selected':'' }}>Intermediate</option>
+                    <option value="advance" {{ request('level')=='advance'?'selected':'' }}>Advance</option>
+                </select>
+                <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Filter</button>
+            </form>
         </div>
         <div class="relative">
             <button class="btn-prev absolute rotate-180 -left-[52px] top-[216px]">
@@ -136,6 +150,12 @@
                             <div class="font-semibold text-lg line-clamp-2 hover:line-clamp-none min-h-[56px]">
                                 {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}
                             </div>
+                            <p class="text-sm text-[#6D7786]">{{ ucfirst($course->category->course_type) }} - {{ ucfirst($course->category->level) }}</p>
+
+                            <form action="{{ route('cart.store', $course->slug) }}" method="POST">
+                                @csrf
+                                <button class="mt-1 px-3 py-1 bg-[#FF6129] text-white rounded">Add to Cart</button>
+                            </form>
 
                             <div class="flex justify-between items-center">
                                 <div class="flex items-center gap-[2px]">
