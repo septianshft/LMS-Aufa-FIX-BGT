@@ -90,16 +90,17 @@
         @endif
 
         <form method="GET" class="flex gap-4 mb-6">
-            <select name="course_type" class="border rounded p-2">
-                <option value="">All Types</option>
-                <option value="online" {{ request('course_type')=='online'?'selected':'' }}>Online</option>
-                <option value="onsite" {{ request('course_type')=='onsite'?'selected':'' }}>Onsite</option>
+            <select name="course_mode_id" class="border rounded p-2">
+                <option value="">All Modes</option>
+                @foreach($modes as $mode)
+                    <option value="{{ $mode->id }}" {{ request('course_mode_id')==$mode->id?'selected':'' }}>{{ $mode->name }}</option>
+                @endforeach
             </select>
-            <select name="level" class="border rounded p-2">
+            <select name="course_level_id" class="border rounded p-2">
                 <option value="">All Levels</option>
-                <option value="beginner" {{ request('level')=='beginner'?'selected':'' }}>Beginner</option>
-                <option value="intermediate" {{ request('level')=='intermediate'?'selected':'' }}>Intermediate</option>
-                <option value="advance" {{ request('level')=='advance'?'selected':'' }}>Advance</option>
+                @foreach($levels as $level)
+                    <option value="{{ $level->id }}" {{ request('course_level_id')==$level->id?'selected':'' }}>{{ $level->name }}</option>
+                @endforeach
             </select>
             <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Filter</button>
         </form>
@@ -133,7 +134,7 @@
                         <div class="font-semibold text-lg">
                             {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}
                         </div>
-                        <p class="text-sm text-[#6D7786]">{{ ucfirst($course->category->course_type) }} - {{ ucfirst($course->category->level) }}</p>
+                        <p class="text-sm text-[#6D7786]">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
 
                         <form action="{{ route('cart.store', $course->slug) }}" method="POST">
                             @csrf

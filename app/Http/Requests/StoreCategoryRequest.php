@@ -24,8 +24,6 @@ class StoreCategoryRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'icon' => ['required', 'image', 'mimes:png,jpg,jpeg'],
-            'course_type' => ['required', 'in:online,onsite'],
-            'level' => ['required', 'in:beginner,intermediate,advance'],
         ];
     }
 }

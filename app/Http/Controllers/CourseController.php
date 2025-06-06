@@ -7,6 +7,8 @@ use App\Http\Requests\UpdateCourseRequest;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\Trainer;
+use App\Models\CourseMode;
+use App\Models\CourseLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,7 @@ class CourseController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $query = Course::with(['category', 'trainer.user', 'trainees', 'course_videos'])->orderByDesc('id');
+        $query = Course::with(['category', 'trainer.user', 'trainees', 'course_videos', 'mode', 'level'])->orderByDesc('id');
 
         if ($user->hasRole('trainer')) {
             $query->whereHas('trainer', function ($query) use ($user) {
@@ -34,7 +36,9 @@ class CourseController extends Controller
     public function create()
     {
         $categories = Category::all();
-        return view('admin.courses.create', compact('categories'));
+        $modes = CourseMode::all();
+        $levels = CourseLevel::all();
+        return view('admin.courses.create', compact('categories', 'modes', 'levels'));
     }
 
     public function store(StoreCourseRequest $request)
@@ -97,7 +101,9 @@ class CourseController extends Controller
         }
 
         $categories = Category::all();
-        return view('admin.courses.edit', compact('course', 'categories'));
+        $modes = CourseMode::all();
+        $levels = CourseLevel::all();
+        return view('admin.courses.edit', compact('course', 'categories', 'modes', 'levels'));
     }
 
     public function update(UpdateCourseRequest $request, Course $course)

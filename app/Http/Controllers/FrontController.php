@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSubscribeTransactionRequest;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\CourseMode;
+use App\Models\CourseLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubscribeTransaction;
@@ -17,24 +19,22 @@ class FrontController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Course::with(['category', 'trainer', 'trainees'])->orderByDesc('id');
+        $query = Course::with(['category', 'trainer', 'trainees', 'mode', 'level'])->orderByDesc('id');
 
-        if ($request->filled('course_type')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('course_type', $request->course_type);
-            });
+        if ($request->filled('course_mode_id')) {
+            $query->where('course_mode_id', $request->course_mode_id);
         }
 
-        if ($request->filled('level')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('level', $request->level);
-            });
+        if ($request->filled('course_level_id')) {
+            $query->where('course_level_id', $request->course_level_id);
         }
 
         $courses = $query->get();
         $categories = Category::all();
+        $modes = CourseMode::all();
+        $levels = CourseLevel::all();
 
-        return view('front.index', compact('courses', 'categories'));
+        return view('front.index', compact('courses', 'categories', 'modes', 'levels'));
     }
 
     /**
@@ -47,25 +47,23 @@ class FrontController extends Controller
 
     public function category(Request $request, Category $category)
     {
-        $query = $category->courses();
+        $query = $category->courses()->with(['mode', 'level']);
 
-        if ($request->filled('course_type')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('course_type', $request->course_type);
-            });
+        if ($request->filled('course_mode_id')) {
+            $query->where('course_mode_id', $request->course_mode_id);
         }
 
-        if ($request->filled('level')) {
-            $query->whereHas('category', function ($q) use ($request) {
-                $q->where('level', $request->level);
-            });
+        if ($request->filled('course_level_id')) {
+            $query->where('course_level_id', $request->course_level_id);
         }
 
         $courses = $query->get();
 
         $otherCategories = Category::where('id', '!=', $category->id)->get();
+        $modes = CourseMode::all();
+        $levels = CourseLevel::all();
 
-        return view('front.category', compact('courses', 'category', 'otherCategories'));
+        return view('front.category', compact('courses', 'category', 'otherCategories', 'modes', 'levels'));
     }
 
     /**
