@@ -122,6 +122,10 @@
     <section id="Video-Resources" class="flex flex-col mt-5">
         <div class="max-w-[1100px] w-full mx-auto flex flex-col gap-3">
             <h1 class="title font-extrabold text-[30px] leading-[45px]">{{$course->name}}</h1>
+            <form action="{{ route('cart.store', $course->slug) }}" method="POST" class="my-2">
+                @csrf
+                <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Add to Cart</button>
+            </form>
             <div class="flex items-center gap-5">
                 <div class="flex items-center gap-[6px]">
                     <div>
