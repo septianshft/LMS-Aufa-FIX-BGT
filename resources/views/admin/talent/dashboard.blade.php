@@ -1,7 +1,7 @@
 @extends('layout.template.mainTemplate')
 
 @section('title', 'Talent Dashboard')
-@section('content')
+@section('container')
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">

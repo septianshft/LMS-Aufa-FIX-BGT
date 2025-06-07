@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.shortname') }} | {{ $title }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
@@ -71,7 +72,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <strong>Website Pelatihan</strong> by PUI PT IS-IoT Telkom University 
+                        <strong>Website Pelatihan</strong> by PUI PT IS-IoT Telkom University
                     </div>
                 </div>
             </footer>
@@ -150,6 +151,8 @@
     <script src="{{ url('/asset/js/sb-admin-2.min.js') }}"></script>
     <script src="{{ url('/asset/js/jquery.datetimepicker.full.min.js') }}"></script>
 
+    <!-- Page-specific scripts -->
+    @yield('scripts')
 
     <!-- Page level plugins -->
 
