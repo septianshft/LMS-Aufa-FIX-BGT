@@ -42,8 +42,22 @@
          <!-- Nav Item - Talent Admin Dashboard -->
          <li class="nav-item  {{ Request::is('talent-admin/dashboard') ? 'active' : '' }} animate-btn">
              <a class="nav-link" href="{{ route('talent_admin.dashboard') }}">
-                 <i class="fas fa-fw fa-users-cog"></i>
-                 <span>Talent Admin Dashboard</span></a>
+                 <i class="fas fa-fw fa-tachometer-alt"></i>
+                 <span>Dashboard</span></a>
+         </li>
+
+         <!-- Nav Item - Manage Talents -->
+         <li class="nav-item  {{ Request::is('talent-admin/manage-talents') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent_admin.manage_talents') }}">
+                 <i class="fas fa-fw fa-user-tie"></i>
+                 <span>Manage Talents</span></a>
+         </li>
+
+         <!-- Nav Item - Manage Recruiters -->
+         <li class="nav-item  {{ Request::is('talent-admin/manage-recruiters') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent_admin.manage_recruiters') }}">
+                 <i class="fas fa-fw fa-briefcase"></i>
+                 <span>Manage Recruiters</span></a>
          </li>
      @endif
 

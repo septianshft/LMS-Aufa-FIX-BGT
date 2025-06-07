@@ -108,6 +108,10 @@ Route::middleware('auth')->group(function () {
     // Talent Admin Routes
     Route::middleware('role:talent_admin')->group(function () {
         Route::get('talent-admin/dashboard', [TalentAdminController::class, 'dashboard'])->name('talent_admin.dashboard');
+        Route::get('talent-admin/manage-talents', [TalentAdminController::class, 'manageTalents'])->name('talent_admin.manage_talents');
+        Route::get('talent-admin/manage-recruiters', [TalentAdminController::class, 'manageRecruiters'])->name('talent_admin.manage_recruiters');
+        Route::patch('talent-admin/talent/{talent}/toggle-status', [TalentAdminController::class, 'toggleTalentStatus'])->name('talent_admin.toggle_talent_status');
+        Route::patch('talent-admin/recruiter/{recruiter}/toggle-status', [TalentAdminController::class, 'toggleRecruiterStatus'])->name('talent_admin.toggle_recruiter_status');
     });
 
     // Talent Routes

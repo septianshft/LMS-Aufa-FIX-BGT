@@ -21,6 +21,12 @@
                      <span class="badge p-2 badge-danger">Pengajar</span>
                  @elseif (Auth()->user()->roles_id == 3)
                      <span class="badge p-2 badge-primary">Siswa</span>
+                 @elseif (Auth()->user()->hasRole('talent_admin'))
+                     <span class="badge p-2 badge-info">Talent Admin</span>
+                 @elseif (Auth()->user()->hasRole('talent'))
+                     <span class="badge p-2 badge-success">Talent</span>
+                 @elseif (Auth()->user()->hasRole('recruiter'))
+                     <span class="badge p-2 badge-warning">Recruiter</span>
                  @endif
                  Halo Selamat datang kembali, {{ Auth()->User()->name }}
              </p>
@@ -50,10 +56,14 @@
                          <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                          Profile
                      </a>
-                 @endif
-                 @if (Auth()->user()->roles_id == 3)
+                 @elseif (Auth()->user()->roles_id == 3)
                      <a class="dropdown-item"
                          href="{{ route('viewProfileSiswa', ['token' => encrypt(Auth()->User()->id)]) }}">
+                         <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                         Profile
+                     </a>
+                 @elseif (Auth()->user()->hasRole(['talent_admin', 'talent', 'recruiter']))
+                     <a class="dropdown-item" href="{{ route('profile.edit') }}">
                          <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                          Profile
                      </a>

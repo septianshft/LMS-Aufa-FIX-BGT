@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Talent;
 
 class RecruiterController extends Controller
 {
@@ -14,6 +15,16 @@ class RecruiterController extends Controller
         $roles = 'Recruiter';
         $assignedKelas = [];
 
-        return view('admin.recruiter.dashboard', compact('user', 'title', 'roles', 'assignedKelas'));
+        // Get active talents for discovery
+        $talents = Talent::with('user')
+            ->where('is_active', true)
+            ->whereHas('user', function($query) {
+                $query->whereNotNull('name')
+                      ->whereNotNull('email');
+            })
+            ->latest()
+            ->paginate(12);
+
+        return view('admin.recruiter.dashboard', compact('user', 'title', 'roles', 'assignedKelas', 'talents'));
     }
 }
