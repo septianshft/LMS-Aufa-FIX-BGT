@@ -38,6 +38,33 @@
          </li>
      @endif
 
+     @if (Auth()->user()->hasRole('talent_admin'))
+         <!-- Nav Item - Talent Admin Dashboard -->
+         <li class="nav-item  {{ Request::is('talent-admin/dashboard') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent_admin.dashboard') }}">
+                 <i class="fas fa-fw fa-users-cog"></i>
+                 <span>Talent Admin Dashboard</span></a>
+         </li>
+     @endif
+
+     @if (Auth()->user()->hasRole('talent'))
+         <!-- Nav Item - Talent Dashboard -->
+         <li class="nav-item  {{ Request::is('talent/dashboard') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent.dashboard') }}">
+                 <i class="fas fa-fw fa-user-tie"></i>
+                 <span>Talent Dashboard</span></a>
+         </li>
+     @endif
+
+     @if (Auth()->user()->hasRole('recruiter'))
+         <!-- Nav Item - Recruiter Dashboard -->
+         <li class="nav-item  {{ Request::is('recruiter/dashboard') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('recruiter.dashboard') }}">
+                 <i class="fas fa-fw fa-search"></i>
+                 <span>Recruiter Dashboard</span></a>
+         </li>
+     @endif
+
 
      <!-- Divider -->
      <hr class="sidebar-divider">

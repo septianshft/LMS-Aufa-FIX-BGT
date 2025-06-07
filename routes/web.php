@@ -12,6 +12,9 @@ use App\Http\Controllers\{
     TrainerController,
     FinalQuizController,
     QuizAttemptController, // Pastikan ini sudah ada
+    TalentAdminController,
+    TalentController,
+    RecruiterController,
 };
 // ====================
 // FRONTEND ROUTES
@@ -32,7 +35,7 @@ Route::middleware(['auth', 'role:trainee'])->group(function () {
 
     // Route untuk menampilkan halaman kuis
     Route::get('/learning/course/{course}/quiz', [QuizAttemptController::class, 'show'])->name('front.quiz');
-    
+
     // Route untuk submit kuis
     Route::post('/learning/quiz/{quiz}/submit', [QuizAttemptController::class, 'submit'])->name('learning.quiz.submit');
 });
@@ -81,8 +84,8 @@ Route::middleware('auth')->group(function () {
           Route::post('courses/{course}/quiz', [FinalQuizController::class, 'store'])->name('course_quiz.store');
           Route::get('courses/{course}/quiz/edit', [FinalQuizController::class, 'edit'])->name('course_quiz.edit');
           Route::put('courses/{course}/quiz', [FinalQuizController::class, 'update'])->name('course_quiz.update');
-            
-                
+
+
         });
     });
 
@@ -97,6 +100,25 @@ Route::middleware('auth')->group(function () {
         // })->name('front.quiz');
         // Route::post('/learning/quiz/{quiz}/submit', [QuizAttemptController::class, 'submit'])->name('learning.quiz.submit'); // Sudah didefinisikan di atas
     // });
+
+    // ====================
+    // TALENT SCOUTING ROUTES
+    // ====================
+
+    // Talent Admin Routes
+    Route::middleware('role:talent_admin')->group(function () {
+        Route::get('talent-admin/dashboard', [TalentAdminController::class, 'dashboard'])->name('talent_admin.dashboard');
+    });
+
+    // Talent Routes
+    Route::middleware('role:talent')->group(function () {
+        Route::get('talent/dashboard', [TalentController::class, 'dashboard'])->name('talent.dashboard');
+    });
+
+    // Recruiter Routes
+    Route::middleware('role:recruiter')->group(function () {
+        Route::get('recruiter/dashboard', [RecruiterController::class, 'dashboard'])->name('recruiter.dashboard');
+    });
 });
 
 require __DIR__.'/auth.php';

@@ -65,17 +65,33 @@ class User extends Authenticatable
     {
         $query = SubscribeTransaction::where('user_id', $this->id)
             ->where('is_paid', true);
-    
+
         if ($course) {
             $query->where('course_id', $course->id); // hanya boleh akses kelas yang dibayarkan
         }
-    
+
         return $query->exists();
     }
-    
+
     public function trainer()
-{
-    return $this->hasOne(Trainer::class);
-}
+    {
+        return $this->hasOne(Trainer::class);
+    }
+
+    // New talent scouting relationships
+    public function talentAdmin()
+    {
+        return $this->hasOne(TalentAdmin::class);
+    }
+
+    public function talent()
+    {
+        return $this->hasOne(Talent::class);
+    }
+
+    public function recruiter()
+    {
+        return $this->hasOne(Recruiter::class);
+    }
 
 }
