@@ -20,4 +20,8 @@ class Talent extends Model
     public function user(){
         return $this->belongsTo(User::class);
     }
+
+    public function talentRequests(){
+        return $this->hasMany(TalentRequest::class);
+    }
 }

@@ -46,6 +46,13 @@
                  <span>Dashboard</span></a>
          </li>
 
+         <!-- Nav Item - Manage Requests -->
+         <li class="nav-item  {{ Request::is('talent-admin/manage-requests*') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent_admin.manage_requests') }}">
+                 <i class="fas fa-fw fa-handshake"></i>
+                 <span>Manage Requests</span></a>
+         </li>
+
          <!-- Nav Item - Manage Talents -->
          <li class="nav-item  {{ Request::is('talent-admin/manage-talents') ? 'active' : '' }} animate-btn">
              <a class="nav-link" href="{{ route('talent_admin.manage_talents') }}">

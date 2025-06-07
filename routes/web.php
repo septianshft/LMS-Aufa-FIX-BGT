@@ -110,6 +110,9 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/dashboard', [TalentAdminController::class, 'dashboard'])->name('talent_admin.dashboard');
         Route::get('talent-admin/manage-talents', [TalentAdminController::class, 'manageTalents'])->name('talent_admin.manage_talents');
         Route::get('talent-admin/manage-recruiters', [TalentAdminController::class, 'manageRecruiters'])->name('talent_admin.manage_recruiters');
+        Route::get('talent-admin/manage-requests', [TalentAdminController::class, 'manageRequests'])->name('talent_admin.manage_requests');
+        Route::get('talent-admin/request/{talentRequest}', [TalentAdminController::class, 'showRequest'])->name('talent_admin.show_request');
+        Route::patch('talent-admin/request/{talentRequest}/status', [TalentAdminController::class, 'updateRequestStatus'])->name('talent_admin.update_request_status');
         Route::patch('talent-admin/talent/{talent}/toggle-status', [TalentAdminController::class, 'toggleTalentStatus'])->name('talent_admin.toggle_talent_status');
         Route::patch('talent-admin/recruiter/{recruiter}/toggle-status', [TalentAdminController::class, 'toggleRecruiterStatus'])->name('talent_admin.toggle_recruiter_status');
     });
@@ -122,6 +125,8 @@ Route::middleware('auth')->group(function () {
     // Recruiter Routes
     Route::middleware('role:recruiter')->group(function () {
         Route::get('recruiter/dashboard', [RecruiterController::class, 'dashboard'])->name('recruiter.dashboard');
+        Route::post('recruiter/talent-request', [RecruiterController::class, 'submitTalentRequest'])->name('recruiter.submit_talent_request');
+        Route::get('recruiter/my-requests', [RecruiterController::class, 'myRequests'])->name('recruiter.my_requests');
     });
 });
 

@@ -83,20 +83,79 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Member Since
+                                My Requests
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $user->created_at->format('M Y') }}
+                                {{ $myRequests->count() }}
                             </div>
                         </div>
                         <div class="col-auto">
-                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                            <i class="fas fa-handshake fa-2x text-gray-300"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- My Recent Requests Section -->
+    @if($myRequests->count() > 0)
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-clipboard-list mr-2"></i>My Recent Talent Requests
+            </h6>
+            <a href="{{ route('recruiter.my_requests') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-list mr-1"></i>View All
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Talent</th>
+                            <th>Project</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($myRequests as $request)
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    @if($request->talent->user->avatar)
+                                        <img class="rounded-circle mr-2" src="{{ asset('storage/' . $request->talent->user->avatar) }}"
+                                             alt="{{ $request->talent->user->name }}" style="width: 30px; height: 30px; object-fit: cover;">
+                                    @else
+                                        <div class="rounded-circle bg-secondary mr-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                            <i class="fas fa-user text-white text-xs"></i>
+                                        </div>
+                                    @endif
+                                    <div>
+                                        <div class="font-weight-bold text-sm">{{ $request->talent->user->name }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="font-weight-bold text-sm">{{ $request->project_title }}</div>
+                                <div class="text-muted small">{{ Str::limit($request->project_description, 50) }}</div>
+                            </td>
+                            <td>
+                                <span class="badge badge-{{ $request->getStatusBadgeColor() }}">
+                                    {{ $request->getFormattedStatus() }}
+                                </span>
+                            </td>
+                            <td class="text-sm">{{ $request->created_at->format('M d, Y') }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <!-- Talent Discovery Section -->
     <div class="card shadow mb-4">
@@ -146,7 +205,17 @@
                                             <p class="text-muted small mb-2">{{ $talent->user->pekerjaan }}</p>
                                         @endif
 
-                                        <span class="badge badge-success">Active Talent</span>
+                                        @php
+                                            $existingRequest = $talent->talentRequests->first();
+                                        @endphp
+
+                                        @if($existingRequest)
+                                            <span class="badge badge-{{ $existingRequest->getStatusBadgeColor() }}">
+                                                {{ $existingRequest->getFormattedStatus() }}
+                                            </span>
+                                        @else
+                                            <span class="badge badge-success">Available</span>
+                                        @endif
                                     </div>
 
                                     <!-- Contact Info -->
@@ -179,6 +248,37 @@
                                                 onclick="viewTalentDetails('{{ $talent->user->name }}', '{{ $talent->user->email }}', '{{ $talent->user->pekerjaan ?? 'Not specified' }}', '{{ $talent->user->alamat ?? 'Not specified' }}', '{{ $talent->user->no_telp ?? 'Not specified' }}')">
                                             <i class="fas fa-eye fa-sm mr-1"></i>View Details
                                         </button>
+
+                                        @php
+                                            $existingRequest = $talent->talentRequests->first();
+                                        @endphp
+
+                                        @if($existingRequest)
+                                            @if($existingRequest->status == 'pending')
+                                                <button type="button" class="btn btn-warning btn-sm ml-1" disabled>
+                                                    <i class="fas fa-clock fa-sm mr-1"></i>Pending
+                                                </button>
+                                            @elseif($existingRequest->status == 'approved')
+                                                <button type="button" class="btn btn-info btn-sm ml-1" disabled>
+                                                    <i class="fas fa-check fa-sm mr-1"></i>Approved
+                                                </button>
+                                            @elseif($existingRequest->status == 'onboarded')
+                                                <button type="button" class="btn btn-success btn-sm ml-1" disabled>
+                                                    <i class="fas fa-handshake fa-sm mr-1"></i>Onboarded
+                                                </button>
+                                            @else
+                                                <button type="button" class="btn btn-outline-success btn-sm ml-1"
+                                                        onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')">
+                                                    <i class="fas fa-handshake fa-sm mr-1"></i>Request Again
+                                                </button>
+                                            @endif
+                                        @else
+                                            <button type="button" class="btn btn-outline-success btn-sm ml-1"
+                                                    onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')">
+                                                <i class="fas fa-handshake fa-sm mr-1"></i>Request Talent
+                                            </button>
+                                        @endif
+
                                         <a href="mailto:{{ $talent->user->email }}" class="btn btn-outline-primary btn-sm ml-1">
                                             <i class="fas fa-envelope fa-sm mr-1"></i>Contact
                                         </a>
@@ -254,8 +354,108 @@
     </div>
 </div>
 
+<!-- Talent Request Modal -->
+<div class="modal fade" id="talentRequestModal" tabindex="-1" role="dialog" aria-labelledby="talentRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="talentRequestModalLabel">
+                    <i class="fas fa-handshake mr-2"></i>Request Talent
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="talentRequestForm">
+                @csrf
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Note:</strong> Your request will be reviewed by the Talent Admin who will coordinate a meeting between you and the talent.
+                    </div>
+
+                    <input type="hidden" id="requestTalentId" name="talent_id">
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="projectTitle" class="font-weight-bold">Project Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="projectTitle" name="project_title" required
+                                       placeholder="e.g., Mobile App Development">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="budgetRange" class="font-weight-bold">Budget Range</label>
+                                <select class="form-control" id="budgetRange" name="budget_range">
+                                    <option value="">Select budget range</option>
+                                    <option value="Under $1,000">Under $1,000</option>
+                                    <option value="$1,000 - $5,000">$1,000 - $5,000</option>
+                                    <option value="$5,000 - $10,000">$5,000 - $10,000</option>
+                                    <option value="$10,000 - $25,000">$10,000 - $25,000</option>
+                                    <option value="$25,000+">$25,000+</option>
+                                    <option value="Negotiable">Negotiable</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="projectDuration" class="font-weight-bold">Project Duration</label>
+                                <select class="form-control" id="projectDuration" name="project_duration">
+                                    <option value="">Select duration</option>
+                                    <option value="1-2 weeks">1-2 weeks</option>
+                                    <option value="1 month">1 month</option>
+                                    <option value="2-3 months">2-3 months</option>
+                                    <option value="3-6 months">3-6 months</option>
+                                    <option value="6+ months">6+ months</option>
+                                    <option value="Ongoing">Ongoing</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="urgencyLevel" class="font-weight-bold">Urgency Level <span class="text-danger">*</span></label>
+                                <select class="form-control" id="urgencyLevel" name="urgency_level" required>
+                                    <option value="low">Low - Flexible timeline</option>
+                                    <option value="medium" selected>Medium - Standard timeline</option>
+                                    <option value="high">High - Urgent requirement</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="projectDescription" class="font-weight-bold">Project Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="projectDescription" name="project_description" rows="5" required
+                                          placeholder="Describe your project, goals, and what you're looking for..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="requirements" class="font-weight-bold">Specific Requirements</label>
+                                <textarea class="form-control" id="requirements" name="requirements" rows="3"
+                                          placeholder="List any specific skills, technologies, or qualifications needed..."></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="recruiterMessage" class="font-weight-bold">Personal Message</label>
+                                <textarea class="form-control" id="recruiterMessage" name="recruiter_message" rows="3"
+                                          placeholder="Add a personal message to the talent (optional)..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="$('#talentRequestModal').modal('hide')">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-paper-plane mr-1"></i>Submit Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentTalentEmail = '';
+let currentRequestTalentId = '';
+let currentRequestTalentName = '';
 
 function viewTalentDetails(name, email, profession, address, phone) {
     document.getElementById('modalTalentName').textContent = name;
@@ -268,6 +468,21 @@ function viewTalentDetails(name, email, profession, address, phone) {
     $('#talentDetailsModal').modal('show');
 }
 
+function openRequestModal(talentId, talentName) {
+    currentRequestTalentId = talentId;
+    currentRequestTalentName = talentName;
+
+    // Reset form
+    document.getElementById('talentRequestForm').reset();
+    document.getElementById('requestTalentId').value = talentId;
+
+    // Update modal title
+    document.getElementById('talentRequestModalLabel').innerHTML =
+        '<i class="fas fa-handshake mr-2"></i>Request Talent: ' + talentName;
+
+    $('#talentRequestModal').modal('show');
+}
+
 function contactTalent() {
     if (currentTalentEmail) {
         window.location.href = 'mailto:' + currentTalentEmail;
@@ -277,5 +492,58 @@ function contactTalent() {
 function refreshTalents() {
     location.reload();
 }
+
+// Ensure modal close functionality works
+$(document).ready(function() {
+    // Handle modal close buttons
+    $('.modal .close, .modal [data-dismiss="modal"]').on('click', function() {
+        $(this).closest('.modal').modal('hide');
+    });
+});
+
+// Handle talent request form submission
+document.getElementById('talentRequestForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.innerHTML;
+
+    // Show loading state
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>Submitting...';
+
+    fetch('{{ route("recruiter.submit_talent_request") }}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            alert('Success! Your talent request has been submitted and will be reviewed by the Talent Admin.');
+
+            // Close modal and refresh page
+            $('#talentRequestModal').modal('hide');
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            alert('Error: ' + (data.message || 'Something went wrong. Please try again.'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error: Failed to submit request. Please try again.');
+    })
+    .finally(() => {
+        // Reset button state
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    });
+});
 </script>
 @endsection
