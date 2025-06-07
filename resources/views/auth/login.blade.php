@@ -1,79 +1,160 @@
 <x-guest-layout>
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-            <!-- Header -->
-            <div class="text-center">
-                <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h2>
-                <p class="text-gray-600">Sign in to your account</p>
+    <div class="min-h-screen flex">
+        <!-- Left Side - Welcome Section -->
+        <div class="hidden lg:flex lg:w-1/2 gradient-bg relative overflow-hidden">
+            <div class="floating-shapes"></div>
+            <div class="relative z-10 flex flex-col justify-center items-center text-white p-12 slide-in-left">
+                <div class="max-w-md text-center">
+                    <!-- Logo/Icon -->
+                    <div class="mb-8">
+                        <div class="w-20 h-20 mx-auto bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <svg class="w-10 h-10 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Welcome Content -->
+                    <h1 class="text-4xl font-bold mb-4">Welcome Back!</h1>
+                    <p class="text-lg text-white text-opacity-90 mb-8">
+                        Sign in to access your account and continue your learning journey with our comprehensive training platform.
+                    </p>
+
+                    <!-- Features -->
+                    <div class="space-y-4 text-left">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span>Access premium courses</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span>Track your progress</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                            </div>
+                            <span>Connect with professionals</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Login Form -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50 slide-in-right relative">
+            <!-- Home Button -->
+            <div class="absolute top-6 right-6">
+                <a href="{{ url('/') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    Home
+                </a>
             </div>
 
-            <form method="POST" action="{{ route('login') }}" class="space-y-6">
-                @csrf
-
-                <!-- Email -->
-                <div class="space-y-2">
-                    <x-input-label for="email" :value="__('Email Address')" class="text-sm font-medium text-gray-700" />
-                    <x-text-input id="email"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200"
-                        type="email"
-                        name="email"
-                        :value="old('email')"
-                        placeholder="your.email@example.com"
-                        required autofocus autocomplete="username" />
-                    <x-input-error :messages="$errors->get('email')" class="mt-1" />
+            <div class="w-full max-w-md">
+                <!-- Mobile Logo (visible on small screens) -->
+                <div class="lg:hidden text-center mb-8">
+                    <div class="w-16 h-16 mx-auto bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </div>
                 </div>
 
-                <!-- Password -->
-                <div class="space-y-2">
-                    <x-input-label for="password" :value="__('Password')" class="text-sm font-medium text-gray-700" />
-                    <div class="relative">
-                        <x-text-input id="password"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 pr-12"
-                            type="password"
-                            name="password"
-                            placeholder="Enter your password"
-                            required autocomplete="current-password" />
-                        <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600">
-                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                            </svg>
+                <!-- Header -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
+                    <p class="text-gray-600">Enter your credentials to access your account</p>
+                </div>
+
+                <!-- Login Form -->
+                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                    @csrf
+
+                    <!-- Email -->
+                    <div class="space-y-2">
+                        <x-input-label for="email" :value="__('Email Address')" class="text-sm font-semibold text-gray-700" />
+                        <x-text-input id="email"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 bg-white"
+                            type="email"
+                            name="email"
+                            :value="old('email')"
+                            placeholder="your.email@example.com"
+                            required autofocus autocomplete="username" />
+                        <x-input-error :messages="$errors->get('email')" class="mt-1" />
+                    </div>
+
+                    <!-- Password -->
+                    <div class="space-y-2">
+                        <x-input-label for="password" :value="__('Password')" class="text-sm font-semibold text-gray-700" />
+                        <div class="relative">
+                            <x-text-input id="password"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 bg-white pr-12"
+                                type="password"
+                                name="password"
+                                placeholder="Enter your password"
+                                required autocomplete="current-password" />
+                            <button type="button" id="togglePassword" class="absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 hover:text-gray-600 transition duration-200">
+                                <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <x-input-error :messages="$errors->get('password')" class="mt-1" />
+                    </div>
+
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center text-sm">
+                            <input type="checkbox" name="remember" class="rounded border-gray-300 text-purple-600 shadow-sm focus:ring-purple-500">
+                            <span class="ml-2 text-gray-600">{{ __('Remember me') }}</span>
+                        </label>
+
+                        @if (Route::has('password.request'))
+                            <a class="text-sm text-purple-600 hover:text-purple-800 hover:underline transition duration-200" href="{{ route('password.request') }}">
+                                {{ __('Forgot password?') }}
+                            </a>
+                        @endif
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-200 transform hover:scale-[1.02]">
+                            {{ __('Sign In') }}
                         </button>
                     </div>
-                    <x-input-error :messages="$errors->get('password')" class="mt-1" />
-                </div>
 
-                <!-- Remember Me & Forgot Password -->
-                <div class="flex items-center justify-between">
-                    <label class="flex items-center text-sm">
-                        <input type="checkbox" name="remember" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500">
-                        <span class="ml-2 text-gray-600">{{ __('Remember me') }}</span>
-                    </label>
+                    <!-- Divider -->
+                    <div class="relative my-6">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-4 bg-gray-50 text-gray-500">New to our platform?</span>
+                        </div>
+                    </div>
 
-                    @if (Route::has('password.request'))
-                        <a class="text-sm text-blue-600 hover:text-blue-800 hover:underline transition duration-200" href="{{ route('password.request') }}">
-                            {{ __('Forgot password?') }}
+                    <!-- Register Link -->
+                    <div class="text-center">
+                        <a href="{{ route('register') }}" class="w-full inline-flex justify-center py-3 px-4 border border-purple-300 rounded-xl shadow-sm text-sm font-semibold text-purple-600 bg-white hover:bg-purple-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-200 transform hover:scale-[1.02]">
+                            {{ __('Create an Account') }}
                         </a>
-                    @endif
-                </div>
-
-                <!-- Submit Button -->
-                <div>
-                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200">
-                        {{ __('Sign In') }}
-                    </button>
-                </div>
-
-                <!-- Register Link -->
-                <div class="text-center">
-                    <p class="text-sm text-gray-600">
-                        Don't have an account?
-                        <a href="{{ route('register') }}" class="font-medium text-blue-600 hover:text-blue-800 hover:underline transition duration-200">
-                            Create one now
-                        </a>
-                    </p>
-                </div>
-            </form>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
