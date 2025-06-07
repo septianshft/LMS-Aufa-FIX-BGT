@@ -16,27 +16,40 @@ class RolePermissionSeeder extends Seeder
     {
         //
 
-        $adminRole = Role::create([
+        $adminRole = Role::firstOrCreate([
             'name' => 'admin'
         ]);
 
-        $traineeRole = Role::create([
+        $traineeRole = Role::firstOrCreate([
             'name' => 'trainee'
         ]);
 
-        $trainerRole = Role::create([
+        $trainerRole = Role::firstOrCreate([
             'name' => 'trainer'
+        ]);
+
+        // New talent scouting roles
+        $talentAdminRole = Role::firstOrCreate([
+            'name' => 'talent_admin'
+        ]);
+
+        $talentRole = Role::firstOrCreate([
+            'name' => 'talent'
+        ]);
+
+        $recruiterRole = Role::firstOrCreate([
+            'name' => 'recruiter'
         ]);
 
         //akun admin
 
-        $userAdmin = User::create([
+        $userAdmin = User::firstOrCreate([
+            'email' => 'admin@admin.com'
+        ], [
             'name' => 'admin',
             'pekerjaan' => 'admin',
             'avatar' => 'images/default-avatar.png',
-            'email' => 'admin@admin.com',
             'password' => bcrypt('123123123'),
-
         ]);
 
         $userAdmin->assignRole($adminRole);
