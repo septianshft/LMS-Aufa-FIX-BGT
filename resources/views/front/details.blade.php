@@ -197,17 +197,22 @@
                     <div class="mentor-sidebar w-full max-w-[100px] flex flex-col gap-[30px] z-10">
                         <div class="mentor-info bg-white flex flex-col gap-4 rounded-2xl p-5">
                             <p class="font-bold text-lg text-left w-full">Trainer</p>
-                            <div class="flex items-center justify-between w-full">
-                                <div class="flex items-center gap-3">
-                                    <a href="" class="w-[50px] h-[50px] flex shrink-0 rounded-full overflow-hidden">
-                                        <img src="{{ Storage::url($course->trainer->user->avatar) }}" class="w-full h-full object-cover" alt="photo">
-                                    </a>
-                                    <div class="flex flex-col gap-[2px]">
-                                        <a href="" class="font-semibold">{{ $course->trainer->user->name }}</a>
-                                        <p class="text-sm text-[#6D7786]">{{ $course->trainer->user->pekerjaan }}</p>
-                                    </div>
-                                </div>
+                            @php
+                            $trainerUser = optional($course->trainer?->user);
+                        @endphp
+
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 flex shrink-0 rounded-full overflow-hidden">
+                                <img
+                                    src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}"
+                                    class="w-full h-full object-cover"
+                                    alt="avatar">
                             </div>
+                            <div class="flex flex-col">
+                                <p class="font-semibold">{{ $trainerUser->name ?? 'Unknown Trainer' }}</p>
+                                <p class="text-[#6D7786]">{{ $trainerUser->pekerjaan ?? '-' }}</p>
+                            </div>
+                        </div>
                         </div>
                     </div>
 
