@@ -13,18 +13,69 @@
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
-            </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
-                {{ $slot }}
-            </div>
-        </div>
+        <style>
+            .gradient-bg {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+
+            .floating-shapes {
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+            }
+
+            .floating-shapes::before,
+            .floating-shapes::after {
+                content: '';
+                position: absolute;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.1);
+                animation: float 6s ease-in-out infinite;
+            }
+
+            .floating-shapes::before {
+                width: 200px;
+                height: 200px;
+                top: 20%;
+                left: 10%;
+                animation-delay: 0s;
+            }
+
+            .floating-shapes::after {
+                width: 150px;
+                height: 150px;
+                bottom: 20%;
+                right: 10%;
+                animation-delay: 3s;
+            }
+
+            @keyframes float {
+                0%, 100% { transform: translateY(0px) rotate(0deg); }
+                50% { transform: translateY(-20px) rotate(180deg); }
+            }
+
+            .slide-in-left {
+                animation: slideInLeft 0.8s ease-out;
+            }
+
+            .slide-in-right {
+                animation: slideInRight 0.8s ease-out;
+            }
+
+            @keyframes slideInLeft {
+                0% { transform: translateX(-100%); opacity: 0; }
+                100% { transform: translateX(0); opacity: 1; }
+            }
+
+            @keyframes slideInRight {
+                0% { transform: translateX(100%); opacity: 0; }
+                100% { transform: translateX(0); opacity: 1; }
+            }
+        </style>
+    </head>
+    <body class="font-sans antialiased">
+        {{ $slot }}
     </body>
 </html>
