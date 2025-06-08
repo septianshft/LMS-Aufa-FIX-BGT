@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Certificate;
 
 class Course extends Model
 {
@@ -66,10 +67,15 @@ public function finalQuizzes()
     return $this->hasMany(FinalQuiz::class);
 }
 
-public function finalQuiz()
-{
-    return $this->hasOne(FinalQuiz::class);
-}
+    public function finalQuiz()
+    {
+        return $this->hasOne(FinalQuiz::class);
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
 
 
 }

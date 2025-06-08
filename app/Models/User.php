@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Certificate;
 
 class User extends Authenticatable
 {
@@ -106,6 +107,11 @@ class User extends Authenticatable
     public function recruiter()
     {
         return $this->hasOne(Recruiter::class);
+    }
+
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
     }
 
     // Talent utility methods

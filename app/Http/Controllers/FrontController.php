@@ -10,6 +10,10 @@ use App\Models\CourseLevel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubscribeTransaction;
+use App\Models\CourseProgress;
+use App\Models\Certificate;
+use Illuminate\Support\Facades\Storage;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 
 class FrontController extends Controller
@@ -99,7 +103,36 @@ class FrontController extends Controller
         // Tambahkan course ke relasi user jika belum ada (untuk pelacakan/history)
         $user->courses()->syncWithoutDetaching($course->id);
 
-        return view('front.learning', compact('course', 'video'));
+        // Update progress for this video
+        $progress = CourseProgress::firstOrCreate([
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+        ], [
+            'completed_videos' => [],
+            'progress' => 0,
+        ]);
+
+        $completed = $progress->completed_videos ?? [];
+        if (!in_array($video->id, $completed)) {
+            $completed[] = $video->id;
+            $totalVideos = $course->course_videos->count();
+            $percentage = $totalVideos > 0 ? floor(count($completed) / $totalVideos * 100) : 0;
+            $progress->update([
+                'completed_videos' => $completed,
+                'progress' => $percentage,
+            ]);
+        }
+
+        // Generate certificate if eligible
+        if ($progress->progress == 100 && $progress->quiz_passed && !$progress->course->certificates()->where('user_id', $user->id)->exists()) {
+            $this->generateCertificate($course, $user);
+        }
+
+        $certificate = Certificate::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->first();
+
+        return view('front.learning', compact('course', 'video', 'certificate'));
     }
 
     /**
@@ -116,6 +149,25 @@ class FrontController extends Controller
     public function checkout(Course $course)
     {
         return view('front.checkout', compact('course'));
+    }
+
+    private function generateCertificate(Course $course, $user): void
+    {
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificates.certificate', [
+            'course' => $course,
+            'user' => $user,
+            'date' => now()->toDateString(),
+        ]);
+
+        $path = 'certificates/' . $user->id . '_' . $course->id . '.pdf';
+        \Illuminate\Support\Facades\Storage::disk('public')->put($path, $pdf->output());
+
+        Certificate::create([
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'path' => $path,
+            'generated_at' => now(),
+        ]);
     }
 
     /**

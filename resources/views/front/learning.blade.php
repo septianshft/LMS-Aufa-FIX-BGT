@@ -149,7 +149,11 @@
                         <div id="Rewards" class="tabcontent hidden">
                             <div class="flex flex-col gap-5">
                                 <h3 class="font-bold text-2xl">Rewards</h3>
-                                <p class="font-medium leading-[30px]">Rewards detail placeholder content</p>
+                                @if(isset($certificate))
+                                    <a href="{{ route('certificate.download', $certificate) }}" class="text-white font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980] w-fit">Download Certificate</a>
+                                @else
+                                    <p class="font-medium leading-[30px]">Complete all lessons and pass the quiz to earn a certificate.</p>
+                                @endif
                             </div>
                         </div>
 

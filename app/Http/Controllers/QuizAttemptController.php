@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Models\FinalQuiz;
 use App\Models\QuizAttempt;
+use App\Models\CourseProgress;
+use App\Models\Certificate;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 
 class QuizAttemptController extends Controller
@@ -42,6 +46,25 @@ class QuizAttemptController extends Controller
             'is_passed' => $passed,
         ]);
 
+        $user = auth()->user();
+        $course = $quiz->course;
+
+        $progress = CourseProgress::firstOrCreate([
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+        ], [
+            'completed_videos' => [],
+            'progress' => 0,
+        ]);
+
+        if ($passed) {
+            $progress->update(['quiz_passed' => true]);
+        }
+
+        if ($progress->progress == 100 && $passed && !$course->certificates()->where('user_id', $user->id)->exists()) {
+            $this->generateCertificate($course, $user);
+        }
+
         // Auto-add skill to user if they passed the quiz (completed the course)
         if ($passed) {
             $user = auth()->user();
@@ -61,5 +84,24 @@ class QuizAttemptController extends Controller
 
         // Redirect kembali dengan membawa hasil
         return redirect()->back()->with('result', compact('score', 'passed', 'quiz'));
+    }
+
+    private function generateCertificate(Course $course, $user): void
+    {
+        $pdf = Pdf::loadView('certificates.certificate', [
+            'course' => $course,
+            'user' => $user,
+            'date' => now()->toDateString(),
+        ]);
+
+        $path = 'certificates/' . $user->id . '_' . $course->id . '.pdf';
+        Storage::disk('public')->put($path, $pdf->output());
+
+        Certificate::create([
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+            'path' => $path,
+            'generated_at' => now(),
+        ]);
     }
 }
