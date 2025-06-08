@@ -12,6 +12,7 @@ use App\Http\Controllers\{
     TrainerController,
     FinalQuizController,
     QuizAttemptController, // Pastikan ini sudah ada
+    CertificateController,
     TalentAdminController,
     TalentController,
     RecruiterController,
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'role:trainee'])->group(function () {
 
     // Route untuk submit kuis
     Route::post('/learning/quiz/{quiz}/submit', [QuizAttemptController::class, 'submit'])->name('learning.quiz.submit');
+    Route::get('/certificate/{certificate}', [CertificateController::class, 'download'])->name('certificate.download');
 });
 
 Route::get('/pricing/{course:slug}', [FrontController::class, 'pricing'])
