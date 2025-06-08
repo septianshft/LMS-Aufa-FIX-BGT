@@ -27,6 +27,7 @@ class CourseController extends Controller
             ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
             ->when($request->course_mode_id, fn($q) => $q->where('course_mode_id', $request->course_mode_id))
             ->when($request->course_level_id, fn($q) => $q->where('course_level_id', $request->course_level_id))
+            ->when($request->search, fn($q) => $q->where('name', 'like', "%{$request->search}%"))
             ->latest()
             ->get();
 
@@ -35,6 +36,44 @@ class CourseController extends Controller
         }
 
         return view('front.index', compact('courses', 'categories', 'modes', 'levels'));
+    }
+
+    /**
+     * Page to explore all courses with filtering and search
+     */
+    public function explore(Request $request)
+    {
+        $categories = Category::all();
+        $modes = CourseMode::all();
+        $levels = CourseLevel::all();
+
+        $courses = Course::with(['category', 'trainer.user', 'trainees', 'mode', 'level'])
+            ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
+            ->when($request->course_mode_id, fn($q) => $q->where('course_mode_id', $request->course_mode_id))
+            ->when($request->course_level_id, fn($q) => $q->where('course_level_id', $request->course_level_id))
+            ->when($request->search, fn($q) => $q->where('name', 'like', "%{$request->search}%"))
+            ->latest()
+            ->get();
+
+        if ($request->ajax()) {
+            return view('partials.course-list', compact('courses'))->render();
+        }
+
+        return view('front.explore', compact('courses', 'categories', 'modes', 'levels'));
+    }
+
+    /**
+     * Display courses owned by authenticated user
+     */
+    public function myCourses()
+    {
+        $user = Auth::user();
+
+        $courses = Course::whereHas('subscribeTransactions', function ($q) use ($user) {
+            $q->where('user_id', $user->id)->where('is_paid', true);
+        })->with(['category', 'trainer.user', 'mode', 'level'])->get();
+
+        return view('front.my_courses', compact('courses'));
     }
 
     // ✅ Untuk halaman admin (manage course)
