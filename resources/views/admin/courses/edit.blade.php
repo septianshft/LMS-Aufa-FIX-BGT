@@ -105,6 +105,11 @@
                         <x-input-error :messages="$errors->get('keypoints')" class="mt-2" />
                     </div>
 
+                    <div class="mt-4">
+                        <x-input-label for="materials" :value="__('Course Materials')" />
+                        <input id="materials" class="block mt-1 w-full" type="file" name="materials[]" multiple>
+                    </div>
+
                     <div class="flex items-center justify-end mt-4">
                         <button type="submit" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
                             Update Course
