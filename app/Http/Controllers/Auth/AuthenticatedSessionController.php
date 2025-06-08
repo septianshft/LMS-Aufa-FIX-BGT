@@ -28,7 +28,39 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = Auth::user();
+        $platform = $request->input('platform', 'lms');
+
+        // If talent platform login, check for talent roles
+        if ($platform === 'talent') {
+            return $this->handleTalentLogin($user);
+        }
+
+        // Default LMS login redirect
         return redirect()->intended(route('dashboard', absolute: false));
+    }
+
+    /**
+     * Handle talent platform login routing
+     */
+    private function handleTalentLogin($user): RedirectResponse
+    {
+        if ($user->hasAnyRole(['talent_admin', 'talent', 'recruiter'])) {
+            // Redirect based on role
+            if ($user->hasRole('talent_admin')) {
+                return redirect()->route('talent_admin.dashboard');
+            } elseif ($user->hasRole('talent')) {
+                return redirect()->route('talent.dashboard');
+            } elseif ($user->hasRole('recruiter')) {
+                return redirect()->route('recruiter.dashboard');
+            }
+        }
+
+        // User doesn't have talent roles, logout and redirect back
+        Auth::logout();
+        return back()->withErrors([
+            'email' => 'You do not have access to the talent platform.',
+        ]);
     }
 
     /**

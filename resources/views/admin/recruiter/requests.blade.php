@@ -213,5 +213,12 @@ function viewRequestDetails(title, description, requirements, budget, duration, 
 
     $('#requestDetailsModal').modal('show');
 }
+
+// Ensure modal close functionality works
+$(document).ready(function() {
+    $('.close, [data-dismiss="modal"]').on('click', function() {
+        $('#requestDetailsModal').modal('hide');
+    });
+});
 </script>
 @endsection

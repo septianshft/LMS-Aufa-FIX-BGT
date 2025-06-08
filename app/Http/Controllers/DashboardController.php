@@ -56,7 +56,7 @@ class DashboardController extends Controller
             $trainers = Trainer::count();
             $courses = $trainerCourses->count();
 
-        } elseif ($user->roles_id == 3) { // Trainee (Siswa)
+        } elseif ($user->roles_id == 3 || $user->hasRole('trainee')) { // Trainee (Siswa)
             $roles = 'Trainee';
             // Pastikan relasi 'courses' ada di model User dan berfungsi
             $traineeCourses = $user->courses()->get();
@@ -75,10 +75,10 @@ class DashboardController extends Controller
             $courses = $traineeCourses->count();
         } elseif ($user->hasRole('talent_admin')) { // Talent Admin
             return redirect()->route('talent_admin.dashboard');
-        } elseif ($user->hasRole('talent')) { // Talent
-            return redirect()->route('talent.dashboard');
         } elseif ($user->hasRole('recruiter')) { // Recruiter
             return redirect()->route('recruiter.dashboard');
+        } elseif ($user->hasRole('talent')) { // Talent (only if no trainee role)
+            return redirect()->route('talent.dashboard');
         }
 
         $categories = Category::count();

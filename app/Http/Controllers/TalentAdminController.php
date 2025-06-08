@@ -19,11 +19,15 @@ class TalentAdminController extends Controller
         $roles = 'Talent Admin';
         $assignedKelas = [];
 
-        // Statistics
-        $totalTalents = Talent::count();
-        $activeTalents = Talent::where('is_active', true)->count();
-        $totalRecruiters = Recruiter::count();
-        $activeRecruiters = Recruiter::where('is_active', true)->count();
+        // Use the new unified user system instead of separate Talent/Recruiter models
+        // Count users with talent status
+        $activeTalents = User::where('is_active_talent', true)->count();
+        $availableTalents = User::where('available_for_scouting', true)->count();
+
+        // Count users with recruiter role
+        $activeRecruiters = User::whereHas('roles', function($query) {
+            $query->where('name', 'recruiter');
+        })->count();
 
         // Request statistics
         $totalRequests = TalentRequest::count();
@@ -32,29 +36,35 @@ class TalentAdminController extends Controller
         $rejectedRequests = TalentRequest::where('status', 'rejected')->count();
 
         // Recent registrations (last 30 days)
-        $recentTalents = Talent::where('created_at', '>=', Carbon::now()->subDays(30))->count();
-        $recentRecruiters = Recruiter::where('created_at', '>=', Carbon::now()->subDays(30))->count();
+        $recentTalents = User::where('is_active_talent', true)
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->count();
+
+        $recentRecruiters = User::whereHas('roles', function($query) {
+            $query->where('name', 'recruiter');
+        })->where('created_at', '>=', Carbon::now()->subDays(30))->count();
 
         // Recent activity (latest 5 users of each type)
-        $latestTalents = Talent::with('user')
+        $latestTalents = User::where('is_active_talent', true)
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        $latestRecruiters = Recruiter::with('user')
-            ->orderBy('created_at', 'desc')
+        $latestRecruiters = User::whereHas('roles', function($query) {
+            $query->where('name', 'recruiter');
+        })->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         // Recent requests (latest 5)
-        $latestRequests = TalentRequest::with(['recruiter.user', 'talent.user'])
+        $latestRequests = TalentRequest::with(['user'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        return view('admin.talent_admin.dashboard', compact(
+        return view('talent_admin.dashboard', compact(
             'user', 'title', 'roles', 'assignedKelas',
-            'totalTalents', 'activeTalents', 'totalRecruiters', 'activeRecruiters',
+            'activeTalents', 'availableTalents', 'activeRecruiters',
             'totalRequests', 'pendingRequests', 'approvedRequests', 'rejectedRequests',
             'recentTalents', 'recentRecruiters', 'latestTalents', 'latestRecruiters',
             'latestRequests'

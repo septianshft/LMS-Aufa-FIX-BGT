@@ -15,6 +15,7 @@ use App\Http\Controllers\{
     TalentAdminController,
     TalentController,
     RecruiterController,
+    TalentDiscoveryController,
 };
 // ====================
 // FRONTEND ROUTES
@@ -50,6 +51,7 @@ Route::get('/pricing/{course:slug}', [FrontController::class, 'pricing'])
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile/talent', [ProfileController::class, 'updateTalent'])->name('profile.update-talent');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::get('/learning/{course}/{courseVideoId}', [FrontController::class, 'learning'])
@@ -127,6 +129,31 @@ Route::middleware('auth')->group(function () {
         Route::get('recruiter/dashboard', [RecruiterController::class, 'dashboard'])->name('recruiter.dashboard');
         Route::post('recruiter/talent-request', [RecruiterController::class, 'submitTalentRequest'])->name('recruiter.submit_talent_request');
         Route::get('recruiter/my-requests', [RecruiterController::class, 'myRequests'])->name('recruiter.my_requests');
+
+        // Talent Discovery Routes for Recruiters
+        Route::prefix('recruiter/discovery')->name('recruiter.discovery.')->group(function () {
+            Route::get('/', [TalentDiscoveryController::class, 'index'])->name('index');
+            Route::post('/search', [TalentDiscoveryController::class, 'search'])->name('search');
+            Route::post('/match', [TalentDiscoveryController::class, 'match'])->name('match');
+            Route::get('/recommendations', [TalentDiscoveryController::class, 'recommendations'])->name('recommendations');
+            Route::get('/talent/{talent}', [TalentDiscoveryController::class, 'show'])->name('show');
+            Route::post('/advanced-search', [TalentDiscoveryController::class, 'advancedSearch'])->name('advanced');
+            Route::get('/analytics', [TalentDiscoveryController::class, 'analytics'])->name('analytics');
+        });
+    });
+
+    // Talent Admin Routes
+    Route::middleware('role:talent_admin')->group(function () {
+        // Talent Discovery Routes for Admins (full access)
+        Route::prefix('admin/discovery')->name('admin.discovery.')->group(function () {
+            Route::get('/', [TalentDiscoveryController::class, 'index'])->name('index');
+            Route::post('/search', [TalentDiscoveryController::class, 'search'])->name('search');
+            Route::post('/match', [TalentDiscoveryController::class, 'match'])->name('match');
+            Route::get('/recommendations', [TalentDiscoveryController::class, 'recommendations'])->name('recommendations');
+            Route::get('/talent/{talent}', [TalentDiscoveryController::class, 'show'])->name('show');
+            Route::post('/advanced-search', [TalentDiscoveryController::class, 'advancedSearch'])->name('advanced');
+            Route::get('/analytics', [TalentDiscoveryController::class, 'analytics'])->name('analytics');
+        });
     });
 });
 
