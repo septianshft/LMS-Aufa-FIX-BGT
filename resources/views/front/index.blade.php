@@ -82,7 +82,7 @@
                 <h2 class="font-bold text-[40px] leading-[60px]">Don’t Missed It, Learn Now</h2>
                 <p class="text-[#6D7786] text-lg -tracking-[2%]">Catching up the on demand skills and high paying career this year</p>
             </div>
-            <form method="GET" class="flex gap-4 mt-4">
+            <form id="filterForm" method="GET" class="flex gap-4 mt-4">
                 <select name="course_mode_id" class="border rounded p-2">
                     <option value="">All Category</option>
                     @foreach($categories as $category)
@@ -113,70 +113,59 @@
             </button>
             <div id="course-slider" class="w-full">
 
-                @forelse($courses as $course)
-                <div class="course-card w-1/3 px-3 pb-[70px] mt-[2px]">
-                    <div class="flex flex-col rounded-t-[12px] rounded-b-[24px] gap-[32px] bg-white w-full pb-[10px] overflow-hidden transition-all duration-300 hover:ring-2 hover:ring-[#FF6129]">
-                        <a href="{{ route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
-                            <img src="{{ Storage::url($course->thumbnail) }}" class="w-full h-full object-cover" alt="thumbnail">
-                        </a>
-                        <div class="flex flex-col px-4 gap-[10px]">
-                            <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:line-clamp-none min-h-[56px]">{{$course->name}}</a>
-                            <div class="font-semibold text-lg line-clamp-2 hover:line-clamp-none min-h-[56px]">
-                                {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}
-                            </div>
-                            <p class="text-sm text-[#6D7786]">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
+            <div id="courseContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+                    @forelse($courses as $course)
+                    <div class="course-card px-3 pb-[70px] mt-[2px]">
+                        <div class="flex flex-col rounded-t-[12px] rounded-b-[24px] gap-[32px] bg-white w-full pb-[10px] overflow-hidden transition-all duration-300 hover:ring-2 hover:ring-[#FF6129]">
+                            <a href="{{ route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
+                                <img src="{{ Storage::url($course->thumbnail) }}" class="w-full h-full object-cover" alt="thumbnail">
+                            </a>
+                            <div class="flex flex-col px-4 gap-[10px]">
+                                <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:line-clamp-none min-h-[56px]">{{ $course->name }}</a>
+                                <div class="font-semibold text-lg">
+                                    {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}
+                                </div>
+                                <p class="text-sm text-[#6D7786]">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
 
-                            <form action="{{ route('cart.store', $course->slug) }}" method="POST">
-                                @csrf
-                                <button class="mt-1 px-3 py-1 bg-[#FF6129] text-white rounded">Add to Cart</button>
-                            </form>
+                                <form action="{{ route('cart.store', $course->slug) }}" method="POST">
+                                    @csrf
+                                    <button class="mt-1 px-3 py-1 bg-[#FF6129] text-white rounded">Add to Cart</button>
+                                </form>
 
-                            <div class="flex justify-between items-center">
-                                <div class="flex items-center gap-[2px]">
-                                    <div>
-                                        <img src="assets/icon/star.svg" alt="star">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center gap-[2px]">
+                                        @for ($i = 0; $i < 5; $i++)
+                                            <img src="assets/icon/star.svg" alt="star">
+                                        @endfor
                                     </div>
-                                    <div>
-                                        <img src="assets/icon/star.svg" alt="star">
+                                    <p class="text-right text-[#6D7786]">{{ $course->trainees->count() }}</p>
+                                </div>
+
+                                @php
+                                    $trainerUser = optional($course->trainer?->user);
+                                @endphp
+
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 flex shrink-0 rounded-full overflow-hidden">
+                                        <img
+                                            src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}"
+                                            class="w-full h-full object-cover"
+                                            alt="avatar">
                                     </div>
-                                    <div>
-                                        <img src="assets/icon/star.svg" alt="star">
-                                    </div>
-                                    <div>
-                                        <img src="assets/icon/star.svg" alt="star">
-                                    </div>
-                                    <div>
-                                        <img src="assets/icon/star.svg" alt="star">
+                                    <div class="flex flex-col">
+                                        <p class="font-semibold">{{ $trainerUser->name ?? 'Unknown Trainer' }}</p>
+                                        <p class="text-[#6D7786]">{{ $trainerUser->pekerjaan ?? '-' }}</p>
                                     </div>
                                 </div>
-                                <p class="text-right text-[#6D7786]">{{$course->trainees->count()}}</p>
                             </div>
-                            
-                        @php
-                            $trainerUser = optional($course->trainer?->user);
-                        @endphp
-
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 flex shrink-0 rounded-full overflow-hidden">
-                                <img
-                                    src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}"
-                                    class="w-full h-full object-cover"
-                                    alt="avatar">
-                            </div>
-                            <div class="flex flex-col">
-                                <p class="font-semibold">{{ $trainerUser->name ?? 'Unknown Trainer' }}</p>
-                                <p class="text-[#6D7786]">{{ $trainerUser->pekerjaan ?? '-' }}</p>
-                            </div>
-                        </div>
-
                         </div>
                     </div>
+                    @empty
+                    <p>Belum ada data kelas terbaru</p>
+                    @endforelse
                 </div>
-                @empty
-                <p>
-                    Belum ada data kelas terbaru
-                </p>
-                @endforelse
+
+                </div>
             </div>
         </div>
     </section>
@@ -743,5 +732,26 @@
     <script src="https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js"></script>
     <script src="{{ asset('js/main.js') }}"></script>
     
+
+<script>
+    $(document).ready(function () {
+        $('#filterForm').on('submit', function (e) {
+            e.preventDefault();
+            $.ajax({
+                url: "{{ route('front.index') }}",
+                type: "GET",
+                data: $(this).serialize(),
+                success: function (data) {
+                    const html = $(data).find('#courseContent').html();
+                    $('#courseContent').html(html);
+                },
+                error: function (xhr) {
+                    console.error('Filter error:', xhr);
+                }
+            });
+        });
+    });
+</script>
+
 </body>
 </html>
