@@ -55,6 +55,6 @@ echo "✅ Talent data available\n";
 echo "✅ Search functionality working\n";
 echo "✅ Recommendations working\n";
 echo "\n🎯 Visit: http://127.0.0.1:8000/login\n";
-echo "Login as talent_admin@test.com / password123\n";
+echo "Login as talentadmin@test.com / password123\n";
 echo "Or as recruiter@test.com / password123\n";
 echo "Then go to /admin/discovery or /recruiter/discovery\n";

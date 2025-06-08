@@ -13,7 +13,7 @@ $users = User::with('roles')->whereIn('email', [
     'admin@test.com',
     'trainer@test.com',
     'talent@test.com',
-    'talent_admin@test.com',
+    'talentadmin@test.com',
     'recruiter@test.com'
 ])->get();
 
@@ -43,6 +43,6 @@ echo "2. Toggle between LMS and Talent platforms\n";
 echo "3. Test with these credentials:\n";
 echo "   - Trainee: trainee@test.com / password123\n";
 echo "   - Admin: admin@test.com / password123\n";
-echo "   - Talent Admin: talent_admin@test.com / password123\n";
+echo "   - Talent Admin: talentadmin@test.com / password123\n";
 echo "   - Recruiter: recruiter@test.com / password123\n";
 echo "4. Verify routing to correct dashboards\n";

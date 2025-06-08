@@ -69,7 +69,7 @@ echo "Talent Admin Dashboard: http://127.0.0.1:8000/talent-admin/dashboard\n\n";
 // 6. Show test credentials
 echo "🔑 TEST CREDENTIALS\n";
 echo "-" . str_repeat("-", 30) . "\n";
-echo "Talent Admin: talent_admin@test.com / password123\n";
+echo "Talent Admin: talentadmin@test.com / password123\n";
 echo "Recruiter: recruiter@test.com / password123\n";
 echo "Trainee: trainee@test.com / password123\n";
 echo "Admin: admin@test.com / password123\n\n";

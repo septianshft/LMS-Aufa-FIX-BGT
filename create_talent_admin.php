@@ -15,7 +15,7 @@ $talentAdminRole = Role::firstOrCreate(['name' => 'talent_admin']);
 
 // Create talent admin user
 $talentAdmin = User::firstOrCreate([
-    'email' => 'talent_admin@test.com'
+    'email' => 'talentadmin@test.com'
 ], [
     'name' => 'Talent Admin',
     'password' => bcrypt('password123'),
@@ -38,7 +38,7 @@ if (!$talentAdmin->hasRole('admin')) {
 }
 
 echo "\n🎯 Talent Admin Created Successfully!\n";
-echo "Email: talent_admin@test.com\n";
+echo "Email: talentadmin@test.com\n";
 echo "Password: password123\n";
 echo "Roles: " . implode(', ', $talentAdmin->getRoleNames()->toArray()) . "\n";
 echo "\nYou can now access the talent discovery system at:\n";

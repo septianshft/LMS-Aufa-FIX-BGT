@@ -242,7 +242,7 @@ private function handleTalentLogin($user)
 
 ### **👥 Test Accounts:**
 ```
-Talent Admin: talent_admin@test.com / password123
+Talent Admin: talentadmin@test.com / password123
 Recruiter:    recruiter@test.com / password123  
 Trainee:      trainee@test.com / password123
 ```

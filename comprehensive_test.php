@@ -187,7 +187,7 @@ try {
     echo "🌐 Development server should be running at: http://127.0.0.1:8000" . PHP_EOL;
     echo PHP_EOL;
     echo "Test accounts:" . PHP_EOL;
-    echo "1. Talent Admin: talent_admin@test.com / password123" . PHP_EOL;
+    echo "1. Talent Admin: talentadmin@test.com / password123" . PHP_EOL;
     echo "   - Should access: /talent-admin/dashboard" . PHP_EOL;
     echo PHP_EOL;
     echo "2. Recruiter: recruiter@test.com / password123" . PHP_EOL;

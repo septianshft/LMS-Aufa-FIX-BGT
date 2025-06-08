@@ -22,12 +22,14 @@ class TalentAdminController extends Controller
         // Use the new unified user system instead of separate Talent/Recruiter models
         // Count users with talent status
         $activeTalents = User::where('is_active_talent', true)->count();
+        $totalTalents = User::where('is_active_talent', true)->count(); // Total talents for dashboard
         $availableTalents = User::where('available_for_scouting', true)->count();
 
         // Count users with recruiter role
         $activeRecruiters = User::whereHas('roles', function($query) {
             $query->where('name', 'recruiter');
         })->count();
+        $totalRecruiters = $activeRecruiters; // Total recruiters for dashboard
 
         // Request statistics
         $totalRequests = TalentRequest::count();
@@ -57,14 +59,14 @@ class TalentAdminController extends Controller
             ->get();
 
         // Recent requests (latest 5)
-        $latestRequests = TalentRequest::with(['user'])
+        $latestRequests = TalentRequest::with(['recruiter.user', 'talentUser'])
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
         return view('talent_admin.dashboard', compact(
             'user', 'title', 'roles', 'assignedKelas',
-            'activeTalents', 'availableTalents', 'activeRecruiters',
+            'activeTalents', 'totalTalents', 'availableTalents', 'activeRecruiters', 'totalRecruiters',
             'totalRequests', 'pendingRequests', 'approvedRequests', 'rejectedRequests',
             'recentTalents', 'recentRecruiters', 'latestTalents', 'latestRecruiters',
             'latestRequests'
