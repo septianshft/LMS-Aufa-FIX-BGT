@@ -41,7 +41,24 @@ class QuizAttemptController extends Controller
             'score' => $score,
             'is_passed' => $passed,
         ]);
-        
+
+        // Auto-add skill to user if they passed the quiz (completed the course)
+        if ($passed) {
+            $user = auth()->user();
+            $course = $quiz->course;
+
+            // Add skill from course completion
+            $user->addSkillFromCourse($course);
+
+            // If user is not yet available for scouting but has skills, suggest opting in
+            if (!$user->available_for_scouting && $user->talent_skills && count($user->talent_skills) > 0) {
+                session()->flash('talent_suggestion', [
+                    'message' => 'Congratulations! You\'ve gained new skills. Consider making yourself available for talent scouting to connect with recruiters.',
+                    'action_url' => route('profile.edit') . '#talent-settings'
+                ]);
+            }
+        }
+
         // Redirect kembali dengan membawa hasil
         return redirect()->back()->with('result', compact('score', 'passed', 'quiz'));
     }

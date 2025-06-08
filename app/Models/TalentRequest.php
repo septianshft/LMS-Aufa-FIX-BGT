@@ -15,6 +15,7 @@ class TalentRequest extends Model
     protected $fillable = [
         'recruiter_id',
         'talent_id',
+        'talent_user_id', // New field for direct user reference
         'project_title',
         'project_description',
         'requirements',
@@ -29,11 +30,11 @@ class TalentRequest extends Model
         'onboarded_at'
     ];
 
-    protected $dates = [
-        'approved_at',
-        'meeting_arranged_at',
-        'onboarded_at',
-        'deleted_at'
+    protected $casts = [
+        'approved_at' => 'datetime',
+        'meeting_arranged_at' => 'datetime',
+        'onboarded_at' => 'datetime',
+        'deleted_at' => 'datetime'
     ];
 
     // Relationships
@@ -45,6 +46,24 @@ class TalentRequest extends Model
     public function talent()
     {
         return $this->belongsTo(Talent::class);
+    }
+
+    // New relationship to user directly
+    public function talentUser()
+    {
+        return $this->belongsTo(User::class, 'talent_user_id');
+    }
+
+    // Alias for easier access in views and controllers
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'talent_user_id');
+    }
+
+    // Helper method to get talent user (either from direct reference or through talent)
+    public function getTalentUser()
+    {
+        return $this->talentUser ?? $this->talent?->user;
     }
 
     // Status helper methods

@@ -25,7 +25,7 @@ class Course extends Model
 
     public function category(){
         return $this->belongsTo(Category::class);
-     
+
     }
     public function trainer(){
             return $this->belongsTo(Trainer::class);
@@ -64,6 +64,11 @@ public function subscribeTransactions()
 public function finalQuizzes()
 {
     return $this->hasMany(FinalQuiz::class);
+}
+
+public function finalQuiz()
+{
+    return $this->hasOne(FinalQuiz::class);
 }
 
 

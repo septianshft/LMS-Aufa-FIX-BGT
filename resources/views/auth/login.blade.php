@@ -14,37 +14,74 @@
                         </div>
                     </div>
 
-                    <!-- Welcome Content -->
-                    <h1 class="text-4xl font-bold mb-4">Welcome Back!</h1>
-                    <p class="text-lg text-white text-opacity-90 mb-8">
-                        Sign in to access your account and continue your learning journey with our comprehensive training platform.
-                    </p>
+                    <!-- Dynamic Content Based on Platform -->
+                    <div id="lmsContent">
+                        <h1 class="text-4xl font-bold mb-4">Welcome Back!</h1>
+                        <p class="text-lg text-white text-opacity-90 mb-8">
+                            Sign in to access your account and continue your learning journey with our comprehensive training platform.
+                        </p>
 
-                    <!-- Features -->
-                    <div class="space-y-4 text-left">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
+                        <!-- LMS Features -->
+                        <div class="space-y-4 text-left">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <span>Access premium courses</span>
                             </div>
-                            <span>Access premium courses</span>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <span>Track your progress</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <span>Connect with instructors</span>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
+                    </div>
+
+                    <div id="talentContent" class="hidden">
+                        <h1 class="text-4xl font-bold mb-4">Talent Platform</h1>
+                        <p class="text-lg text-white text-opacity-90 mb-8">
+                            Access the talent scouting platform to discover opportunities or find the perfect talent for your projects.
+                        </p>
+
+                        <!-- Talent Features -->
+                        <div class="space-y-4 text-left">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <span>Discover talent opportunities</span>
                             </div>
-                            <span>Track your progress</span>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                                </svg>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <span>Connect with recruiters</span>
                             </div>
-                            <span>Connect with professionals</span>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                    </svg>
+                                </div>
+                                <span>Manage talent requests</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -64,6 +101,24 @@
             </div>
 
             <div class="w-full max-w-md">
+                <!-- Platform Toggle -->
+                <div class="mb-6">
+                    <div class="bg-white rounded-xl p-1 shadow-sm border border-gray-200">
+                        <div class="flex">
+                            <button type="button" id="lmsToggle" onclick="switchPlatform('lms')"
+                                    class="flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200 bg-purple-100 text-purple-700">
+                                <i class="fas fa-graduation-cap mr-2"></i>
+                                Learning Platform
+                            </button>
+                            <button type="button" id="talentToggle" onclick="switchPlatform('talent')"
+                                    class="flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-users-cog mr-2"></i>
+                                Talent Platform
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Mobile Logo (visible on small screens) -->
                 <div class="lg:hidden text-center mb-8">
                     <div class="w-16 h-16 mx-auto bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center">
@@ -76,12 +131,13 @@
                 <!-- Header -->
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-gray-900 mb-2">Sign In</h2>
-                    <p class="text-gray-600">Enter your credentials to access your account</p>
+                    <p id="platformDescription" class="text-gray-600">Enter your credentials to access your learning account</p>
                 </div>
 
                 <!-- Login Form -->
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                <form method="POST" action="{{ route('login') }}" id="loginForm" class="space-y-6">
                     @csrf
+                    <input type="hidden" name="platform" id="platformInput" value="lms">
 
                     <!-- Email -->
                     <div class="space-y-2">
@@ -132,8 +188,9 @@
 
                     <!-- Submit Button -->
                     <div>
-                        <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-200 transform hover:scale-[1.02]">
-                            {{ __('Sign In') }}
+                        <button type="submit" id="submitButton" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-semibold text-white bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-200 transform hover:scale-[1.02]">
+                            <i class="fas fa-graduation-cap mr-2"></i>
+                            {{ __('Sign In to Learning Platform') }}
                         </button>
                     </div>
 
@@ -159,6 +216,47 @@
     </div>
 
     <script>
+        // Platform switching functionality
+        function switchPlatform(platform) {
+            const lmsToggle = document.getElementById('lmsToggle');
+            const talentToggle = document.getElementById('talentToggle');
+            const lmsContent = document.getElementById('lmsContent');
+            const talentContent = document.getElementById('talentContent');
+            const platformInput = document.getElementById('platformInput');
+            const platformDescription = document.getElementById('platformDescription');
+            const submitButton = document.getElementById('submitButton');
+
+            if (platform === 'lms') {
+                // Update toggle buttons
+                lmsToggle.className = 'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200 bg-purple-100 text-purple-700';
+                talentToggle.className = 'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700';
+
+                // Update content
+                lmsContent.classList.remove('hidden');
+                talentContent.classList.add('hidden');
+
+                // Update form
+                platformInput.value = 'lms';
+                platformDescription.textContent = 'Enter your credentials to access your learning account';
+                submitButton.innerHTML = '<i class="fas fa-graduation-cap mr-2"></i>Sign In to Learning Platform';
+
+            } else {
+                // Update toggle buttons
+                talentToggle.className = 'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200 bg-blue-100 text-blue-700';
+                lmsToggle.className = 'flex-1 py-2 px-4 text-sm font-medium rounded-lg transition-all duration-200 text-gray-500 hover:text-gray-700';
+
+                // Update content
+                talentContent.classList.remove('hidden');
+                lmsContent.classList.add('hidden');
+
+                // Update form
+                platformInput.value = 'talent';
+                platformDescription.textContent = 'Enter your credentials to access the talent platform';
+                submitButton.innerHTML = '<i class="fas fa-users-cog mr-2"></i>Sign In to Talent Platform';
+            }
+        }
+
+        // Password toggle functionality
         document.getElementById('togglePassword').addEventListener('click', function() {
             const passwordField = document.getElementById('password');
             const eyeIcon = document.getElementById('eyeIcon');
