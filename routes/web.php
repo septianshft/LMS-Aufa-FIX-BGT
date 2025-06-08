@@ -21,6 +21,8 @@ use App\Http\Controllers\{
 // FRONTEND ROUTES
 // ====================
 Route::get('/', [FrontController::class, 'index'])->name('front.index');
+Route::get('/courses', [CourseController::class, 'explore'])->name('courses.index');
+Route::middleware('auth')->get('/my-courses', [CourseController::class, 'myCourses'])->name('courses.my');
 Route::get('/details/{course:slug}', [FrontController::class, 'details'])->name('front.details');
 Route::get('/category/{category:slug}', [FrontController::class, 'category'])->name('front.category');
 
