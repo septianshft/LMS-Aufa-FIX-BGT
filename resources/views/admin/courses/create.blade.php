@@ -89,7 +89,7 @@
                     <hr class="my-5">
 
                     <div class="mt-4">
-                        
+
                         <div class="flex flex-col gap-y-5">
                             <x-input-label for="keypoints" :value="__('keypoints')" />
                             @for ($i = 0; $i < 4; $i++)
@@ -97,6 +97,11 @@
                             @endfor
                         </div>
                         <x-input-error :messages="$errors->get('keypoints')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label for="materials" :value="__('Course Materials')" />
+                        <input id="materials" class="block mt-1 w-full" type="file" name="materials[]" multiple>
                     </div>
 
                     <div class="flex items-center justify-end mt-4">
