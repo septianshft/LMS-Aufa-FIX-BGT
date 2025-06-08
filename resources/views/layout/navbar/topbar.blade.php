@@ -1,83 +1,73 @@
- <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-
-     <!-- Sidebar Toggle (Topbar) -->
-     <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
-         <i class="fa fa-bars"></i>
-     </button>
-
-
-     <div class="">
-         <div class="navbar-nav mt-3 d-none d-sm-block">
-
-         </div>
-     </div>
-
-     <ul class="navbar-nav ">
-        <li class="nav-item dropdown no-arrow mt-3 d-none d-sm-block">
-            <p class="small">
-                @if (Auth()->user()->roles_id == 1)
-                    <span class="badge p-2 badge-dark">Admin</span>
-                @elseif (Auth()->user()->roles_id == 2)
-                    <span class="badge p-2 badge-danger">Pengajar</span>
-                @elseif (Auth()->user()->roles_id == 3)
-                    <span class="badge p-2 badge-primary">Siswa</span>
-                @elseif (Auth()->user()->hasRole('talent_admin'))
-                    <span class="badge p-2 badge-info">Talent Admin</span>
-                @elseif (Auth()->user()->hasRole('talent'))
-                    <span class="badge p-2 badge-success">Talent</span>
-                @elseif (Auth()->user()->hasRole('recruiter'))
-                    <span class="badge p-2 badge-warning">Recruiter</span>
-                @endif
-                <span class="mx-2">|</span>
-                Halo Selamat datang kembali, {{ Auth()->User()->name }}
-            </p>
-        </li>
-     </ul>
-
-     <!-- Topbar Navbar -->
-     <ul class="navbar-nav ml-auto">
-         <!-- Nav Item - Messages -->
-         <li class="nav-item dropdown no-arrow">
-             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
-                 aria-haspopup="true" aria-expanded="false">
-                 <i class="fa-solid fa-circle-chevron-down me-2"></i>
-                 <span class="mr-2 text-gray-600 small">{{ Auth()->User()->name }}</span>
-                 @if (Auth()->user()->gambar == null)
-                     <img src="/asset/icons/profile-women.svg" class="img-profile rounded-circle me-2" alt="">
-                 @else
-                     <img class="img-profile rounded-circle me-2"
-                         src="{{ asset('storage/user-images/' . Auth()->user()->gambar) }}">
-                 @endif
-             </a>
-             <!-- Dropdown - User Information -->
-             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                 @if (Auth()->user()->roles_id == 1 || Auth()->user()->roles_id == 2)
-                     <a class="dropdown-item"
-                         href="{{ route('viewProfilePengajar', ['token' => encrypt(Auth()->User()->id)]) }}">
-                         <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                         Profile
-                     </a>
-                 @elseif (Auth()->user()->roles_id == 3)
-                     <a class="dropdown-item"
-                         href="{{ route('viewProfileSiswa', ['token' => encrypt(Auth()->User()->id)]) }}">
-                         <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                         Profile
-                     </a>
-                 @elseif (Auth()->user()->hasRole(['talent_admin', 'talent', 'recruiter']))
-                     <a class="dropdown-item" href="{{ route('profile.edit') }}">
-                         <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                         Profile
-                     </a>
-                 @endif
-                 <div class="dropdown-divider"></div>
-                 <a class="dropdown-item" href="#" aria-expanded="false" data-toggle="modal"
-                     data-target="#logoutModal">
-                     <span class=" text-danger"><i class="fa-solid mr-2 fa-right-from-bracket"></i>
-                         Logout</span>
-                 </a>
-             </div>
-         </li>
-
-     </ul>
-
- </nav>
+<div class="ol-header print-d-none d-flex align-items-center justify-content-between py-2 ps-3">
+    <div class="header-title-menubar d-flex align-items-start flex-wrap mt-md-1">
+        <div class="main-header-title d-flex align-items-start pb-sm-0 h-auto p-0">
+            <button class="menu-toggler sidebar-plus" id="sidebarToggleTop">
+                <span class="fi-rr-menu-burger"></span>
+            </button>
+            <h1 class="page-title ms-2 fs-18px d-flex flex-column row-gap-0">
+                <span style="display: -webkit-box !important; -webkit-line-clamp: 1; -webkit-box-orient: vertical !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: normal !important;">
+                    {{ config('app.name', 'Web Pelatihan') }}
+                </span>
+                <p class="text-12px fw-400 d-none d-lg-none d-xl-inline-block mt-1">Admin Panel</p>
+            </h1>
+        </div>
+        <a href="{{ route('home') }}" target="_blank" class="btn btn-sm p-0 ms-4 ms-md-2 text-14px text-muted">
+            <span>View site</span>
+            <i class="fi-rr-arrow-up-right-from-square text-12px text-muted"></i>
+        </a>
+    </div>
+    <div class="header-content-right d-flex align-items-center justify-content-end">
+        <div class="header-dropdown-md">
+            <button class="header-dropdown-toggle-md" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <div class="user-profile-sm">
+                    @if (Auth()->user()->gambar == null)
+                        <img src="/asset/icons/profile-women.svg" alt="">
+                    @else
+                        <img src="{{ asset('storage/user-images/' . Auth()->user()->gambar) }}" alt="">
+                    @endif
+                </div>
+            </button>
+            <div class="header-dropdown-menu-md p-3">
+                <div class="d-flex column-gap-2 mb-12px pb-12px ol-border-bottom-2">
+                    <div class="user-profile-sm">
+                        @if (Auth()->user()->gambar == null)
+                            <img src="/asset/icons/profile-women.svg" alt="">
+                        @else
+                            <img src="{{ asset('storage/user-images/' . Auth()->user()->gambar) }}" alt="">
+                        @endif
+                    </div>
+                    <div>
+                        <h6 class="title fs-12px mb-2px">{{ Auth()->user()->name }}</h6>
+                        <p class="sub-title fs-12px">
+                            @if (Auth()->user()->roles_id == 1)
+                                Admin
+                            @elseif (Auth()->user()->roles_id == 2)
+                                Pengajar
+                            @elseif (Auth()->user()->roles_id == 3)
+                                Siswa
+                            @elseif (Auth()->user()->hasRole('talent_admin'))
+                                Talent Admin
+                            @elseif (Auth()->user()->hasRole('talent'))
+                                Talent
+                            @elseif (Auth()->user()->hasRole('recruiter'))
+                                Recruiter
+                            @endif
+                        </p>
+                    </div>
+                </div>
+                <ul class="mb-12px pb-12px ol-border-bottom-2">
+                    @if (Auth()->user()->roles_id == 1 || Auth()->user()->roles_id == 2)
+                        <li class="dropdown-list-1"><a class="dropdown-item-1" href="{{ route('viewProfilePengajar', ['token' => encrypt(Auth()->User()->id)]) }}">My Profile</a></li>
+                    @elseif (Auth()->user()->roles_id == 3)
+                        <li class="dropdown-list-1"><a class="dropdown-item-1" href="{{ route('viewProfileSiswa', ['token' => encrypt(Auth()->User()->id)]) }}">My Profile</a></li>
+                    @elseif (Auth()->user()->hasRole(['talent_admin', 'talent', 'recruiter']))
+                        <li class="dropdown-list-1"><a class="dropdown-item-1" href="{{ route('profile.edit') }}">My Profile</a></li>
+                    @endif
+                </ul>
+                <ul>
+                    <li class="dropdown-list-1"><a class="dropdown-item-1" href="#" aria-expanded="false" data-toggle="modal" data-target="#logoutModal">Sign Out</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
