@@ -9,11 +9,17 @@ use App\Models\Course;
 use App\Models\Trainer;
 use App\Models\CourseMode;
 use App\Models\CourseLevel;
+use App\Models\CourseKeypoint;
+use App\Models\CourseMaterial;
+use App\Models\CourseVideo;
+use App\Models\CourseModule;
 use App\Models\SubscribeTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+
+
 
 class CourseController extends Controller
 {
@@ -139,49 +145,58 @@ class CourseController extends Controller
         return view('admin.courses.create', compact('categories', 'modes', 'levels', 'trainers'));
     }
 
-    public function store(StoreCourseRequest $request)
-    {
-        if (Auth::user()->hasRole('trainer')) {
-            $trainer = Trainer::where('user_id', Auth::id())->first();
-        } else {
-            $trainer = Trainer::find($request->input('trainer_id'));
-        }
+public function store(StoreCourseRequest $request)
+{
+    $data = $request->validated();
 
-        if (!$trainer) {
-            return redirect()->route('admin.courses.index')
-                ->withErrors(['trainer' => 'Unauthorized or invalid trainer']);
-        }
-
-        DB::transaction(function () use ($request, $trainer) {
-            $validated = $request->validated();
-
-            if ($request->hasFile('thumbnail')) {
-                $validated['thumbnail'] = $request->file('thumbnail')->store('thumbnails', 'public');
-            }
-
-            $slug = Str::slug($validated['name']);
-            $count = Course::where('slug', 'like', "{$slug}%")->count();
-            $slug = $count ? "{$slug}-{$count}" : $slug;
-
-            $validatedData = array_merge($validated, [
-                'slug' => $slug,
-                'trainer_id' => $trainer->id,
-                'price' => $validated['price'] ?? 0,
-            ]);
-
-            $course = Course::create($validatedData);
-
-            if (!empty($validated['course_keypoints'])) {
-                foreach ($validated['course_keypoints'] as $keypointText) {
-                    if (!empty($keypointText)) {
-                        $course->course_keypoints()->create(['name' => $keypointText]);
-                    }
-                }
-            }
-        });
-
-        return redirect()->route('admin.courses.index')->with('success', 'Course successfully created.');
+    // Upload thumbnail
+    if ($request->hasFile('thumbnail')) {
+        $path = $request->file('thumbnail')->store('thumbnails', 'public');
+        $data['thumbnail'] = $path;
     }
+
+    // Tambahkan slug
+    $data['slug'] = \Str::slug($data['name']) . '-' . uniqid();
+
+    // Simpan Course
+    $course = Course::create($data);
+
+    // ✅ Buat Modul Default
+    $module = CourseModule::create([
+        'course_id' => $course->id,
+        'title' => 'Modul 1',
+        'description' => 'Modul default',
+        'order' => 1,
+    ]);
+
+    // ✅ Simpan Keypoints
+    if ($request->has('course_keypoints')) {
+        foreach ($request->course_keypoints as $keypoint) {
+            if (!empty($keypoint)) {
+                CourseKeypoint::create([
+                    'course_id' => $course->id,
+                    'name' => $keypoint,
+                ]);
+            }
+        }
+    }
+
+    // ✅ Simpan Materials ke modul default
+    if ($request->hasFile('materials')) {
+        foreach ($request->file('materials') as $file) {
+            $materialPath = $file->store('materials', 'public');
+            CourseMaterial::create([
+                'course_id' => $course->id,
+                'course_module_id' => $module->id, // ⬅ penting
+                'path' => $materialPath,
+                'name' => $file->getClientOriginalName(),
+            ]);
+        }
+    }
+
+    return redirect()->route('admin.courses.index')->with('success', 'Course created successfully with default module.');
+}
+
 
     public function show(Course $course)
 {
