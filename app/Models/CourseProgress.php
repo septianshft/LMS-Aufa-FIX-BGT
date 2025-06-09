@@ -9,6 +9,8 @@ class CourseProgress extends Model
 {
     use HasFactory;
 
+    protected $table = 'course_progresses'; // ⬅️ ini wajib ditambahkan
+
     protected $fillable = [
         'user_id',
         'course_id',
