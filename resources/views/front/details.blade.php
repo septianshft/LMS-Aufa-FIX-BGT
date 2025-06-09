@@ -70,10 +70,6 @@
     </div>
 </section>
 
-    <section id="Video-Resources" class="flex flex-col mt-5">
-        <div class="max-w-[1100px] w-full mx-auto flex flex-col gap-3">
-            <h1 class="title font-extrabold text-[30px] leading-[45px]">{{$course->name}}</h1>
-            <p class="font-semibold text-lg">{{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}</p>
 @php
     $hasJoined = auth()->check() && auth()->user()->hasActiveSubscription($course);
     $trainerUser = optional($course->trainer?->user);
