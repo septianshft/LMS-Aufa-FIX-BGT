@@ -35,27 +35,55 @@
                     </a>
                 </div>
 
-                @foreach($course->course_videos as $video)
-                    @php
-                        $isActive = request()->get('courseVideoId') == $video->id;
-                        $hasAccess = Auth::check() && Auth::user()->hasActiveSubscription($course);
-                    @endphp
-
-                    @if($hasAccess || $course->price == 0)
-                        <a href="{{ route('front.learning', [$course, 'courseVideoId' => $video->id]) }}" class="group p-[12px_16px] flex items-center gap-[10px] rounded-full transition-all duration-300 {{ $isActive ? 'bg-[#3525B3]' : 'bg-[#E9EFF3] hover:bg-[#3525B3]' }}">
-                            <div class="text-black group-hover:text-white {{ $isActive ? 'text-white' : '' }}">
-                                ▶️
+                @foreach($course->modules as $module)
+                    <div class="flex flex-col p-5 rounded-2xl bg-[#FFF8F4] has-[.hide]:bg-transparent border-t-4 border-[#FF6129] has-[.hide]:border-0 w-full">
+                        <button class="accordion-button flex justify-between gap-1 items-center" data-accordion="module-{{ $module->id }}">
+                            <span class="font-semibold text-lg text-left">{{ $module->name }}</span>
+                            <div class="arrow w-9 h-9 flex shrink-0">
+                                <img src="{{ asset('assets/icon/add.svg') }}" alt="icon">
                             </div>
-                            <p class="font-semibold {{ $isActive ? 'text-white' : 'group-hover:text-white text-black' }}">
-                                {{ $video->name }}
-                            </p>
-                        </a>
-                    @else
-                        <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full opacity-50 cursor-not-allowed">
-                            <div class="text-black">🔒</div>
-                            <p class="font-semibold text-black">{{ $video->name }} <span class="text-xs text-red-500">(PRO)</span></p>
+                        </button>
+                        <div id="module-{{ $module->id }}" class="accordion-content hide">
+                            <div class="flex flex-col gap-4 pt-2">
+                                @foreach($module->videos as $video)
+                                    @php
+                                        $isActive = request()->get('courseVideoId') == $video->id;
+                                        $hasAccess = Auth::check() && Auth::user()->hasActiveSubscription($course);
+                                    @endphp
+
+                                    @if($hasAccess || $course->price == 0)
+                                        <a href="{{ route('front.learning', [$course, 'courseVideoId' => $video->id]) }}" class="group p-[12px_16px] flex items-center gap-[10px] rounded-full transition-all duration-300 {{ $isActive ? 'bg-[#3525B3] active-video' : 'bg-[#E9EFF3] hover:bg-[#3525B3]' }}">
+                                            <div class="text-black group-hover:text-white {{ $isActive ? 'text-white' : '' }}">
+                                                ▶️
+                                            </div>
+                                            <p class="font-semibold {{ $isActive ? 'text-white' : 'group-hover:text-white text-black' }}">
+                                                {{ $video->name }}
+                                            </p>
+                                        </a>
+                                    @else
+                                        <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full opacity-50 cursor-not-allowed">
+                                            <div class="text-black">🔒</div>
+                                            <p class="font-semibold text-black">{{ $video->name }} <span class="text-xs text-red-500">(PRO)</span></p>
+                                        </div>
+                                    @endif
+                                @endforeach
+
+                                @foreach($module->materials as $material)
+                                    <a href="{{ Storage::url($material->file_path) }}" class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full hover:bg-[#3525B3] transition-all">
+                                        <div class="text-black group-hover:text-white">📄</div>
+                                        <p class="font-semibold group-hover:text-white">{{ $material->name }}</p>
+                                    </a>
+                                @endforeach
+
+                                @foreach($module->tasks as $task)
+                                    <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full">
+                                        <div class="text-black">📝</div>
+                                        <p class="font-semibold text-black">{{ $task->name }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
-                    @endif
+                    </div>
                 @endforeach
             </div>
         </div>
@@ -147,6 +175,19 @@
         }
 
         document.getElementById("defaultOpen").click();
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var active = document.querySelector('.active-video');
+            if (active) {
+                var content = active.closest('.accordion-content');
+                if (content && content.classList.contains('hide')) {
+                    content.classList.remove('hide');
+                    content.style.maxHeight = content.scrollHeight + 'px';
+                    var btn = document.querySelector('[data-accordion="' + content.id + '"]');
+                    if (btn) btn.classList.add('open');
+                }
+            }
+        });
     </script>
 </body>
 </html>
