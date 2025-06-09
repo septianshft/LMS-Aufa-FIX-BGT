@@ -9,6 +9,7 @@ use App\Http\Controllers\{
     CourseController,
     CourseVideoController,
     CourseMaterialController,
+    CourseModuleController,
     ModuleVideoController,
     ModuleMaterialController,
     ModuleTaskController,
@@ -101,10 +102,6 @@ Route::middleware('auth')->group(function () {
                 Route::post('module/{courseModule}/videos', [ModuleVideoController::class, 'store'])->name('videos.store');
                 Route::post('module/{courseModule}/materials', [ModuleMaterialController::class, 'store'])->name('materials.store');
                 Route::post('module/{courseModule}/tasks', [ModuleTaskController::class, 'store'])->name('tasks.store');
-                Route::post('course/{course}/modules/reorder', [CourseModuleController::class, 'reorder'])->name('modules.reorder');
-                Route::post('module/{courseModule}/videos/reorder', [ModuleVideoController::class, 'reorder'])->name('videos.reorder');
-                Route::post('module/{courseModule}/materials/reorder', [ModuleMaterialController::class, 'reorder'])->name('materials.reorder');
-                Route::post('module/{courseModule}/tasks/reorder', [ModuleTaskController::class, 'reorder'])->name('tasks.reorder');
             });
 
           // Final Quiz Management Routes
@@ -151,17 +148,6 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/api/conversion-candidates', [TalentAdminController::class, 'getConversionCandidates'])->name('talent_admin.api.conversion_candidates');
         Route::get('talent-admin/api/skill-analytics', [TalentAdminController::class, 'getSkillAnalytics'])->name('talent_admin.api.skill_analytics');
         Route::get('talent-admin/api/market-demand', [TalentAdminController::class, 'getMarketDemand'])->name('talent_admin.api.market_demand');
-
-        // Mock LMS Integration Routes (for independent development)
-        Route::prefix('admin/lms-mock')->name('admin.lms.')->group(function () {
-            Route::get('/demo', function () {
-                return view('mock-lms-demo');
-            })->name('demo');
-            Route::get('/talent/{userId}/profile', [TalentAdminController::class, 'getTalentProfile'])->name('talent.profile');
-            Route::get('/talent/{userId}/score', [TalentAdminController::class, 'getTalentScore'])->name('talent.score');
-            Route::get('/talent/{userId}/skills', [TalentAdminController::class, 'getTalentSkillAnalysis'])->name('talent.skills');
-            Route::get('/integration-status', [TalentAdminController::class, 'getLMSIntegrationStatus'])->name('integration.status');
-        });
     });
 
     // Talent Routes
@@ -203,35 +189,3 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
-
-// Test route for debugging analytics services
-Route::get('/test-analytics', function () {
-    try {
-        $skillAnalytics = new \App\Services\AdvancedSkillAnalyticsService();
-        $conversionTracking = new \App\Services\SmartConversionTrackingService();
-        
-        echo "<h1>Analytics Services Test</h1>";
-        
-        echo "<h2>1. Testing AdvancedSkillAnalyticsService</h2>";
-        $skillData = $skillAnalytics->getSkillAnalytics();
-        echo "<p>✅ AdvancedSkillAnalyticsService working - " . count($skillData) . " sections returned</p>";
-        
-        echo "<h2>2. Testing SmartConversionTrackingService</h2>";
-        $conversionData = $conversionTracking->getConversionAnalytics();
-        echo "<p>✅ SmartConversionTrackingService working - " . count($conversionData) . " sections returned</p>";
-        
-        echo "<h2>3. Sample Data</h2>";
-        echo "<pre>" . json_encode([
-            'skill_analytics_keys' => array_keys($skillData),
-            'conversion_analytics_keys' => array_keys($conversionData)
-        ], JSON_PRETTY_PRINT) . "</pre>";
-        
-        echo "<p style='color: green; font-weight: bold;'>✅ ALL TESTS PASSED - No more 'foreach() argument must be of type array|object, string given' errors!</p>";
-        
-    } catch (\Exception $e) {
-        echo "<h2 style='color: red;'>❌ Error Found:</h2>";
-        echo "<p><strong>Message:</strong> " . $e->getMessage() . "</p>";
-        echo "<p><strong>File:</strong> " . $e->getFile() . ":" . $e->getLine() . "</p>";
-        echo "<pre>" . $e->getTraceAsString() . "</pre>";
-    }
-})->middleware('web');
