@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
                 Route::post('course/{course}', [CourseModuleController::class, 'store'])->name('store');
                 Route::put('module/{courseModule}', [CourseModuleController::class, 'update'])->name('update');
                 Route::delete('module/{courseModule}', [CourseModuleController::class, 'destroy'])->name('destroy');
+                Route::post('course/{course}/modules/reorder', [CourseModuleController::class, 'reorder'])->name('modules.reorder');
 
                 Route::post('module/{courseModule}/videos', [ModuleVideoController::class, 'store'])->name('videos.store');
                 Route::post('module/{courseModule}/materials', [ModuleMaterialController::class, 'store'])->name('materials.store');
