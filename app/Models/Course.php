@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Certificate;
+use App\Models\CourseModule;
 
 class Course extends Model
 {
@@ -46,8 +47,18 @@ class Course extends Model
         return $this->hasMany(CourseVideo::class);
     }
 
+    public function modules()
+    {
+        return $this->hasMany(CourseModule::class)->orderBy('order');
+    }
+
     public function course_keypoints(){
         return $this->hasMany(CourseKeypoint::class);
+    }
+
+    public function modules()
+    {
+        return $this->hasMany(CourseModule::class);
     }
 
     // App\Models\Course.php
