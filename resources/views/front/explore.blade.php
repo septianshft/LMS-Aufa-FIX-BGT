@@ -1,12 +1,21 @@
 <!doctype html>
 <html>
 <head>
+    @include('layouts.seo')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ asset('css/output.css') }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
 </head>
-<body class="text-black font-poppins pt-10 pb-10">
+<body class="text-black font-poppins pt-10 pb-10 bg-gray-50">
     <div class="max-w-[1200px] mx-auto">
         <nav class="flex justify-between items-center py-6 px-[50px]">
             <div class="flex items-center gap-3">
@@ -46,7 +55,10 @@
             </div>
             @endguest
         </nav>
+
+        <!-- Filter + Konten -->
         <div class="flex gap-6 mt-6">
+            <!-- Sidebar Filter -->
             <aside class="w-1/4">
                 <form id="filterForm" method="GET" class="flex flex-col gap-4">
                     <input type="text" name="search" placeholder="Search" value="{{ request('search') }}" class="border rounded p-2">
@@ -71,15 +83,41 @@
                     <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Filter</button>
                 </form>
             </aside>
+
+            <!-- Course List -->
             <div class="flex-1">
-                <div id="courseContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    @include('partials.course-list', ['courses' => $courses])
+                <div id="courseContent" class="flex flex-col gap-6">
+                    @foreach($courses as $course)
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col md:flex-row transition hover:shadow-lg hover:scale-[1.01]">
+                        <div class="w-full md:w-1/3 h-48 md:h-auto overflow-hidden">
+                            <img src="{{ $course->thumbnail ? Storage::url($course->thumbnail) : asset('assets/default-course.jpg') }}"
+                                alt="{{ $course->name }}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="p-4 flex flex-col justify-between md:w-2/3">
+                            <div>
+                                <h2 class="text-xl font-semibold line-clamp-2">{{ $course->name }}</h2>
+                                <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
+                                <div class="flex flex-wrap items-center text-xs text-gray-600 gap-2 my-2">
+                                    <span class="bg-gray-100 px-2 py-1 rounded-full">Level: {{ $course->level->name ?? '-' }}</span>
+                                    <span class="bg-gray-100 px-2 py-1 rounded-full">Mode: {{ $course->mode->name ?? '-' }}</span>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <a href="{{ route('front.details', $course->slug) }}"
+                                    class="inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">
+                                    Lihat Detail
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <!-- Script -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         $(document).ready(function(){
             $('#filterForm').on('submit', function(e){
@@ -101,10 +139,4 @@
             });
             $(document).on('click', function(e){
                 if(!$('#dropdownWrapper').is(e.target) && $('#dropdownWrapper').has(e.target).length === 0){
-                    $('#dropdownMenu').addClass('hidden');
-                }
-            });
-        });
-    </script>
-</body>
-</html>
+                    $('#dropdownMenu').addC
