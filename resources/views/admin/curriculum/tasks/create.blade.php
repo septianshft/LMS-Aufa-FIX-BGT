@@ -21,6 +21,11 @@
                         <x-text-input id="description" class="block mt-1 w-full" type="text" name="description" />
                         <x-input-error :messages="$errors->get('description')" class="mt-2" />
                     </div>
+                    <div class="mt-4">
+                        <x-input-label for="deadline" :value="__('Deadline')" />
+                        <x-text-input id="deadline" class="block mt-1 w-full" type="datetime-local" name="deadline" />
+                        <x-input-error :messages="$errors->get('deadline')" class="mt-2" />
+                    </div>
                     <div class="flex items-center justify-end mt-4">
                         <button type="submit" class="px-4 py-2 bg-indigo-700 text-white rounded">
                             {{ __('Add Task') }}

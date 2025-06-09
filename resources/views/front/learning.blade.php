@@ -97,7 +97,12 @@
                                     <div class="flex items-center gap-2">
                                         <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full">
                                             <div class="text-black">📝</div>
-                                            <p class="font-semibold text-black">{{ $task->name }}</p>
+                                            <p class="font-semibold text-black">
+                                                {{ $task->name }}
+                                                @if($task->deadline)
+                                                    <span class="text-xs text-gray-500 ml-2">{{ $task->deadline->format('d M Y H:i') }}</span>
+                                                @endif
+                                            </p>
                                         </div>
                                         @if(in_array($task->id, $progress->completed_tasks ?? []))
                                             <span class="text-green-600">✔</span>
