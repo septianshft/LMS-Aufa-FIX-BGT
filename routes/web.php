@@ -18,6 +18,8 @@ use App\Http\Controllers\{
     FinalQuizController,
     QuizAttemptController, // Pastikan ini sudah ada
     CertificateController,
+    CourseModuleController,
+    TaskController,
     TalentAdminController,
     TalentController,
     RecruiterController,
@@ -86,6 +88,8 @@ Route::middleware('auth')->group(function () {
         Route::middleware('role:admin|trainer')->group(function () {
             Route::resource('courses', CourseController::class);
             Route::resource('course_videos', CourseVideoController::class);
+            Route::resource('course_modules', CourseModuleController::class);
+            Route::resource('tasks', TaskController::class);
 
             Route::get('/add/video/{course:id}', [CourseVideoController::class, 'create'])->name('course.add_video');
             Route::post('/add/video/save/{course:id}', [CourseVideoController::class, 'store'])->name('course.add_video.save');
