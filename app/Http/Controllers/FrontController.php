@@ -77,7 +77,11 @@ class FrontController extends Controller
      */
     public function learning(Course $course, $courseVideoId)
     {
-        $course->load(['category', 'trainer.user', 'trainees', 'course_videos', 'course_keypoints', 'modules']);
+        $course->load([
+            "category", "trainer.user", "trainees",
+            "course_videos", "course_keypoints",
+            "modules.videos", "modules.materials", "modules.tasks",
+        ]);
 
         $user = Auth::user();
 
