@@ -13,10 +13,17 @@ class CourseVideo extends Model
     protected $fillable = [
         'name',
         'path_video',
-        'course_id'
+        'course_id',
+        'course_module_id',
+        'order',
     ];
 
     public function course(){
         return $this->belongsTo(Course::class);
+    }
+
+    public function module()
+    {
+        return $this->belongsTo(CourseModule::class, 'course_module_id');
     }
 }
