@@ -90,6 +90,7 @@
                             <div>
                                 <h2 class="text-xl font-semibold line-clamp-2">{{ $course->name }}</h2>
                                 <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
+                                <p class="text-sm font-semibold">{{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}</p>
                                 <div class="flex flex-wrap items-center text-xs text-gray-600 gap-2 my-2">
                                     <span class="bg-gray-100 px-2 py-1 rounded-full">Level: {{ $course->level->name ?? '-' }}</span>
                                     <span class="bg-gray-100 px-2 py-1 rounded-full">Mode: {{ $course->mode->name ?? '-' }}</span>
