@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 
 class ModuleVideoController extends Controller
 {
+    public function create(CourseModule $courseModule)
+    {
+        return view('admin.curriculum.videos.create', compact('courseModule'));
+    }
+
     public function store(StoreCourseVideoRequest $request, CourseModule $courseModule)
     {
         DB::transaction(function () use ($request, $courseModule) {
