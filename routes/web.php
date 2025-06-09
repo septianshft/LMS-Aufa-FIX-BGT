@@ -13,6 +13,7 @@ use App\Http\Controllers\{
     ModuleVideoController,
     ModuleMaterialController,
     ModuleTaskController,
+    TaskSubmissionController,
     SubscribeTransactionController,
     TrainerController,
     FinalQuizController,
@@ -70,6 +71,13 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/learning/{course}/{item}/complete', [FrontController::class, 'markItemComplete'])
         ->name('learning.item.complete')
+        ->middleware('role:trainee');
+
+    Route::get('/task/{task}/submit', [TaskSubmissionController::class, 'create'])
+        ->name('task.submit.create')
+        ->middleware('role:trainee');
+    Route::post('/task/{task}/submit', [TaskSubmissionController::class, 'store'])
+        ->name('task.submit.store')
         ->middleware('role:trainee');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

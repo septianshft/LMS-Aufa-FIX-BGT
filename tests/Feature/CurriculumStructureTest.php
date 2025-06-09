@@ -73,7 +73,7 @@ class CurriculumStructureTest extends TestCase
         $this->assertEquals(66, $progress->progress);
         $this->assertCount(1, $progress->completed_materials);
 
-        $this->post(route('learning.item.complete', [$course->id, $task->id]), ['type' => 'task']);
+        $this->post(route('task.submit.store', $task->id), ['answer' => 'done']);
         $progress->refresh();
         $this->assertEquals(100, $progress->progress);
         $this->assertCount(1, $progress->completed_tasks);
