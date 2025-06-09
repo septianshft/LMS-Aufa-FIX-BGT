@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 <head>
+    @include('layouts.seo')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{asset('css//output.css')}}" rel="stylesheet">
@@ -18,51 +19,7 @@
         class="max-w-[1200px] mx-auto w-full h-[393px] flex flex-col gap-10 pb-[50px] bg-center bg-no-repeat bg-cover rounded-[32px] overflow-hidden absolute transform -translate-x-1/2 left-1/2">
         
         <!-- Navigation Bar -->
-        <nav class="flex justify-between items-center pt-6 px-[50px]">
-            <!-- Logo and Text -->
-            <div class="flex items-center gap-4">
-                <img src="{{ asset('assets/logo/logo.png') }}" alt="logo" class="w-[50px] h-[50px] object-contain">
-                <div class="leading-tight text-white">
-                    <p class="font-semibold text-xs">Pusat Unggulan IPTEK Perguruan Tinggi</p>
-                    <h1 class="font-bold text-sm">Intelligent Sensing-IoT</h1>
-                </div>
-            </div>
-
-            <!-- Navigation Menu -->
-            <ul class="flex items-center gap-[30px] text-white">
-                <li>
-                    <a href="{{ route('front.index') }}" class="font-semibold">Home</a>
-                </li>
-        
-                <li>
-                    <a href="" class="font-semibold">My Certificate</a>
-                </li>
-                <li>
-                    <a href="" class="font-semibold">My Course</a>
-                </li>
-            </ul>
-
-            @auth
-            <div class="flex gap-[10px] items-center">
-                <div class="flex flex-col items-end justify-center">
-                    <p class="font-semibold text-white">Hi, {{Auth::user()->name}}</p>
-                    @if(Auth::user()->hasActiveSubscription())
-                        <p class="p-[2px_10px] rounded-full bg-[#FF6129] font-semibold text-xs text-white text-center">PRO</p>                    
-                    @endif
-                </div>
-                <div class="w-[56px] h-[56px] overflow-hidden rounded-full flex shrink-0">
-                <a href="{{ route('dashboard') }}">
-                        <img src="{{Storage::url(Auth::user()->avatar)}}" class="w-full h-full object-cover" alt="photo">
-                    </a>
-                </div>
-            </div>
-            @endauth
-            @guest
-            <div class="flex gap-[10px] items-center">
-                <a href="{{ route('register') }}" class="text-white font-semibold rounded-[30px] p-[16px_32px] ring-1 ring-white transition-all duration-300 hover:ring-2 hover:ring-[#FF6129]">Register</a>
-                <a href="{{ route('login') }}" class="text-white font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980]">Login In</a>
-            </div>
-            @endguest
+@include('front.partials.nav')
         </nav>
     </div>
     <section id="video-content" class="max-w-[1100px] w-full mx-auto mt-[130px] flex flex-col gap-8">
