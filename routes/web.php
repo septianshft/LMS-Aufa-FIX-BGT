@@ -104,6 +104,10 @@ Route::middleware('auth')->group(function () {
                 Route::delete('module/{courseModule}', [CourseModuleController::class, 'destroy'])->name('destroy');
                 Route::post('course/{course}/modules/reorder', [CourseModuleController::class, 'reorder'])->name('modules.reorder');
 
+                Route::get('module/{courseModule}/videos/create', [ModuleVideoController::class, 'create'])->name('videos.create');
+                Route::get('module/{courseModule}/materials/create', [ModuleMaterialController::class, 'create'])->name('materials.create');
+                Route::get('module/{courseModule}/tasks/create', [ModuleTaskController::class, 'create'])->name('tasks.create');
+
                 Route::post('module/{courseModule}/videos', [ModuleVideoController::class, 'store'])->name('videos.store');
                 Route::post('module/{courseModule}/materials', [ModuleMaterialController::class, 'store'])->name('materials.store');
                 Route::post('module/{courseModule}/tasks', [ModuleTaskController::class, 'store'])->name('tasks.store');

@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 
 class ModuleMaterialController extends Controller
 {
+    public function create(CourseModule $courseModule)
+    {
+        return view('admin.curriculum.materials.create', compact('courseModule'));
+    }
+
     public function store(StoreCourseMaterialRequest $request, CourseModule $courseModule)
     {
         DB::transaction(function () use ($request, $courseModule) {

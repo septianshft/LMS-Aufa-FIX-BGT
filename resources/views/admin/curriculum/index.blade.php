@@ -33,28 +33,11 @@
                         </div>
 
                         <div class="ml-4">
-                            <form method="POST" action="{{ route('admin.curriculum.videos.store', $module) }}" class="flex gap-2 mb-2">
-                                @csrf
-                                <input type="text" name="name" placeholder="Video name" class="border rounded w-full">
-                                <input type="text" name="path_video" placeholder="YouTube ID" class="border rounded w-full">
-                                <button class="px-3 py-1 bg-green-700 text-white rounded">Add Video</button>
-                            </form>
-
-                            <form method="POST" action="{{ route('admin.curriculum.materials.store', $module) }}" enctype="multipart/form-data" class="flex gap-2 mb-2">
-                                @csrf
-                                <input type="hidden" name="course_module_id" value="{{ $module->id }}">
-                                <input type="text" name="name" placeholder="Material name" class="border rounded w-full">
-                                <input type="file" name="file" class="border rounded w-full">
-                                <button class="px-3 py-1 bg-green-700 text-white rounded">Add Material</button>
-                            </form>
-
-                            <form method="POST" action="{{ route('admin.curriculum.tasks.store', $module) }}" class="flex gap-2 mb-2">
-                                @csrf
-                                <input type="hidden" name="course_module_id" value="{{ $module->id }}">
-                                <input type="text" name="name" placeholder="Task name" class="border rounded w-full">
-                                <input type="text" name="description" placeholder="Description" class="border rounded w-full">
-                                <button class="px-3 py-1 bg-green-700 text-white rounded">Add Task</button>
-                            </form>
+                            <div class="flex gap-2 mb-2">
+                                <a href="{{ route('admin.curriculum.videos.create', $module) }}" class="px-3 py-1 bg-green-700 text-white rounded">Add Video</a>
+                                <a href="{{ route('admin.curriculum.materials.create', $module) }}" class="px-3 py-1 bg-green-700 text-white rounded">Add Material</a>
+                                <a href="{{ route('admin.curriculum.tasks.create', $module) }}" class="px-3 py-1 bg-green-700 text-white rounded">Add Task</a>
+                            </div>
 
                             <div class="mt-2">
                                 <h4 class="font-semibold">Videos</h4>

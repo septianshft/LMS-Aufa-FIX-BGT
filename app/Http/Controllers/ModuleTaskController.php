@@ -10,6 +10,11 @@ use Illuminate\Http\Request;
 
 class ModuleTaskController extends Controller
 {
+    public function create(CourseModule $courseModule)
+    {
+        return view('admin.curriculum.tasks.create', compact('courseModule'));
+    }
+
     public function store(StoreModuleTaskRequest $request, CourseModule $courseModule)
     {
         DB::transaction(function () use ($request, $courseModule) {
