@@ -84,6 +84,13 @@
                  <i class="fas fa-fw fa-search"></i>
                  <span>Recruiter Dashboard</span></a>
          </li>
+
+         <!-- Nav Item - My Requests -->
+         <li class="nav-item  {{ Request::is('recruiter/my-requests*') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('recruiter.my_requests') }}">
+                 <i class="fas fa-fw fa-clipboard-list"></i>
+                 <span>My Requests</span></a>
+         </li>
      @endif
 
 
