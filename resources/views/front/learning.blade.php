@@ -107,6 +107,15 @@
                 </div>
             </div>
 
+            @isset($progress)
+            <div class="mt-4 w-full">
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div class="bg-[#3525B3] h-2.5 rounded-full" style="width: {{ $progress->progress }}%"></div>
+                </div>
+                <p class="mt-1 text-sm font-medium">{{ $progress->progress }}% completed</p>
+            </div>
+            @endisset
+
             <div class="max-w-[1100px] w-full mx-auto mt-10 tablink-container flex gap-3 px-4 sm:p-0 no-scrollbar overflow-x-scroll">
                 <div class="tablink font-semibold text-lg h-[47px] cursor-pointer hover:text-[#FF6129]" onclick="openPage('About', this)" id="defaultOpen">About</div>
                 <div class="tablink font-semibold text-lg h-[47px] cursor-pointer hover:text-[#FF6129]" onclick="openPage('Rewards', this)">Rewards</div>
@@ -159,24 +168,23 @@
         </div>
     </section>
 
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+        crossorigin="anonymous"></script>
+    <script src="{{ asset('js/main.js') }}"></script>
     <script>
-        function openPage(pageName, elmnt) {
-            var i, tabcontent, tablinks;
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
-            }
-            tablinks = document.getElementsByClassName("tablink");
-            for (i = 0; i < tablinks.length; i++) {
-                tablinks[i].classList.remove("text-[#FF6129]");
-            }
-            document.getElementById(pageName).style.display = "block";
-            elmnt.classList.add("text-[#FF6129]");
-        }
+        $(document).ready(function () {
+            $('#dropdownAvatar').on('click', function(e){
+                e.stopPropagation();
+                $('#dropdownMenu').toggleClass('hidden');
+            });
+            $(document).on('click', function(e){
+                if(!$('#dropdownWrapper').is(e.target) && $('#dropdownWrapper').has(e.target).length === 0){
+                    $('#dropdownMenu').addClass('hidden');
+                }
+            });
 
-        document.getElementById("defaultOpen").click();
-
-        document.addEventListener('DOMContentLoaded', function () {
             var active = document.querySelector('.active-video');
             if (active) {
                 var content = active.closest('.accordion-content');

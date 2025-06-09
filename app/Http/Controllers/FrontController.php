@@ -140,7 +140,7 @@ class FrontController extends Controller
             ->where('course_id', $course->id)
             ->first();
 
-        return view('front.learning', compact('course', 'video', 'certificate'));
+        return view('front.learning', compact('course', 'video', 'certificate', 'progress'));
     }
 
     /**
