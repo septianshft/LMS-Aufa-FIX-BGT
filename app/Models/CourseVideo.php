@@ -16,10 +16,12 @@ class CourseVideo extends Model
         'name',
         'path_video',
         'course_id',
-        'course_module_id'
+        'course_module_id',
+        'order',
     ];
 
-    public function course(){
+    public function course()
+    {
         return $this->belongsTo(Course::class);
     }
 

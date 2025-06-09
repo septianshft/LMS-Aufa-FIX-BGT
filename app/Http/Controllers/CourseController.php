@@ -176,13 +176,27 @@ class CourseController extends Controller
     }
 
     public function show(Course $course)
-    {
-        $course->load(['modules.videos', 'modules.materials', 'modules.tasks', 'course_videos']);
-        return view('admin.courses.show', compact('course'));
-    }
+{
+    $course->load([
+        'category',
+        'trainer.user',
+        'trainees',
+        'course_videos',
+        'course_keypoints',
+        'modules',
+        'modules.videos',
+        'modules.materials',
+        'modules.tasks',
+    ]);
+
+    return view('admin.courses.show', compact('course'));
+}
+
 
     public function edit(Course $course)
     {
+        $course->load(['category', 'trainer.user', 'trainees', 'course_videos', 'course_keypoints', 'modules']);
+
         $user = Auth::user();
         if ($user->hasRole('trainer') && $course->trainer->user_id !== $user->id) {
             abort(403);
