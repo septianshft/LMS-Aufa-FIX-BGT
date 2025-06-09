@@ -46,6 +46,13 @@
                  <span>Dashboard</span></a>
          </li>
 
+         <!-- Nav Item - Analytics (Phase 1 Enhancement) -->
+         <li class="nav-item  {{ Request::is('talent-admin/analytics') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent_admin.analytics') }}">
+                 <i class="fas fa-fw fa-chart-bar"></i>
+                 <span>Analytics</span></a>
+         </li>
+
          <!-- Nav Item - Manage Requests -->
          <li class="nav-item  {{ Request::is('talent-admin/manage-requests*') ? 'active' : '' }} animate-btn">
              <a class="nav-link" href="{{ route('talent_admin.manage_requests') }}">

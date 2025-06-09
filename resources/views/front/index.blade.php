@@ -50,7 +50,10 @@
                     <a href="{{ route('courses.my') }}" class="block px-4 py-2 hover:bg-gray-100">My Course</a>
                     <a href="{{ route('cart.index') }}" class="block px-4 py-2 hover:bg-gray-100">My Cart</a>
                     <a href="{{ route('dashboard') }}" class="block px-4 py-2 hover:bg-gray-100">Dashboard</a>
-                    <a href="{{ route('logout') }}" class="block px-4 py-2 hover:bg-gray-100">Logout</a>
+                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="block w-full text-left px-4 py-2 hover:bg-gray-100">Logout</button>
+                    </form>
                 </div>
             </div>
             @endauth
@@ -741,7 +744,7 @@
         crossorigin="anonymous"></script>
     <script src="https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js"></script>
     <script src="{{ asset('js/main.js') }}"></script>
-    
+
 
 <script>
     $(document).ready(function () {

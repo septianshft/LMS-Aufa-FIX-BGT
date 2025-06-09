@@ -18,8 +18,6 @@ use App\Http\Controllers\{
     FinalQuizController,
     QuizAttemptController, // Pastikan ini sudah ada
     CertificateController,
-    CourseModuleController,
-    TaskController,
     TalentAdminController,
     TalentController,
     RecruiterController,
@@ -89,7 +87,6 @@ Route::middleware('auth')->group(function () {
             Route::resource('courses', CourseController::class);
             Route::resource('course_videos', CourseVideoController::class);
             Route::resource('course_modules', CourseModuleController::class);
-            Route::resource('tasks', TaskController::class);
 
             Route::get('/add/video/{course:id}', [CourseVideoController::class, 'create'])->name('course.add_video');
             Route::post('/add/video/save/{course:id}', [CourseVideoController::class, 'store'])->name('course.add_video.save');
@@ -144,6 +141,24 @@ Route::middleware('auth')->group(function () {
         Route::patch('talent-admin/request/{talentRequest}/status', [TalentAdminController::class, 'updateRequestStatus'])->name('talent_admin.update_request_status');
         Route::patch('talent-admin/talent/{talent}/toggle-status', [TalentAdminController::class, 'toggleTalentStatus'])->name('talent_admin.toggle_talent_status');
         Route::patch('talent-admin/recruiter/{recruiter}/toggle-status', [TalentAdminController::class, 'toggleRecruiterStatus'])->name('talent_admin.toggle_recruiter_status');
+
+        // New Analytics Routes for Phase 1
+        Route::get('talent-admin/analytics', [TalentAdminController::class, 'analytics'])->name('talent_admin.analytics');
+        Route::get('talent-admin/api/conversion-analytics', [TalentAdminController::class, 'getConversionAnalytics'])->name('talent_admin.api.conversion_analytics');
+        Route::get('talent-admin/api/conversion-candidates', [TalentAdminController::class, 'getConversionCandidates'])->name('talent_admin.api.conversion_candidates');
+        Route::get('talent-admin/api/skill-analytics', [TalentAdminController::class, 'getSkillAnalytics'])->name('talent_admin.api.skill_analytics');
+        Route::get('talent-admin/api/market-demand', [TalentAdminController::class, 'getMarketDemand'])->name('talent_admin.api.market_demand');
+
+        // Mock LMS Integration Routes (for independent development)
+        Route::prefix('admin/lms-mock')->name('admin.lms.')->group(function () {
+            Route::get('/demo', function () {
+                return view('mock-lms-demo');
+            })->name('demo');
+            Route::get('/talent/{userId}/profile', [TalentAdminController::class, 'getTalentProfile'])->name('talent.profile');
+            Route::get('/talent/{userId}/score', [TalentAdminController::class, 'getTalentScore'])->name('talent.score');
+            Route::get('/talent/{userId}/skills', [TalentAdminController::class, 'getTalentSkillAnalysis'])->name('talent.skills');
+            Route::get('/integration-status', [TalentAdminController::class, 'getLMSIntegrationStatus'])->name('integration.status');
+        });
     });
 
     // Talent Routes
@@ -185,3 +200,35 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
+
+// Test route for debugging analytics services
+Route::get('/test-analytics', function () {
+    try {
+        $skillAnalytics = new \App\Services\AdvancedSkillAnalyticsService();
+        $conversionTracking = new \App\Services\SmartConversionTrackingService();
+        
+        echo "<h1>Analytics Services Test</h1>";
+        
+        echo "<h2>1. Testing AdvancedSkillAnalyticsService</h2>";
+        $skillData = $skillAnalytics->getSkillAnalytics();
+        echo "<p>✅ AdvancedSkillAnalyticsService working - " . count($skillData) . " sections returned</p>";
+        
+        echo "<h2>2. Testing SmartConversionTrackingService</h2>";
+        $conversionData = $conversionTracking->getConversionAnalytics();
+        echo "<p>✅ SmartConversionTrackingService working - " . count($conversionData) . " sections returned</p>";
+        
+        echo "<h2>3. Sample Data</h2>";
+        echo "<pre>" . json_encode([
+            'skill_analytics_keys' => array_keys($skillData),
+            'conversion_analytics_keys' => array_keys($conversionData)
+        ], JSON_PRETTY_PRINT) . "</pre>";
+        
+        echo "<p style='color: green; font-weight: bold;'>✅ ALL TESTS PASSED - No more 'foreach() argument must be of type array|object, string given' errors!</p>";
+        
+    } catch (\Exception $e) {
+        echo "<h2 style='color: red;'>❌ Error Found:</h2>";
+        echo "<p><strong>Message:</strong> " . $e->getMessage() . "</p>";
+        echo "<p><strong>File:</strong> " . $e->getFile() . ":" . $e->getLine() . "</p>";
+        echo "<pre>" . $e->getTraceAsString() . "</pre>";
+    }
+})->middleware('web');

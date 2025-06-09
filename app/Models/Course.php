@@ -56,10 +56,10 @@ class Course extends Model
         return $this->hasMany(CourseKeypoint::class);
     }
 
-    public function modules()
-    {
-        return $this->hasMany(CourseModule::class);
-    }
+    // public function modules()
+    // {
+    //     return $this->hasMany(CourseModule::class);
+    // }
 
     // App\Models\Course.php
 
