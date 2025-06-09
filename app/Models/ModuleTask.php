@@ -14,6 +14,11 @@ class ModuleTask extends Model
         'name',
         'description',
         'order',
+        'deadline',
+    ];
+
+    protected $casts = [
+        'deadline' => 'datetime',
     ];
 
     public function module()

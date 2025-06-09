@@ -18,6 +18,7 @@ class StoreModuleTaskRequest extends FormRequest
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'order' => 'nullable|integer|min:0',
+            'deadline' => 'nullable|date|after:today',
         ];
     }
 }
