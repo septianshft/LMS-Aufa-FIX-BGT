@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 <head>
+    @include('layouts.seo')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ asset('css/output.css') }}" rel="stylesheet">
@@ -16,6 +17,7 @@
 </head>
 <body class="text-black font-poppins pt-10 pb-10 bg-gray-50">
     <div class="max-w-[1200px] mx-auto">
+<<<<<<< HEAD
         <!-- Navbar -->
         <nav class="flex justify-between items-center py-6 px-[50px] bg-white shadow rounded-xl mb-6">
             <div class="flex items-center gap-3">
@@ -54,6 +56,9 @@
                 <a href="{{ route('login') }}" class="font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] text-white">Login In</a>
             </div>
             @endguest
+=======
+@include('front.partials.nav')
+>>>>>>> 1913d6fb1846437d2b0fd0b7b471ad2a1f6b6fd3
         </nav>
 
         <!-- Judul -->

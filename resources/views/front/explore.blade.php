@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 <head>
+    @include('layouts.seo')
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="{{ asset('css/output.css') }}" rel="stylesheet">
@@ -16,8 +17,7 @@
 </head>
 <body class="text-black font-poppins pt-10 pb-10 bg-gray-50">
     <div class="max-w-[1200px] mx-auto">
-        <!-- Navbar -->
-        <nav class="flex justify-between items-center py-6 px-[50px] bg-white shadow rounded-xl mb-6">
+        <nav class="flex justify-between items-center py-6 px-[50px]">
             <div class="flex items-center gap-3">
                 <img src="{{ asset('assets/logo/logo.png') }}" alt="logo" class="w-[50px] h-[50px] object-contain">
                 <div class="leading-tight text-black">
@@ -40,12 +40,11 @@
                 <div class="w-[56px] h-[56px] overflow-hidden rounded-full cursor-pointer" id="dropdownAvatar">
                     <img src="{{ Storage::url(Auth::user()->avatar) }}" class="w-full h-full object-cover" alt="photo">
                 </div>
-                <div class="absolute right-0 mt-2 bg-white border rounded shadow hidden z-10" id="dropdownMenu">
+                <div class="absolute right-0 mt-2 bg-white border rounded shadow hidden" id="dropdownMenu">
                     <a href="{{ route('profile.edit') }}" class="block px-4 py-2 hover:bg-gray-100">Profile Settings</a>
                     <a href="{{ route('courses.my') }}" class="block px-4 py-2 hover:bg-gray-100">My Course</a>
                     <a href="{{ route('cart.index') }}" class="block px-4 py-2 hover:bg-gray-100">My Cart</a>
                     <a href="{{ route('dashboard') }}" class="block px-4 py-2 hover:bg-gray-100">Dashboard</a>
-                    <a href="{{ route('logout') }}" class="block px-4 py-2 hover:bg-gray-100">Logout</a>
                 </div>
             </div>
             @endauth
