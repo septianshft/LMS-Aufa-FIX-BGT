@@ -68,6 +68,10 @@ Route::middleware('auth')->group(function () {
         ->name('front.learning')
         ->middleware('role:trainee|trainer|admin');
 
+    Route::post('/learning/{course}/{item}/complete', [FrontController::class, 'markItemComplete'])
+        ->name('learning.item.complete')
+        ->middleware('role:trainee');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ====================

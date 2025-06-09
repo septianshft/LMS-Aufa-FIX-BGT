@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\{Course, CourseModule, CourseVideo, CourseMaterial, User, SubscribeTransaction, CourseProgress};
+use App\Models\{Course, CourseModule, CourseVideo, CourseMaterial, ModuleTask, User, SubscribeTransaction, CourseProgress};
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -43,7 +43,10 @@ class CurriculumStructureTest extends TestCase
         $user->assignRole('trainee');
 
         $course = Course::factory()->create(['price' => 100]);
-        $videos = CourseVideo::factory()->count(2)->create(['course_id' => $course->id]);
+        $module = CourseModule::factory()->create(['course_id' => $course->id]);
+        $videos = CourseVideo::factory()->count(1)->create(['course_id' => $course->id, 'course_module_id' => $module->id]);
+        $material = CourseMaterial::factory()->create(['course_module_id' => $module->id]);
+        $task = ModuleTask::factory()->create(['course_module_id' => $module->id]);
 
         SubscribeTransaction::create([
             'total_amount' => 100,
@@ -57,13 +60,23 @@ class CurriculumStructureTest extends TestCase
         $this->actingAs($user)->get(route('front.learning', [$course->id, $videos[0]->id]))->assertStatus(200);
         $progress = CourseProgress::where('user_id', $user->id)->where('course_id', $course->id)->first();
         $this->assertNotNull($progress);
-        $this->assertEquals(50, $progress->progress);
+        $this->assertEquals(0, $progress->progress);
+        $this->assertCount(0, $progress->completed_videos);
+
+        $this->post(route('learning.item.complete', [$course->id, $videos[0]->id]), ['type' => 'video']);
+        $progress->refresh();
+        $this->assertEquals(33, $progress->progress);
         $this->assertCount(1, $progress->completed_videos);
 
-        $this->actingAs($user)->get(route('front.learning', [$course->id, $videos[1]->id]))->assertStatus(200);
+        $this->post(route('learning.item.complete', [$course->id, $material->id]), ['type' => 'material']);
+        $progress->refresh();
+        $this->assertEquals(66, $progress->progress);
+        $this->assertCount(1, $progress->completed_materials);
+
+        $this->post(route('learning.item.complete', [$course->id, $task->id]), ['type' => 'task']);
         $progress->refresh();
         $this->assertEquals(100, $progress->progress);
-        $this->assertCount(2, $progress->completed_videos);
+        $this->assertCount(1, $progress->completed_tasks);
     }
 
     public function test_learner_without_access_is_redirected(): void
