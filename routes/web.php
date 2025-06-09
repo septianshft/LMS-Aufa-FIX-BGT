@@ -9,7 +9,6 @@ use App\Http\Controllers\{
     CourseController,
     CourseVideoController,
     CourseMaterialController,
-    CourseModuleController,
     ModuleVideoController,
     ModuleMaterialController,
     ModuleTaskController,
