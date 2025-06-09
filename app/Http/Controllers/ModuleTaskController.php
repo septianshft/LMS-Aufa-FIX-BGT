@@ -6,6 +6,7 @@ use App\Http\Requests\StoreModuleTaskRequest;
 use App\Models\CourseModule;
 use App\Models\ModuleTask;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class ModuleTaskController extends Controller
 {
@@ -14,8 +15,20 @@ class ModuleTaskController extends Controller
         DB::transaction(function () use ($request, $courseModule) {
             $data = $request->validated();
             $data['course_module_id'] = $courseModule->id;
+            $data['order'] = $data['order'] ?? ($courseModule->tasks()->max('order') + 1);
             ModuleTask::create($data);
         });
         return back();
+    }
+
+    public function reorder(Request $request, CourseModule $courseModule)
+    {
+        $request->validate(['tasks' => 'required|array']);
+        DB::transaction(function () use ($request) {
+            foreach ($request->tasks as $index => $id) {
+                ModuleTask::where('id', $id)->update(['order' => $index + 1]);
+            }
+        });
+        return response()->json(['status' => 'ok']);
     }
 }

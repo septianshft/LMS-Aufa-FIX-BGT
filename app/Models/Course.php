@@ -44,7 +44,7 @@ class Course extends Model
     }
 
     public function course_videos(){
-        return $this->hasMany(CourseVideo::class);
+        return $this->hasMany(CourseVideo::class)->orderBy('order');
     }
 
     public function course_keypoints(){
@@ -53,7 +53,7 @@ class Course extends Model
 
     public function modules()
     {
-        return $this->hasMany(CourseModule::class);
+        return $this->hasMany(CourseModule::class)->orderBy('order');
     }
 
     // App\Models\Course.php
