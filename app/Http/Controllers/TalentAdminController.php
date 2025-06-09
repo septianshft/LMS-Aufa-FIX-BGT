@@ -6,18 +6,39 @@ use App\Models\Talent;
 use App\Models\Recruiter;
 use App\Models\TalentRequest;
 use App\Models\User;
+use App\Services\AdvancedSkillAnalyticsService;
+use App\Services\SmartConversionTrackingService;
+use App\Services\LMSIntegrationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class TalentAdminController extends Controller
 {
+    protected $skillAnalytics;
+    protected $conversionTracking;
+    protected $lmsIntegration;
+
+    public function __construct(
+        AdvancedSkillAnalyticsService $skillAnalytics,
+        SmartConversionTrackingService $conversionTracking,
+        LMSIntegrationService $lmsIntegration
+    ) {
+        $this->skillAnalytics = $skillAnalytics;
+        $this->conversionTracking = $conversionTracking;
+        $this->lmsIntegration = $lmsIntegration;
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
         $title = 'Talent Admin Dashboard';
         $roles = 'Talent Admin';
         $assignedKelas = [];
+
+        // Enhanced analytics data
+        $skillAnalytics = $this->skillAnalytics->getSkillAnalytics();
+        $conversionAnalytics = $this->conversionTracking->getConversionAnalytics();
 
         // Use the new unified user system instead of separate Talent/Recruiter models
         // Count users with talent status
@@ -69,7 +90,7 @@ class TalentAdminController extends Controller
             'activeTalents', 'totalTalents', 'availableTalents', 'activeRecruiters', 'totalRecruiters',
             'totalRequests', 'pendingRequests', 'approvedRequests', 'rejectedRequests',
             'recentTalents', 'recentRecruiters', 'latestTalents', 'latestRecruiters',
-            'latestRequests'
+            'latestRequests', 'skillAnalytics', 'conversionAnalytics'
         ));
     }
 
@@ -205,5 +226,131 @@ class TalentAdminController extends Controller
             'message' => $statusMessage,
             'status' => $request->status
         ]);
+    }
+
+    /**
+     * Display advanced analytics dashboard
+     */
+    public function analytics()
+    {
+        $user = Auth::user();
+        $title = 'Advanced Analytics';
+        $roles = 'Talent Admin';
+        $assignedKelas = [];
+
+        // Get comprehensive analytics
+        $skillAnalytics = $this->skillAnalytics->getSkillAnalytics();
+        $conversionAnalytics = $this->conversionTracking->getConversionAnalytics();
+
+        // Trigger smart notifications for conversion-ready users
+        $notificationsSent = $this->conversionTracking->triggerSmartNotifications();
+
+        return view('talent_admin.analytics', compact(
+            'user', 'title', 'roles', 'assignedKelas',
+            'skillAnalytics', 'conversionAnalytics', 'notificationsSent'
+        ));
+    }
+
+    /**
+     * Get conversion candidates API endpoint
+     */
+    public function getConversionCandidates()
+    {
+        $analytics = $this->conversionTracking->getConversionAnalytics();
+        return response()->json($analytics['top_conversion_candidates']);
+    }
+
+    /**
+     * Get skill trends API endpoint
+     */
+    public function getSkillTrends()
+    {
+        $analytics = $this->skillAnalytics->getSkillAnalytics();
+        return response()->json([
+            'progression_trends' => $analytics['skill_progression_trends'],
+            'category_distribution' => $analytics['skill_categories'],
+            'market_demand' => $analytics['market_demand_analysis']
+        ]);
+    }
+
+    /**
+     * Mock LMS Data Endpoints - for independent development
+     * These will automatically switch to real LMS when ready
+     */
+
+    /**
+     * Get talent profile with LMS data (mock or real)
+     */
+    public function getTalentProfile($userId)
+    {
+        try {
+            $talentProfile = $this->lmsIntegration->getTalentData($userId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $talentProfile,
+                'integration_status' => $this->lmsIntegration->getIntegrationStatus()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch talent profile',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get talent score from LMS (mock or real)
+     */
+    public function getTalentScore($userId)
+    {
+        try {
+            $score = $this->lmsIntegration->getOverallScore($userId);
+            $progress = $this->lmsIntegration->getLearningProgress($userId);
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'overall_score' => $score,
+                    'learning_progress' => $progress,
+                    'data_source' => $this->lmsIntegration->isLMSConnected() ? 'lms' : 'mock'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch talent score'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get skill analysis from LMS (mock or real)
+     */
+    public function getTalentSkillAnalysis($userId)
+    {
+        try {
+            $skillAnalysis = $this->lmsIntegration->getSkillAnalysis($userId);
+
+            return response()->json([
+                'success' => true,
+                'data' => $skillAnalysis,
+                'integration_ready' => true
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to fetch skill analysis'
+            ], 500);
+        }
+    }
+
+    /**
+     * Integration status endpoint
+     */
+    public function getLMSIntegrationStatus()
+    {
+        return response()->json($this->lmsIntegration->getIntegrationStatus());
     }
 }

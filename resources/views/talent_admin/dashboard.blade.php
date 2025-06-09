@@ -17,7 +17,6 @@
             </h1>
             <p class="text-gray-600">Selamat datang kembali! Berikut adalah yang terjadi dengan platform pencarian talent Anda.</p>
         </div>
-
     </div>
 
     <!-- Overview Statistics Cards -->
@@ -110,7 +109,23 @@
             </div>
         </div>
         <div class="p-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Analytics Dashboard (Phase 1 Enhancement) -->
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 hover-lift border border-purple-200">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <i class="fas fa-chart-bar text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Analytics</h4>
+                        <p class="text-gray-600 text-sm mb-6">Lihat analitik skill, konversi, dan permintaan pasar talent.</p>
+                        <div class="space-y-3">
+                            <a href="{{ route('talent_admin.analytics') }}" class="block w-full px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200 font-medium text-sm">
+                                <i class="fas fa-chart-line mr-2"></i>Lihat Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Manage Talents -->
                 <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 hover-lift border border-blue-200">
                     <div class="text-center">
