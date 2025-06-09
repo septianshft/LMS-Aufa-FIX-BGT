@@ -14,48 +14,6 @@ use Illuminate\Support\Facades\DB;
 class AdvancedSkillAnalyticsService
 {
     /**
-     * Helper method to ensure skills are in array format
-     */
-    private function ensureSkillsArray($skills)
-    {
-        if (is_string($skills)) {
-            return json_decode($skills, true) ?? [];
-        }
-        
-        if (is_array($skills)) {
-            return $skills;
-        }
-        
-        return [];
-    }
-
-    /**
-     * Categorize a skill string into appropriate category
-     */
-    private function categorizeSkill($skill)
-    {
-        $skill = strtolower(trim($skill));
-        
-        $categories = [
-            'Frontend Development' => ['javascript', 'react', 'vue.js', 'angular', 'html', 'css', 'typescript', 'jquery', 'bootstrap', 'tailwind'],
-            'Backend Development' => ['php', 'laravel', 'node.js', 'python', 'django', 'flask', 'ruby', 'rails', 'java', 'spring', 'c#', '.net'],
-            'Database' => ['mysql', 'postgresql', 'mongodb', 'redis', 'sqlite', 'oracle', 'sql server'],
-            'DevOps & Cloud' => ['docker', 'kubernetes', 'aws', 'azure', 'gcp', 'jenkins', 'git', 'linux', 'nginx', 'apache'],
-            'Mobile Development' => ['react native', 'flutter', 'swift', 'kotlin', 'ionic', 'xamarin'],
-            'Data Science' => ['python', 'r', 'machine learning', 'deep learning', 'tensorflow', 'pandas', 'numpy'],
-            'Testing' => ['phpunit', 'jest', 'cypress', 'selenium', 'unit testing', 'integration testing']
-        ];
-        
-        foreach ($categories as $category => $skillList) {
-            if (in_array($skill, $skillList)) {
-                return $category;
-            }
-        }
-        
-        return 'General Technology';
-    }
-
-    /**
      * Get comprehensive skill analytics for dashboard
      */
     public function getSkillAnalytics(): array
@@ -82,10 +40,8 @@ class AdvancedSkillAnalyticsService
 
         $categories = [];
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
-            foreach ($skills as $skill) {
-                // Handle skills as strings, not arrays
-                $category = $this->categorizeSkill($skill);
+            foreach ($talent->talent_skills ?? [] as $skill) {
+                $category = $skill['category'] ?? 'General Technology';
                 $categories[$category] = ($categories[$category] ?? 0) + 1;
             }
         }
@@ -111,10 +67,8 @@ class AdvancedSkillAnalyticsService
             ->get();
 
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
-            foreach ($skills as $skill) {
-                // Handle skills as strings and assign demand based on skill name
-                $demand = $this->getSkillMarketDemand($skill);
+            foreach ($talent->talent_skills ?? [] as $skill) {
+                $demand = $skill['market_demand'] ?? 'Medium';
                 $skillsByDemand[$demand][] = $skill;
             }
         }
@@ -165,10 +119,9 @@ class AdvancedSkillAnalyticsService
 
         $progressionData = [];
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
+            $skills = $talent->talent_skills ?? [];
             foreach ($skills as $skill) {
-                // Since we don't have acquired_at data, use current month for progression
-                $month = Carbon::now()->format('Y-m');
+                $month = Carbon::parse($skill['acquired_at'] ?? now())->format('Y-m');
                 $progressionData[$month] = ($progressionData[$month] ?? 0) + 1;
             }
         }
@@ -194,10 +147,8 @@ class AdvancedSkillAnalyticsService
 
         foreach ($requests as $request) {
             if ($request->talentUser && $request->talentUser->talent_skills) {
-                $skills = $this->ensureSkillsArray($request->talentUser->talent_skills);
-                foreach ($skills as $skill) {
-                    // Skill is a string, not an array
-                    $skillName = $skill;
+                foreach ($request->talentUser->talent_skills as $skill) {
+                    $skillName = $skill['name'];
                     $requestedSkills[$skillName] = ($requestedSkills[$skillName] ?? 0) + 1;
                 }
             }
@@ -261,8 +212,7 @@ class AdvancedSkillAnalyticsService
         ];
 
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
-            $skillCount = count($skills);
+            $skillCount = count($talent->talent_skills ?? []);
             $hourlyRate = (float) $talent->hourly_rate;
 
             if (!isset($correlationData['avg_hourly_rate_by_skill_count'][$skillCount])) {
@@ -271,8 +221,8 @@ class AdvancedSkillAnalyticsService
             $correlationData['avg_hourly_rate_by_skill_count'][$skillCount][] = $hourlyRate;
 
             // Analyze by primary skill category
-            if (count($skills) > 0) {
-                $primaryCategory = $skills[0]['category'] ?? 'General';
+            if ($talent->talent_skills) {
+                $primaryCategory = $talent->talent_skills[0]['category'] ?? 'General';
                 if (!isset($correlationData['avg_hourly_rate_by_category'][$primaryCategory])) {
                     $correlationData['avg_hourly_rate_by_category'][$primaryCategory] = [];
                 }
@@ -299,10 +249,9 @@ class AdvancedSkillAnalyticsService
     {
         $skillCounts = [];
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
-            foreach ($skills as $skill) {
-                if ($this->getSkillMarketDemand($skill) === 'Very High') {
-                    $skillCounts[$skill] = ($skillCounts[$skill] ?? 0) + 1;
+            foreach ($talent->talent_skills ?? [] as $skill) {
+                if (($skill['market_demand'] ?? 'Medium') === 'Very High') {
+                    $skillCounts[$skill['name']] = ($skillCounts[$skill['name']] ?? 0) + 1;
                 }
             }
         }
@@ -325,8 +274,7 @@ class AdvancedSkillAnalyticsService
     {
         $talents = User::where('available_for_scouting', true)->get();
         $totalSkills = $talents->sum(function($talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
-            return count($skills);
+            return count($talent->talent_skills ?? []);
         });
         return $talents->count() > 0 ? round($totalSkills / $talents->count(), 2) : 0;
     }
@@ -346,16 +294,18 @@ class AdvancedSkillAnalyticsService
     {
         $velocityData = [];
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
+            $skills = $talent->talent_skills ?? [];
             if (count($skills) >= 2) {
-                // Since we don't have acquired_at data, simulate velocity based on skill count
-                // Higher skill count suggests faster learning velocity
-                $velocity = count($skills) / 30; // Simulate skills per month
+                $dates = array_map(function($skill) {
+                    return Carbon::parse($skill['acquired_at'] ?? now());
+                }, $skills);
+
+                sort($dates);
+                $daysBetween = $dates[count($dates) - 1]->diffInDays($dates[0]);
+                $velocity = $daysBetween > 0 ? count($skills) / $daysBetween : 0;
                 $velocityData[] = $velocity;
             }
-        }
-        
-        rsort($velocityData);
+        }        rsort($velocityData);
 
         return [
             'average_skills_per_day' => count($velocityData) > 0 ? round(array_sum($velocityData) / count($velocityData), 3) : 0,
@@ -373,10 +323,9 @@ class AdvancedSkillAnalyticsService
         ];
 
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
+            $skills = $talent->talent_skills ?? [];
             foreach ($skills as $skill) {
-                // Since we don't have acquired_at data, simulate learning patterns
-                $date = Carbon::now();
+                $date = Carbon::parse($skill['acquired_at'] ?? now());
                 if ($date->isWeekend()) {
                     $patterns['weekend_learning']++;
                 } else {
@@ -384,14 +333,9 @@ class AdvancedSkillAnalyticsService
                 }
             }
 
-            // Analyze category diversity based on skill categorization
-            $categories = [];
-            foreach ($skills as $skill) {
-                $categories[] = $this->categorizeSkill($skill);
-            }
-            $uniqueCategories = array_unique($categories);
-            
-            if (count($uniqueCategories) > 1) {
+            // Analyze category diversity
+            $categories = array_unique(array_column($skills, 'category'));
+            if (count($categories) > 1) {
                 $patterns['diverse_categories']++;
             } else {
                 $patterns['sequential_categories']++;
@@ -409,8 +353,7 @@ class AdvancedSkillAnalyticsService
         foreach ($requestedSkills as $skill => $totalRequests) {
             $successfulRequests = $completedRequests->filter(function($request) use ($skill) {
                 if (!$request->talentUser || !$request->talentUser->talent_skills) return false;
-                $skills = $this->ensureSkillsArray($request->talentUser->talent_skills);
-                return collect($skills)->contains('name', $skill);
+                return collect($request->talentUser->talent_skills)->contains('name', $skill);
             })->count();
 
             $successRates[$skill] = $totalRequests > 0 ? round(($successfulRequests / $totalRequests) * 100, 2) : 0;
@@ -427,12 +370,10 @@ class AdvancedSkillAnalyticsService
 
         $talents = User::where('available_for_scouting', true)->get();
         foreach ($talents as $talent) {
-            $skills = $this->ensureSkillsArray($talent->talent_skills);
-            foreach ($skills as $skill) {
-                // Since we don't have acquired_at data, consider all skills as recent
-                $acquiredDate = Carbon::now();
+            foreach ($talent->talent_skills ?? [] as $skill) {
+                $acquiredDate = Carbon::parse($skill['acquired_at'] ?? now());
                 if ($acquiredDate->gte($cutoffDate)) {
-                    $recentSkills[$skill] = ($recentSkills[$skill] ?? 0) + 1;
+                    $recentSkills[$skill['name']] = ($recentSkills[$skill['name']] ?? 0) + 1;
                 }
             }
         }
@@ -452,8 +393,7 @@ class AdvancedSkillAnalyticsService
         if ($talents->count() > 0) {
             $avgHourlyRate = $talents->avg('hourly_rate') ?? 0;
             $avgSkillCount = $talents->avg(function($talent) {
-                $skills = $this->ensureSkillsArray($talent->talent_skills);
-                return count($skills);
+                return count($talent->talent_skills ?? []);
             });
 
             // Estimate annual earning potential (assumptions: 20 hours/week, 50 weeks/year)
@@ -467,28 +407,5 @@ class AdvancedSkillAnalyticsService
         }
 
         return $roiData;
-    }
-
-    /**
-     * Get market demand level for a specific skill
-     */
-    private function getSkillMarketDemand($skill)
-    {
-        $skill = strtolower(trim($skill));
-        
-        $demandLevels = [
-            'Very High' => ['javascript', 'python', 'react', 'aws', 'docker', 'kubernetes', 'node.js', 'typescript'],
-            'High' => ['php', 'laravel', 'vue.js', 'angular', 'mysql', 'mongodb', 'git', 'linux'],
-            'Medium' => ['html', 'css', 'bootstrap', 'jquery', 'postgresql', 'redis', 'nginx'],
-            'Low' => ['flash', 'perl', 'cobol', 'fortran']
-        ];
-        
-        foreach ($demandLevels as $level => $skills) {
-            if (in_array($skill, $skills)) {
-                return $level;
-            }
-        }
-        
-        return 'Medium'; // Default
     }
 }
