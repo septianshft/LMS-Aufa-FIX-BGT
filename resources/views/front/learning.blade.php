@@ -107,11 +107,7 @@
                                         @if(in_array($task->id, $progress->completed_tasks ?? []))
                                             <span class="text-green-600">✔</span>
                                         @else
-                                            <form method="POST" action="{{ route('learning.item.complete', [$course, $task->id]) }}">
-                                                @csrf
-                                                <input type="hidden" name="type" value="task">
-                                                <button type="submit" class="text-xs text-blue-500">Mark as done</button>
-                                            </form>
+                                            <a href="{{ route('task.submit.create', $task) }}" class="text-xs text-blue-500">Submit Task</a>
                                         @endif
                                     </div>
                                 @endforeach
