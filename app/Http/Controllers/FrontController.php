@@ -7,6 +7,9 @@ use App\Models\Category;
 use App\Models\Course;
 use App\Models\CourseMode;
 use App\Models\CourseLevel;
+use App\Models\CourseVideo;
+use App\Models\CourseMaterial;
+use App\Models\ModuleTask;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubscribeTransaction;
@@ -111,25 +114,16 @@ class FrontController extends Controller
         // Tambahkan course ke relasi user jika belum ada (untuk pelacakan/history)
         $user->courses()->syncWithoutDetaching($course->id);
 
-        // Update progress for this video
+        // Ensure progress record exists for this user and course
         $progress = CourseProgress::firstOrCreate([
             'user_id' => $user->id,
             'course_id' => $course->id,
         ], [
             'completed_videos' => [],
+            'completed_materials' => [],
+            'completed_tasks' => [],
             'progress' => 0,
         ]);
-
-        $completed = $progress->completed_videos ?? [];
-        if (!in_array($video->id, $completed)) {
-            $completed[] = $video->id;
-            $totalVideos = $course->course_videos->count();
-            $percentage = $totalVideos > 0 ? floor(count($completed) / $totalVideos * 100) : 0;
-            $progress->update([
-                'completed_videos' => $completed,
-                'progress' => $percentage,
-            ]);
-        }
 
         // Generate certificate if eligible
         if ($progress->progress == 100 && $progress->quiz_passed && !$progress->course->certificates()->where('user_id', $user->id)->exists()) {
@@ -157,6 +151,75 @@ class FrontController extends Controller
     public function checkout(Course $course)
     {
         return view('front.checkout', compact('course'));
+    }
+
+    public function markItemComplete(Request $request, Course $course, $itemId)
+    {
+        $request->validate([
+            'type' => 'required|in:video,material,task',
+        ]);
+
+        $user = Auth::user();
+
+        $progress = CourseProgress::firstOrCreate([
+            'user_id' => $user->id,
+            'course_id' => $course->id,
+        ], [
+            'completed_videos' => [],
+            'completed_materials' => [],
+            'completed_tasks' => [],
+            'progress' => 0,
+        ]);
+
+        switch ($request->type) {
+            case 'video':
+                $item = CourseVideo::where('course_id', $course->id)->findOrFail($itemId);
+                $completed = $progress->completed_videos ?? [];
+                if (!in_array($item->id, $completed)) {
+                    $completed[] = $item->id;
+                    $progress->completed_videos = $completed;
+                }
+                break;
+            case 'material':
+                $item = CourseMaterial::whereHas('module', function ($q) use ($course) {
+                    $q->where('course_id', $course->id);
+                })->findOrFail($itemId);
+                $completed = $progress->completed_materials ?? [];
+                if (!in_array($item->id, $completed)) {
+                    $completed[] = $item->id;
+                    $progress->completed_materials = $completed;
+                }
+                break;
+            case 'task':
+                $item = ModuleTask::whereHas('module', function ($q) use ($course) {
+                    $q->where('course_id', $course->id);
+                })->findOrFail($itemId);
+                $completed = $progress->completed_tasks ?? [];
+                if (!in_array($item->id, $completed)) {
+                    $completed[] = $item->id;
+                    $progress->completed_tasks = $completed;
+                }
+                break;
+        }
+
+        $totalVideos = CourseVideo::where('course_id', $course->id)->count();
+        $totalMaterials = CourseMaterial::whereHas('module', function ($q) use ($course) {
+            $q->where('course_id', $course->id);
+        })->count();
+        $totalTasks = ModuleTask::whereHas('module', function ($q) use ($course) {
+            $q->where('course_id', $course->id);
+        })->count();
+
+        $completedCount = count($progress->completed_videos ?? []) + count($progress->completed_materials ?? []) + count($progress->completed_tasks ?? []);
+        $totalItems = $totalVideos + $totalMaterials + $totalTasks;
+        $progress->progress = $totalItems > 0 ? floor($completedCount / $totalItems * 100) : 0;
+        $progress->save();
+
+        if ($progress->progress == 100 && $progress->quiz_passed && !$progress->course->certificates()->where('user_id', $user->id)->exists()) {
+            $this->generateCertificate($course, $user);
+        }
+
+        return back();
     }
 
     private function generateCertificate(Course $course, $user): void

@@ -15,12 +15,16 @@ class CourseProgress extends Model
         'user_id',
         'course_id',
         'completed_videos',
+        'completed_materials',
+        'completed_tasks',
         'quiz_passed',
         'progress',
     ];
 
     protected $casts = [
         'completed_videos' => 'array',
+        'completed_materials' => 'array',
+        'completed_tasks' => 'array',
         'quiz_passed' => 'boolean',
     ];
 

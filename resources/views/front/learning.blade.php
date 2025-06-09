@@ -52,14 +52,21 @@
                                     @endphp
 
                                     @if($hasAccess || $course->price == 0)
-                                        <a href="{{ route('front.learning', [$course, 'courseVideoId' => $video->id]) }}" class="group p-[12px_16px] flex items-center gap-[10px] rounded-full transition-all duration-300 {{ $isActive ? 'bg-[#3525B3] active-video' : 'bg-[#E9EFF3] hover:bg-[#3525B3]' }}">
-                                            <div class="text-black group-hover:text-white {{ $isActive ? 'text-white' : '' }}">
-                                                ▶️
-                                            </div>
-                                            <p class="font-semibold {{ $isActive ? 'text-white' : 'group-hover:text-white text-black' }}">
-                                                {{ $video->name }}
-                                            </p>
-                                        </a>
+                                        <div class="flex items-center gap-2">
+                                            <a href="{{ route('front.learning', [$course, 'courseVideoId' => $video->id]) }}" class="flex-1 group p-[12px_16px] flex items-center gap-[10px] rounded-full transition-all duration-300 {{ $isActive ? 'bg-[#3525B3] active-video' : 'bg-[#E9EFF3] hover:bg-[#3525B3]' }}">
+                                                <div class="text-black group-hover:text-white {{ $isActive ? 'text-white' : '' }}">▶️</div>
+                                                <p class="font-semibold {{ $isActive ? 'text-white' : 'group-hover:text-white text-black' }}">{{ $video->name }}</p>
+                                            </a>
+                                            @if(in_array($video->id, $progress->completed_videos ?? []))
+                                                <span class="text-green-600">✔</span>
+                                            @else
+                                                <form method="POST" action="{{ route('learning.item.complete', [$course, $video->id]) }}">
+                                                    @csrf
+                                                    <input type="hidden" name="type" value="video">
+                                                    <button type="submit" class="text-xs text-blue-500">Mark as done</button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     @else
                                         <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full opacity-50 cursor-not-allowed">
                                             <div class="text-black">🔒</div>
@@ -69,16 +76,38 @@
                                 @endforeach
 
                                 @foreach($module->materials as $material)
-                                    <a href="{{ Storage::url($material->file_path) }}" class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full hover:bg-[#3525B3] transition-all">
-                                        <div class="text-black group-hover:text-white">📄</div>
-                                        <p class="font-semibold group-hover:text-white">{{ $material->name }}</p>
-                                    </a>
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ Storage::url($material->file_path) }}" class="flex-1 group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full hover:bg-[#3525B3] transition-all">
+                                            <div class="text-black group-hover:text-white">📄</div>
+                                            <p class="font-semibold group-hover:text-white">{{ $material->name }}</p>
+                                        </a>
+                                        @if(in_array($material->id, $progress->completed_materials ?? []))
+                                            <span class="text-green-600">✔</span>
+                                        @else
+                                            <form method="POST" action="{{ route('learning.item.complete', [$course, $material->id]) }}">
+                                                @csrf
+                                                <input type="hidden" name="type" value="material">
+                                                <button type="submit" class="text-xs text-blue-500">Mark as done</button>
+                                            </form>
+                                        @endif
+                                    </div>
                                 @endforeach
 
                                 @foreach($module->tasks as $task)
-                                    <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full">
-                                        <div class="text-black">📝</div>
-                                        <p class="font-semibold text-black">{{ $task->name }}</p>
+                                    <div class="flex items-center gap-2">
+                                        <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full">
+                                            <div class="text-black">📝</div>
+                                            <p class="font-semibold text-black">{{ $task->name }}</p>
+                                        </div>
+                                        @if(in_array($task->id, $progress->completed_tasks ?? []))
+                                            <span class="text-green-600">✔</span>
+                                        @else
+                                            <form method="POST" action="{{ route('learning.item.complete', [$course, $task->id]) }}">
+                                                @csrf
+                                                <input type="hidden" name="type" value="task">
+                                                <button type="submit" class="text-xs text-blue-500">Mark as done</button>
+                                            </form>
+                                        @endif
                                     </div>
                                 @endforeach
                             </div>
