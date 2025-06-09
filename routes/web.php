@@ -9,6 +9,7 @@ use App\Http\Controllers\{
     CourseController,
     CourseVideoController,
     CourseMaterialController,
+    CourseModuleController,
     ModuleVideoController,
     ModuleMaterialController,
     ModuleTaskController,
@@ -17,8 +18,6 @@ use App\Http\Controllers\{
     FinalQuizController,
     QuizAttemptController, // Pastikan ini sudah ada
     CertificateController,
-    CourseModuleController,
-    TaskController,
     TalentAdminController,
     TalentController,
     RecruiterController,
@@ -88,7 +87,6 @@ Route::middleware('auth')->group(function () {
             Route::resource('courses', CourseController::class);
             Route::resource('course_videos', CourseVideoController::class);
             Route::resource('course_modules', CourseModuleController::class);
-            Route::resource('tasks', TaskController::class);
 
             Route::get('/add/video/{course:id}', [CourseVideoController::class, 'create'])->name('course.add_video');
             Route::post('/add/video/save/{course:id}', [CourseVideoController::class, 'store'])->name('course.add_video.save');
@@ -104,10 +102,6 @@ Route::middleware('auth')->group(function () {
                 Route::post('module/{courseModule}/videos', [ModuleVideoController::class, 'store'])->name('videos.store');
                 Route::post('module/{courseModule}/materials', [ModuleMaterialController::class, 'store'])->name('materials.store');
                 Route::post('module/{courseModule}/tasks', [ModuleTaskController::class, 'store'])->name('tasks.store');
-                Route::post('course/{course}/modules/reorder', [CourseModuleController::class, 'reorder'])->name('modules.reorder');
-                Route::post('module/{courseModule}/videos/reorder', [ModuleVideoController::class, 'reorder'])->name('videos.reorder');
-                Route::post('module/{courseModule}/materials/reorder', [ModuleMaterialController::class, 'reorder'])->name('materials.reorder');
-                Route::post('module/{courseModule}/tasks/reorder', [ModuleTaskController::class, 'reorder'])->name('tasks.reorder');
             });
 
           // Final Quiz Management Routes
@@ -147,6 +141,13 @@ Route::middleware('auth')->group(function () {
         Route::patch('talent-admin/request/{talentRequest}/status', [TalentAdminController::class, 'updateRequestStatus'])->name('talent_admin.update_request_status');
         Route::patch('talent-admin/talent/{talent}/toggle-status', [TalentAdminController::class, 'toggleTalentStatus'])->name('talent_admin.toggle_talent_status');
         Route::patch('talent-admin/recruiter/{recruiter}/toggle-status', [TalentAdminController::class, 'toggleRecruiterStatus'])->name('talent_admin.toggle_recruiter_status');
+
+        // New Analytics Routes for Phase 1
+        Route::get('talent-admin/analytics', [TalentAdminController::class, 'analytics'])->name('talent_admin.analytics');
+        Route::get('talent-admin/api/conversion-analytics', [TalentAdminController::class, 'getConversionAnalytics'])->name('talent_admin.api.conversion_analytics');
+        Route::get('talent-admin/api/conversion-candidates', [TalentAdminController::class, 'getConversionCandidates'])->name('talent_admin.api.conversion_candidates');
+        Route::get('talent-admin/api/skill-analytics', [TalentAdminController::class, 'getSkillAnalytics'])->name('talent_admin.api.skill_analytics');
+        Route::get('talent-admin/api/market-demand', [TalentAdminController::class, 'getMarketDemand'])->name('talent_admin.api.market_demand');
     });
 
     // Talent Routes

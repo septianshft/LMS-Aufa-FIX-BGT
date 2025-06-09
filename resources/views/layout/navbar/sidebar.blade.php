@@ -46,6 +46,13 @@
                  <span>Dashboard</span></a>
          </li>
 
+         <!-- Nav Item - Analytics (Phase 1 Enhancement) -->
+         <li class="nav-item  {{ Request::is('talent-admin/analytics') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent_admin.analytics') }}">
+                 <i class="fas fa-fw fa-chart-bar"></i>
+                 <span>Analytics</span></a>
+         </li>
+
          <!-- Nav Item - Manage Requests -->
          <li class="nav-item  {{ Request::is('talent-admin/manage-requests*') ? 'active' : '' }} animate-btn">
              <a class="nav-link" href="{{ route('talent_admin.manage_requests') }}">
@@ -83,6 +90,13 @@
              <a class="nav-link" href="{{ route('recruiter.dashboard') }}">
                  <i class="fas fa-fw fa-search"></i>
                  <span>Recruiter Dashboard</span></a>
+         </li>
+
+         <!-- Nav Item - My Requests -->
+         <li class="nav-item  {{ Request::is('recruiter/my-requests*') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('recruiter.my_requests') }}">
+                 <i class="fas fa-fw fa-clipboard-list"></i>
+                 <span>My Requests</span></a>
          </li>
      @endif
 

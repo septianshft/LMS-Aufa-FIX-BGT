@@ -70,14 +70,16 @@ class QuizAttemptController extends Controller
             $user = auth()->user();
             $course = $quiz->course;
 
-            // Add skill from course completion
+            // Add skill from course completion with enhanced analytics
             $user->addSkillFromCourse($course);
 
-            // If user is not yet available for scouting but has skills, suggest opting in
-            if (!$user->available_for_scouting && $user->talent_skills && count($user->talent_skills) > 0) {
-                session()->flash('talent_suggestion', [
-                    'message' => 'Congratulations! You\'ve gained new skills. Consider making yourself available for talent scouting to connect with recruiters.',
-                    'action_url' => route('profile.edit') . '#talent-settings'
+            // Enhanced talent suggestion is now handled automatically in addSkillFromCourse()
+            // Check for certificate eligibility suggestion
+            if ($progress->progress == 100 && !$user->available_for_scouting) {
+                session()->flash('certificate_talent_suggestion', [
+                    'message' => 'Congratulations on completing the course! You\'ve earned a certificate and valuable skills. Join our talent platform to showcase your achievements to employers.',
+                    'action_url' => route('profile.edit') . '#talent-settings',
+                    'certificate_earned' => true
                 ]);
             }
         }

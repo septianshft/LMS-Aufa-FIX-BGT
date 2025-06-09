@@ -6,18 +6,35 @@ use App\Models\Talent;
 use App\Models\Recruiter;
 use App\Models\TalentRequest;
 use App\Models\User;
+use App\Services\AdvancedSkillAnalyticsService;
+use App\Services\SmartConversionTrackingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
 class TalentAdminController extends Controller
 {
+    protected $skillAnalytics;
+    protected $conversionTracking;
+
+    public function __construct(
+        AdvancedSkillAnalyticsService $skillAnalytics,
+        SmartConversionTrackingService $conversionTracking
+    ) {
+        $this->skillAnalytics = $skillAnalytics;
+        $this->conversionTracking = $conversionTracking;
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
         $title = 'Talent Admin Dashboard';
         $roles = 'Talent Admin';
         $assignedKelas = [];
+
+        // Enhanced analytics data
+        $skillAnalytics = $this->skillAnalytics->getSkillAnalytics();
+        $conversionAnalytics = $this->conversionTracking->getConversionAnalytics();
 
         // Use the new unified user system instead of separate Talent/Recruiter models
         // Count users with talent status
@@ -69,7 +86,7 @@ class TalentAdminController extends Controller
             'activeTalents', 'totalTalents', 'availableTalents', 'activeRecruiters', 'totalRecruiters',
             'totalRequests', 'pendingRequests', 'approvedRequests', 'rejectedRequests',
             'recentTalents', 'recentRecruiters', 'latestTalents', 'latestRecruiters',
-            'latestRequests'
+            'latestRequests', 'skillAnalytics', 'conversionAnalytics'
         ));
     }
 
@@ -204,6 +221,51 @@ class TalentAdminController extends Controller
             'success' => true,
             'message' => $statusMessage,
             'status' => $request->status
+        ]);
+    }
+
+    /**
+     * Display advanced analytics dashboard
+     */
+    public function analytics()
+    {
+        $user = Auth::user();
+        $title = 'Advanced Analytics';
+        $roles = 'Talent Admin';
+        $assignedKelas = [];
+
+        // Get comprehensive analytics
+        $skillAnalytics = $this->skillAnalytics->getSkillAnalytics();
+        $conversionAnalytics = $this->conversionTracking->getConversionAnalytics();
+
+        // Trigger smart notifications for conversion-ready users
+        $notificationsSent = $this->conversionTracking->triggerSmartNotifications();
+
+        return view('talent_admin.analytics', compact(
+            'user', 'title', 'roles', 'assignedKelas',
+            'skillAnalytics', 'conversionAnalytics', 'notificationsSent'
+        ));
+    }
+
+    /**
+     * Get conversion candidates API endpoint
+     */
+    public function getConversionCandidates()
+    {
+        $analytics = $this->conversionTracking->getConversionAnalytics();
+        return response()->json($analytics['top_conversion_candidates']);
+    }
+
+    /**
+     * Get skill trends API endpoint
+     */
+    public function getSkillTrends()
+    {
+        $analytics = $this->skillAnalytics->getSkillAnalytics();
+        return response()->json([
+            'progression_trends' => $analytics['skill_progression_trends'],
+            'category_distribution' => $analytics['skill_categories'],
+            'market_demand' => $analytics['market_demand_analysis']
         ]);
     }
 }

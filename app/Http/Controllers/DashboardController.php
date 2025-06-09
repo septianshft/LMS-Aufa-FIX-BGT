@@ -84,6 +84,10 @@ class DashboardController extends Controller
         $categories = Category::count();
         $transactions = SubscribeTransaction::count();
 
-        return view('dashboard', compact('title', 'roles', 'assignedKelas', 'categories', 'courses', 'transactions', 'trainees', 'trainers'));
+        // Rename variables to match dashboard.blade.php expectations
+        $students = $trainees;
+        $teachers = $trainers;
+
+        return view('dashboard', compact('title', 'roles', 'assignedKelas', 'categories', 'courses', 'transactions', 'students', 'teachers'));
     }
 }
