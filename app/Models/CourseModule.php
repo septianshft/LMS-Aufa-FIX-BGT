@@ -15,6 +15,11 @@ class CourseModule extends Model
         'order',
     ];
 
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
+
     public function materials()
     {
         return $this->hasMany(CourseMaterial::class);
