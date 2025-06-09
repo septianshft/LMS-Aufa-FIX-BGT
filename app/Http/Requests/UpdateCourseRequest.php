@@ -31,7 +31,8 @@ class UpdateCourseRequest extends FormRequest
             'course_level_id' => 'required|exists:course_levels,id',
             'thumbnail' => 'sometimes|string|max:255',
             'price' => 'required|numeric|min:0',
-            'course_keypoints.*' => 'required|string|max:255',
+            'trainer_id' => 'nullable|exists:trainers,id',
+            'course_keypoints.*' => 'nullable|string|max:255',
         ];
     }
 }

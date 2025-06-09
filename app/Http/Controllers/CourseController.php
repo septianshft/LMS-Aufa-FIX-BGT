@@ -131,13 +131,21 @@ class CourseController extends Controller
         $categories = Category::all();
         $modes = CourseMode::all();
         $levels = CourseLevel::all();
+        $trainers = [];
+        if (Auth::user()->hasRole('admin')) {
+            $trainers = Trainer::with('user')->get();
+        }
 
-        return view('admin.courses.create', compact('categories', 'modes', 'levels'));
+        return view('admin.courses.create', compact('categories', 'modes', 'levels', 'trainers'));
     }
 
     public function store(StoreCourseRequest $request)
     {
-        $trainer = Trainer::where('user_id', Auth::id())->first();
+        if (Auth::user()->hasRole('trainer')) {
+            $trainer = Trainer::where('user_id', Auth::id())->first();
+        } else {
+            $trainer = Trainer::find($request->input('trainer_id'));
+        }
 
         if (!$trainer) {
             return redirect()->route('admin.courses.index')
@@ -205,14 +213,23 @@ class CourseController extends Controller
         $categories = Category::all();
         $modes = CourseMode::all();
         $levels = CourseLevel::all();
-
-        return view('admin.courses.edit', compact('course', 'categories', 'modes', 'levels'));
+        $trainers = [];
+        if ($user->hasRole('admin')) {
+            $trainers = Trainer::with('user')->get();
+        }
+        return view('admin.courses.edit', compact('course', 'categories', 'modes', 'levels', 'trainers'));
     }
 
     public function update(UpdateCourseRequest $request, Course $course)
     {
         DB::transaction(function () use ($request, $course) {
             $validated = $request->validated();
+
+            if (Auth::user()->hasRole('admin') && $request->filled('trainer_id')) {
+                $course->trainer_id = $request->input('trainer_id');
+            } elseif (Auth::user()->hasRole('trainer')) {
+                $course->trainer_id = Auth::user()->trainer->id ?? $course->trainer_id;
+            }
 
             if ($request->hasFile('thumbnail')) {
                 $validated['thumbnail'] = $request->file('thumbnail')->store('thumbnails', 'public');
@@ -222,7 +239,10 @@ class CourseController extends Controller
             $count = Course::where('slug', 'like', "{$slug}%")->where('id', '!=', $course->id)->count();
             $slug = $count ? "{$slug}-{$count}" : $slug;
 
-            $validatedData = array_merge($validated, ['slug' => $slug]);
+            $validatedData = array_merge($validated, [
+                'slug' => $slug,
+                'trainer_id' => $course->trainer_id,
+            ]);
 
             $course->update($validatedData);
 

@@ -27,6 +27,21 @@
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
 
+                    @role('admin')
+                    <div class="mt-4">
+                        <x-input-label for="trainer_id" :value="__('Trainer')" />
+                        <select name="trainer_id" id="trainer_id" class="py-3 rounded-lg pl-3 w-full border border-slate-300">
+                            <option value="">Choose trainer</option>
+                            @foreach($trainers as $trainer)
+                                <option value="{{ $trainer->id }}" {{ $course->trainer_id == $trainer->id ? 'selected' : '' }}>{{ $trainer->user->name }}</option>
+                            @endforeach
+                        </select>
+                        <x-input-error :messages="$errors->get('trainer_id')" class="mt-2" />
+                    </div>
+                    @else
+                        <input type="hidden" name="trainer_id" value="{{ Auth::user()->trainer->id ?? '' }}">
+                    @endrole
+
                     <div class="mt-4">
                         <x-input-label for="path_trailer" :value="__('Path Trailer')" />
                         <x-text-input id="path_trailer" class="block mt-1 w-full" type="text" name="path_trailer" :value="$course->path_trailer" required />
