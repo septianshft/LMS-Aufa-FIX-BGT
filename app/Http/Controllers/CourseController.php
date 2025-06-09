@@ -176,11 +176,22 @@ class CourseController extends Controller
     }
 
     public function show(Course $course)
-    {
-        $course->load(['category', 'trainer.user', 'trainees', 'course_videos', 'course_keypoints', 'modules']);
+{
+    $course->load([
+        'category',
+        'trainer.user',
+        'trainees',
+        'course_videos',
+        'course_keypoints',
+        'modules',
+        'modules.videos',
+        'modules.materials',
+        'modules.tasks',
+    ]);
 
-        return view('admin.courses.show', compact('course'));
-    }
+    return view('admin.courses.show', compact('course'));
+}
+
 
     public function edit(Course $course)
     {
