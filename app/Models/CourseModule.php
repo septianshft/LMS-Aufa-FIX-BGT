@@ -26,16 +26,16 @@ class CourseModule extends Model
 
     public function videos()
     {
-        return $this->hasMany(CourseVideo::class);
+        return $this->hasMany(CourseVideo::class)->orderBy('order');
     }
 
     public function materials()
     {
-        return $this->hasMany(CourseMaterial::class);
+        return $this->hasMany(CourseMaterial::class)->orderBy('order');
     }
 
     public function tasks()
     {
-        return $this->hasMany(ModuleTask::class);
+        return $this->hasMany(ModuleTask::class)->orderBy('order');
     }
 }

@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCourseMaterialRequest;
 use App\Models\CourseModule;
 use App\Models\CourseMaterial;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class ModuleMaterialController extends Controller
 {
@@ -17,8 +18,20 @@ class ModuleMaterialController extends Controller
             $validated['file_path'] = $path;
             $validated['file_type'] = $request->file('file')->getClientOriginalExtension();
             $validated['course_module_id'] = $courseModule->id;
+            $validated['order'] = $validated['order'] ?? ($courseModule->materials()->max('order') + 1);
             CourseMaterial::create($validated);
         });
         return back()->with('success', 'Material uploaded successfully.');
+    }
+
+    public function reorder(Request $request, CourseModule $courseModule)
+    {
+        $request->validate(['materials' => 'required|array']);
+        DB::transaction(function () use ($request) {
+            foreach ($request->materials as $index => $id) {
+                CourseMaterial::where('id', $id)->update(['order' => $index + 1]);
+            }
+        });
+        return response()->json(['status' => 'ok']);
     }
 }
