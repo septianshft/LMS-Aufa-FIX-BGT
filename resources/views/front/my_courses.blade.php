@@ -1,23 +1,15 @@
 <!doctype html>
 <html>
 <head>
-    @include('layouts.seo')
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{ asset('css/output.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <style>
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="{{asset('css//output.css')}}" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/flickity@2/dist/flickity.min.css">
 </head>
 <body class="text-black font-poppins pt-10 pb-10 bg-gray-50">
     <div class="max-w-[1200px] mx-auto">
-<<<<<<< HEAD
         <!-- Navbar -->
         <nav class="flex justify-between items-center py-6 px-[50px] bg-white shadow rounded-xl mb-6">
             <div class="flex items-center gap-3">
@@ -56,9 +48,6 @@
                 <a href="{{ route('login') }}" class="font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] text-white">Login In</a>
             </div>
             @endguest
-=======
-@include('front.partials.nav')
->>>>>>> 1913d6fb1846437d2b0fd0b7b471ad2a1f6b6fd3
         </nav>
 
         <!-- Judul -->
@@ -83,8 +72,8 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                            <a href="{{ route('courses.show', $course->id) }}" class="inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">
-                                Lihat Detail
+                            <a href="{{ route('front.details', $course->slug) }}" class="inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">
+                                Mulai Belajar
                             </a>
                         </div>
                     </div>

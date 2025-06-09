@@ -9,6 +9,7 @@ use App\Models\Course;
 use App\Models\Trainer;
 use App\Models\CourseMode;
 use App\Models\CourseLevel;
+use App\Models\SubscribeTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -74,6 +75,38 @@ class CourseController extends Controller
         })->with(['category', 'trainer.user', 'mode', 'level'])->get();
 
         return view('front.my_courses', compact('courses'));
+    }
+
+    /**
+     * Join a free course and add it to the trainee's course list
+     */
+    public function join(Course $course)
+    {
+        $user = Auth::user();
+
+        if ($course->price > 0) {
+            return redirect()->route('front.pricing', $course->slug);
+        }
+
+        $existing = SubscribeTransaction::where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->where('is_paid', true)
+            ->first();
+
+        if (!$existing) {
+            SubscribeTransaction::create([
+                'user_id' => $user->id,
+                'course_id' => $course->id,
+                'total_amount' => 0,
+                'is_paid' => true,
+                'proof' => 'free',
+                'subscription_start_date' => now(),
+            ]);
+        }
+
+        $user->courses()->syncWithoutDetaching($course->id);
+
+        return redirect()->route('courses.my')->with('success', 'Course added to your list.');
     }
 
     // ✅ Untuk halaman admin (manage course)
@@ -143,12 +176,27 @@ class CourseController extends Controller
     }
 
     public function show(Course $course)
-    {
-        return view('admin.courses.show', compact('course'));
-    }
+{
+    $course->load([
+        'category',
+        'trainer.user',
+        'trainees',
+        'course_videos',
+        'course_keypoints',
+        'modules',
+        'modules.videos',
+        'modules.materials',
+        'modules.tasks',
+    ]);
+
+    return view('admin.courses.show', compact('course'));
+}
+
 
     public function edit(Course $course)
     {
+        $course->load(['category', 'trainer.user', 'trainees', 'course_videos', 'course_keypoints', 'modules']);
+
         $user = Auth::user();
         if ($user->hasRole('trainer') && $course->trainer->user_id !== $user->id) {
             abort(403);

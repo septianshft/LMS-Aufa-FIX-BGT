@@ -50,6 +50,7 @@
                     <a href="{{ route('courses.my') }}" class="block px-4 py-2 hover:bg-gray-100">My Course</a>
                     <a href="{{ route('cart.index') }}" class="block px-4 py-2 hover:bg-gray-100">My Cart</a>
                     <a href="{{ route('dashboard') }}" class="block px-4 py-2 hover:bg-gray-100">Dashboard</a>
+                    <a href="{{ route('logout') }}" class="block px-4 py-2 hover:bg-gray-100">Logout</a>
                 </div>
             </div>
             @endauth

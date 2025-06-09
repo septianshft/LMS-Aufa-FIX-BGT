@@ -1,19 +1,12 @@
 <!doctype html>
 <html>
 <head>
-    @include('layouts.seo')
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{ asset('css/output.css') }}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <style>
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="{{asset('css//output.css')}}" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/flickity@2/dist/flickity.min.css">
 </head>
 <body class="text-black font-poppins pt-10 pb-10 bg-gray-50">
     <div class="max-w-[1200px] mx-auto">
@@ -97,6 +90,7 @@
                             <div>
                                 <h2 class="text-xl font-semibold line-clamp-2">{{ $course->name }}</h2>
                                 <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
+                                <p class="text-sm font-semibold">{{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}</p>
                                 <div class="flex flex-wrap items-center text-xs text-gray-600 gap-2 my-2">
                                     <span class="bg-gray-100 px-2 py-1 rounded-full">Level: {{ $course->level->name ?? '-' }}</span>
                                     <span class="bg-gray-100 px-2 py-1 rounded-full">Mode: {{ $course->mode->name ?? '-' }}</span>
