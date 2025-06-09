@@ -177,6 +177,7 @@ class CourseController extends Controller
 
     public function show(Course $course)
     {
+        $course->load(['modules.videos', 'modules.materials', 'modules.tasks', 'course_videos']);
         return view('admin.courses.show', compact('course'));
     }
 
