@@ -1,18 +1,12 @@
 <!doctype html>
 <html>
 <head>
-    @include('layouts.seo')
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="{{asset('css//output.css')}}" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="{{asset('css//output.css')}}" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <!-- CSS -->
     <link rel="stylesheet" href="https://unpkg.com/flickity@2/dist/flickity.min.css">
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"
-    />
 </head>
 <body class="text-black font-poppins pt-10 pb-[50px]">
     <div style="background-image: url('{{ asset('assets/background/Hero-Banner.png') }}');" id="hero-section"
@@ -80,119 +74,125 @@
         <div class="max-w-[1100px] w-full mx-auto flex flex-col gap-3">
             <h1 class="title font-extrabold text-[30px] leading-[45px]">{{$course->name}}</h1>
             <p class="font-semibold text-lg">{{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}</p>
-            @php
-                $hasJoined = auth()->check() && auth()->user()->hasActiveSubscription($course);
-            @endphp
-            @unless($hasJoined)
-                <form action="{{ route('cart.store', $course->slug) }}" method="POST" class="my-2">
-                    @csrf
-                    <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Add to Cart</button>
-                </form>
-                @auth
-                    @if($course->price > 0)
-                        <a href="{{ route('front.pricing', $course->slug) }}" class="px-4 py-2 bg-[#FF6129] text-white rounded inline-block mb-2">Bergabung Sekarang</a>
-                    @else
-                        <form action="{{ route('courses.join', $course->slug) }}" method="POST" class="mb-2">
-                            @csrf
-                            <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Bergabung Sekarang</button>
-                        </form>
-                    @endif
-                @endauth
-            @endunless
-            <div class="flex items-center gap-5">
-                <div class="flex items-center gap-[6px]">
-                    <div>
-                        <img src="{{asset('assets/icon/crown.svg')}}" alt="icon">
-                    </div>
-                    <p class="font-semibold">{{$course->category->name}}</p>
-                </div>
-                <div class="flex items-center gap-[6px]">
-                    <div>
-                        <img src="{{asset('assets/icon/award-outline.svg')}}" alt="icon">
-                    </div>
-                    <p class="font-semibold">Certificate</p>
-                </div>
-                <div class="flex items-center gap-[6px]">
-                    <div>
-                        <img src="{{asset('assets/icon/profile-2user.svg')}}" alt="icon">
-                    </div>
-                    <p class="font-semibold">{{$course->trainees->count()}} Trainees</p>
-                </div>
-                <div class="flex items-center gap-[6px]">
+@php
+    $hasJoined = auth()->check() && auth()->user()->hasActiveSubscription($course);
+    $trainerUser = optional($course->trainer?->user);
+@endphp
+
+<section id="Video-Resources" class="flex flex-col mt-5">
+    <div class="max-w-[1100px] w-full mx-auto flex flex-col gap-3">
+        <h1 class="title font-extrabold text-[30px] leading-[45px]">{{ $course->name }}</h1>
+        <p class="font-semibold text-lg">
+            {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}
+        </p>
+
+        @unless($hasJoined)
+            <form action="{{ route('cart.store', $course->slug) }}" method="POST" class="my-2">
+                @csrf
+                <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Add to Cart</button>
+            </form>
+            @auth
+                @if($course->price > 0)
+                    <a href="{{ route('front.pricing', $course->slug) }}" class="px-4 py-2 bg-[#FF6129] text-white rounded inline-block mb-2">Bergabung Sekarang</a>
+                @else
+                    <form action="{{ route('courses.join', $course->slug) }}" method="POST" class="mb-2">
+                        @csrf
+                        <button class="px-4 py-2 bg-[#FF6129] text-white rounded">Bergabung Sekarang</button>
+                    </form>
+                @endif
+            @endauth
+        @endunless
+
+        <div class="flex items-center gap-5">
+            <div class="flex items-center gap-[6px]">
+                <img src="{{ asset('assets/icon/crown.svg') }}" alt="icon">
+                <p class="font-semibold">{{ $course->category->name }}</p>
+            </div>
+            <div class="flex items-center gap-[6px]">
+                <img src="{{ asset('assets/icon/award-outline.svg') }}" alt="icon">
+                <p class="font-semibold">Certificate</p>
+            </div>
+            <div class="flex items-center gap-[6px]">
+                <img src="{{ asset('assets/icon/profile-2user.svg') }}" alt="icon">
+                <p class="font-semibold">{{ $course->trainees->count() }} Trainees</p>
             </div>
         </div>
-                <!-- TAB MENU -->
-            <div class="max-w-[1100px] w-full mx-auto mt-10 tablink-container flex gap-3 px-4 sm:p-0 no-scrollbar overflow-x-scroll">
-                <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('About', this)" id="defaultOpen">About</div>
-                <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('Rewards', this)">Rewards</div>
-                <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('Quiz', this)">Quiz</div>
-            </div>
+    </div>
 
-            <!-- TAB CONTENT SECTION -->
-                <div class="w-full bg-[#F5F8FA] py-[50px]">
-                    <div class="max-w-[1100px] w-full mx-auto flex flex-wrap lg:flex-nowrap gap-[50px] px-4 sm:px-0">
-                    
-                    <!-- KONTEN TAB -->
-                    <div class="tabs-container w-full max-w-[700px] flex flex-col z-0 min-w-0">
-                        <!-- About -->
-                        <div id="About" class="tabcontent hidden">
-                            <div class="flex flex-col gap-5">
-                                <h3 class="font-bold text-2xl">Grow Your Career</h3>
-                                <p class="font-medium leading-[30px]">
-                                    {{ $course->about }}
-                                </p>
-                                <div class="grid grid-cols-2 gap-x-[30px] gap-y-5">
-                                    @forelse($course->course_keypoints as $keypoint)
-                                    <div class="benefit-card flex items-center gap-3">
-                                        <div class="w-6 h-6 flex shrink-0">
-                                            <img src="{{ asset('assets/icon/tick-circle.svg') }}" alt="icon">
-                                        </div>
-                                        <p class="font-medium leading-[30px]">{{ $keypoint->name }}</p>
-                                    </div>
-                                    @empty
-                                    @endforelse
+    <!-- TAB MENU -->
+    <div class="max-w-[1100px] w-full mx-auto mt-10 tablink-container flex gap-3 px-4 sm:p-0 no-scrollbar overflow-x-scroll">
+        <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('About', this)" id="defaultOpen">About</div>
+        <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('Rewards', this)">Rewards</div>
+        <div class="tablink font-semibold text-lg h-[47px] transition-all duration-300 cursor-pointer hover:text-[#FF6129]" onclick="openPage('Quiz', this)">Quiz</div>
+    </div>
+
+    <!-- TAB CONTENT SECTION -->
+    <div class="w-full bg-[#F5F8FA] py-[50px]">
+        <div class="max-w-[1100px] w-full mx-auto flex flex-wrap lg:flex-nowrap gap-[50px] px-4 sm:px-0">
+        
+            <!-- TAB CONTENT -->
+            <div class="tabs-container w-full max-w-[700px] flex flex-col z-0 min-w-0">
+                <!-- About -->
+                <div id="About" class="tabcontent hidden">
+                    <div class="flex flex-col gap-5">
+                        <h3 class="font-bold text-2xl">Grow Your Career</h3>
+                        <p class="font-medium leading-[30px]">
+                            {{ $course->about }}
+                        </p>
+                        <div class="grid grid-cols-2 gap-x-[30px] gap-y-5">
+                            @forelse($course->course_keypoints as $keypoint)
+                                <div class="benefit-card flex items-center gap-3">
+                                    <img src="{{ asset('assets/icon/tick-circle.svg') }}" alt="icon" class="w-6 h-6">
+                                    <p class="font-medium leading-[30px]">{{ $keypoint->name }}</p>
                                 </div>
-                            </div>
-                        </div>
-
-                        <!-- Rewards -->
-                        <div id="Rewards" class="tabcontent hidden">
-                            <div class="flex flex-col gap-5">
-                                <h3 class="font-bold text-2xl">Rewards</h3>
-                                <p class="font-medium leading-[30px]">
-                                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Nesciunt eos et accusantium quia exercitationem reiciendis? Doloribus, voluptate natus voluptas deserunt aliquam nesciunt blanditiis ipsum porro hic! Iusto maxime ullam soluta.
-                                </p>
-                            </div>
-                        </div>
-
-
-                    <!-- SIDEBAR TRAINER -->
-                    <div class="mentor-sidebar w-full max-w-[100px] flex flex-col gap-[30px] z-10">
-                        <div class="mentor-info bg-white flex flex-col gap-4 rounded-2xl p-5">
-                            <p class="font-bold text-lg text-left w-full">Trainer</p>
-                            @php
-                            $trainerUser = optional($course->trainer?->user);
-                        @endphp
-
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 flex shrink-0 rounded-full overflow-hidden">
-                                <img
-                                    src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}"
-                                    class="w-full h-full object-cover"
-                                    alt="avatar">
-                            </div>
-                            <div class="flex flex-col">
-                                <p class="font-semibold">{{ $trainerUser->name ?? 'Unknown Trainer' }}</p>
-                                <p class="text-[#6D7786]">{{ $trainerUser->pekerjaan ?? '-' }}</p>
-                            </div>
-                        </div>
+                            @empty
+                                <p class="text-gray-500">Belum ada poin kunci.</p>
+                            @endforelse
                         </div>
                     </div>
+                </div>
 
+                <!-- Rewards -->
+                <div id="Rewards" class="tabcontent hidden">
+                    <div class="flex flex-col gap-5">
+                        <h3 class="font-bold text-2xl">Rewards</h3>
+                        <p class="font-medium leading-[30px]">
+                            Lorem ipsum dolor sit amet consectetur adipisicing elit. Nesciunt eos et accusantium quia exercitationem reiciendis?
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Quiz -->
+                <div id="Quiz" class="tabcontent hidden">
+                    <div class="flex flex-col gap-5">
+                        <h3 class="font-bold text-2xl">Quiz</h3>
+                        <p class="font-medium leading-[30px]">Coming soon.</p>
+                    </div>
                 </div>
             </div>
 
-    </section>
+            <!-- SIDEBAR TRAINER -->
+            <div class="mentor-sidebar w-full max-w-[100px] flex flex-col gap-[30px] z-10">
+                <div class="mentor-info bg-white flex flex-col gap-4 rounded-2xl p-5">
+                    <p class="font-bold text-lg text-left w-full">Trainer</p>
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full overflow-hidden">
+                            <img
+                                src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}"
+                                class="w-full h-full object-cover"
+                                alt="avatar">
+                        </div>
+                        <div class="flex flex-col">
+                            <p class="font-semibold">{{ $trainerUser->name ?? 'Unknown Trainer' }}</p>
+                            <p class="text-[#6D7786]">{{ $trainerUser->pekerjaan ?? '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
     <section id="FAQ" class="max-w-[1200px] mx-auto flex flex-col py-[70px] px-[100px]">
         <div class="flex justify-between items-center">
             <div class="flex flex-col gap-[30px]">
