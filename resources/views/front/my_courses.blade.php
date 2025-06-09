@@ -72,8 +72,8 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                            <a href="{{ route('courses.show', $course->id) }}" class="inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">
-                                Lihat Detail
+                            <a href="{{ route('front.details', $course->slug) }}" class="inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">
+                                Mulai Belajar
                             </a>
                         </div>
                     </div>
