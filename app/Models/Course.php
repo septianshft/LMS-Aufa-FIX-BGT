@@ -44,22 +44,17 @@ class Course extends Model
     }
 
     public function course_videos(){
-        return $this->hasMany(CourseVideo::class);
-    }
-
-    public function modules()
-    {
-        return $this->hasMany(CourseModule::class)->orderBy('order');
+        return $this->hasMany(CourseVideo::class)->orderBy('order');
     }
 
     public function course_keypoints(){
         return $this->hasMany(CourseKeypoint::class);
     }
 
-    // public function modules()
-    // {
-    //     return $this->hasMany(CourseModule::class);
-    // }
+    public function modules()
+    {
+        return $this->hasMany(CourseModule::class)->orderBy('order');
+    }
 
     // App\Models\Course.php
 

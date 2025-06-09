@@ -12,18 +12,17 @@
                 <form method="POST" action="{{ route('admin.curriculum.store', $course) }}" class="mb-4 flex gap-2">
                     @csrf
                     <input type="text" name="name" class="border rounded w-full" placeholder="Module name">
-                    <input type="number" name="order" class="border rounded w-24" placeholder="Order">
                     <button class="px-4 py-2 bg-indigo-700 text-white rounded">Add Module</button>
                 </form>
-
+                <div id="modules-list">
                 @foreach($modules as $module)
-                    <div class="border p-4 rounded mb-4">
+                    <div class="border p-4 rounded mb-4 module-item" data-id="{{ $module->id }}">
+                        <span class="handle cursor-move">&#9776;</span>
                         <div class="flex justify-between items-center mb-2">
                             <form method="POST" action="{{ route('admin.curriculum.update', $module) }}" class="flex flex-1 gap-2">
                                 @csrf
                                 @method('PUT')
                                 <input type="text" name="name" value="{{ $module->name }}" class="border rounded w-full">
-                                <input type="number" name="order" value="{{ $module->order }}" class="border rounded w-24">
                                 <button class="px-3 py-1 bg-indigo-700 text-white rounded">Save</button>
                             </form>
                             <form method="POST" action="{{ route('admin.curriculum.destroy', $module) }}">
@@ -54,34 +53,108 @@
                                 <input type="hidden" name="course_module_id" value="{{ $module->id }}">
                                 <input type="text" name="name" placeholder="Task name" class="border rounded w-full">
                                 <input type="text" name="description" placeholder="Description" class="border rounded w-full">
-                                <input type="number" name="order" placeholder="Order" class="border rounded w-24">
                                 <button class="px-3 py-1 bg-green-700 text-white rounded">Add Task</button>
                             </form>
 
                             <div class="mt-2">
                                 <h4 class="font-semibold">Videos</h4>
-                                <ul class="list-disc list-inside">
+                                <ul class="list-disc list-inside sortable-videos" data-module="{{ $module->id }}">
                                     @foreach($module->videos as $v)
-                                        <li>{{ $v->name }}</li>
+                                        <li class="video-item" data-id="{{ $v->id }}">{{ $v->name }}</li>
                                     @endforeach
                                 </ul>
                                 <h4 class="font-semibold mt-2">Materials</h4>
-                                <ul class="list-disc list-inside">
+                                <ul class="list-disc list-inside sortable-materials" data-module="{{ $module->id }}">
                                     @foreach($module->materials as $m)
-                                        <li>{{ $m->name }}</li>
+                                        <li class="material-item" data-id="{{ $m->id }}">{{ $m->name }}</li>
                                     @endforeach
                                 </ul>
                                 <h4 class="font-semibold mt-2">Tasks</h4>
-                                <ul class="list-disc list-inside">
+                                <ul class="list-disc list-inside sortable-tasks" data-module="{{ $module->id }}">
                                     @foreach($module->tasks as $t)
-                                        <li>{{ $t->name }}</li>
+                                        <li class="task-item" data-id="{{ $t->id }}">{{ $t->name }}</li>
                                     @endforeach
                                 </ul>
                             </div>
                         </div>
                     </div>
                 @endforeach
+                </div>
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            new Sortable(document.getElementById('modules-list'), {
+                handle: '.handle',
+                animation: 150,
+                onEnd: () => {
+                    const ids = Array.from(document.querySelectorAll('.module-item')).map(el => el.dataset.id);
+                    fetch('{{ route('admin.curriculum.modules.reorder', $course) }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify({modules: ids})
+                    });
+                }
+            });
+
+            document.querySelectorAll('.sortable-videos').forEach(list => {
+                new Sortable(list, {
+                    animation: 150,
+                    onEnd: () => {
+                        const moduleId = list.dataset.module;
+                        const ids = Array.from(list.querySelectorAll('.video-item')).map(el => el.dataset.id);
+                        fetch(`/admin/curriculum/module/${moduleId}/videos/reorder`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({videos: ids})
+                        });
+                    }
+                });
+            });
+
+            document.querySelectorAll('.sortable-materials').forEach(list => {
+                new Sortable(list, {
+                    animation: 150,
+                    onEnd: () => {
+                        const moduleId = list.dataset.module;
+                        const ids = Array.from(list.querySelectorAll('.material-item')).map(el => el.dataset.id);
+                        fetch(`/admin/curriculum/module/${moduleId}/materials/reorder`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({materials: ids})
+                        });
+                    }
+                });
+            });
+
+            document.querySelectorAll('.sortable-tasks').forEach(list => {
+                new Sortable(list, {
+                    animation: 150,
+                    onEnd: () => {
+                        const moduleId = list.dataset.module;
+                        const ids = Array.from(list.querySelectorAll('.task-item')).map(el => el.dataset.id);
+                        fetch(`/admin/curriculum/module/${moduleId}/tasks/reorder`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({tasks: ids})
+                        });
+                    }
+                });
+            });
+        });
+    </script>
 </x-app-layout>

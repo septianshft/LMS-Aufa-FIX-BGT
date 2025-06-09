@@ -22,16 +22,19 @@ class StoreCourseRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
             'name' => 'required|string|max:255',
-            'path_trailer' => 'required|string|max:255',
-            'about' => 'required|string|max:255',
-            'category_id' => 'required|string|max:255',
+            'about' => 'required|string',
+            'slug' => 'nullable|string|unique:courses,slug',
+            'thumbnail' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
+            'price' => 'required|numeric',
+            'category_id' => 'required|exists:categories,id',
             'course_mode_id' => 'required|exists:course_modes,id',
             'course_level_id' => 'required|exists:course_levels,id',
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'price' => 'required|numeric|min:0',
-            'course_keypoints.*' => 'required|string|max:255',
+            'trainer_id' => 'nullable|exists:trainers,id',
+            'course_keypoints.*' => 'nullable|string|max:255',
+            'path_trailer' => 'required|string|max:255',
+
         ];
     }
+    
 }

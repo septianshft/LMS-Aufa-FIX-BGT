@@ -7,6 +7,7 @@ use App\Http\Requests\UpdateCourseModuleRequest;
 use App\Models\Course;
 use App\Models\CourseModule;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class CourseModuleController extends Controller
 {
@@ -40,5 +41,16 @@ class CourseModuleController extends Controller
         $course = $courseModule->course;
         $courseModule->delete();
         return redirect()->route('admin.curriculum.index', $course);
+    }
+
+    public function reorder(Request $request, Course $course)
+    {
+        $request->validate(['modules' => 'required|array']);
+        DB::transaction(function () use ($request) {
+            foreach ($request->modules as $index => $id) {
+                CourseModule::where('id', $id)->update(['order' => $index + 1]);
+            }
+        });
+        return response()->json(['status' => 'ok']);
     }
 }

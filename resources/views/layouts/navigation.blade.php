@@ -20,12 +20,7 @@
                     <x-nav-link :href="route('admin.courses.index')" :active="request()->routeIs('admin.courses.index')">
                         {{ __('Manage Courses') }}
                     </x-nav-link>
-                    <x-nav-link :href="route('admin.course_modules.index')" :active="request()->routeIs('admin.course_modules.index')">
-                        {{ __('Manage Modules') }}
-                    </x-nav-link>
-                    <x-nav-link :href="route('admin.tasks.index')" :active="request()->routeIs('admin.tasks.index')">
-                        {{ __('Manage Tasks') }}
-                    </x-nav-link>
+                    {{-- Module and Task management removed per request --}}
                     @endrole
 
                     @role('admin')
