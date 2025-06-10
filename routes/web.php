@@ -128,6 +128,8 @@ Route::middleware('auth')->group(function () {
           Route::get('courses/{course}/quiz/edit', [FinalQuizController::class, 'edit'])->name('course_quiz.edit');
           Route::put('courses/{course}/quiz', [FinalQuizController::class, 'update'])->name('course_quiz.update');
 
+          Route::get('courses/{course}/task-submissions', [TaskSubmissionManagementController::class, 'index'])->name('task_submissions.index');
+          Route::patch('task-submissions/{submission}', [TaskSubmissionManagementController::class, 'update'])->name('task_submissions.update');
 
         });
     });

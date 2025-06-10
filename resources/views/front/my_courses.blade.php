@@ -55,31 +55,35 @@
 
         <!-- Konten -->
         <div class="px-[50px]" id="courseContent">
-            <div class="grid grid-cols-1 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($courses as $course)
-                <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col md:flex-row transition hover:shadow-lg hover:scale-[1.01]">
-                    <div class="w-full md:w-1/3 h-48 md:h-auto overflow-hidden">
-                        <img src="{{ $course->thumbnail ? Storage::url($course->thumbnail) : asset('assets/default-course.jpg') }}" 
-                            alt="{{ $course->name }}" class="w-full h-full object-cover">
-                    </div>
-                    <div class="p-4 flex flex-col justify-between md:w-2/3">
-                        <div>
-                            <h2 class="text-xl font-semibold line-clamp-2">{{ $course->name }}</h2>
-                            <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
-                            <div class="flex flex-wrap items-center text-xs text-gray-600 gap-2 my-2">
-                                <span class="bg-gray-100 px-2 py-1 rounded-full">Level: {{ $course->level->name ?? '-' }}</span>
-                                <span class="bg-gray-100 px-2 py-1 rounded-full">Mode: {{ $course->mode->name ?? '-' }}</span>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <a href="{{ route('front.details', $course->slug) }}" class="inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">
-                                Mulai Belajar
-                            </a>
-                        </div>
+                <div class="flex flex-col rounded-xl bg-white overflow-hidden transition-all hover:ring-2 hover:ring-[#FF6129]">
+                    <a href="{{ route('front.details', $course->slug) }}" class="w-full h-48 overflow-hidden">
+                        <img src="{{ $course->thumbnail ? Storage::url($course->thumbnail) : asset('assets/default-course.jpg') }}" class="w-full h-full object-cover" alt="thumbnail">
+                    </a>
+                    <div class="p-4 flex flex-col gap-2">
+                        <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
+                        <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
+                        <p class="text-sm text-gray-600">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
+                        <a href="{{ route('front.details', $course->slug) }}" class="mt-2 inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">Mulai Belajar</a>
                     </div>
                 </div>
                 @endforeach
             </div>
+
+            @if(count($tasksToDo))
+            <div class="mt-10">
+                <h2 class="text-xl font-semibold mb-4">Pending Tasks</h2>
+                <ul class="space-y-2">
+                    @foreach($tasksToDo as $task)
+                        <li class="bg-white p-4 rounded shadow flex justify-between items-center">
+                            <span>{{ $task->module->course->name }} → {{ $task->name }}</span>
+                            <a href="{{ route('task.submit.create', $task) }}" class="text-blue-600">Submit</a>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
         </div>
     </div>
 

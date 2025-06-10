@@ -14,6 +14,7 @@ use App\Models\CourseMaterial;
 use App\Models\CourseVideo;
 use App\Models\CourseModule;
 use App\Models\SubscribeTransaction;
+use App\Models\CourseProgress;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -78,9 +79,31 @@ class CourseController extends Controller
 
         $courses = Course::whereHas('subscribeTransactions', function ($q) use ($user) {
             $q->where('user_id', $user->id)->where('is_paid', true);
-        })->with(['category', 'trainer.user', 'mode', 'level'])->get();
+        })->with(['category', 'trainer.user', 'mode', 'level', 'modules.tasks'])->get();
 
-        return view('front.my_courses', compact('courses'));
+        $tasksToDo = [];
+        foreach ($courses as $course) {
+            $progress = CourseProgress::firstOrCreate([
+                'user_id' => $user->id,
+                'course_id' => $course->id,
+            ], [
+                'completed_videos' => [],
+                'completed_materials' => [],
+                'completed_tasks' => [],
+                'progress' => 0,
+            ]);
+
+            $completed = $progress->completed_tasks ?? [];
+            foreach ($course->modules as $module) {
+                foreach ($module->tasks as $task) {
+                    if (!in_array($task->id, $completed)) {
+                        $tasksToDo[] = $task;
+                    }
+                }
+            }
+        }
+
+        return view('front.my_courses', compact('courses', 'tasksToDo'));
     }
 
     /**
