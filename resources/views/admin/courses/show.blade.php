@@ -87,9 +87,10 @@
                         <h3 class="text-indigo-950 text-xl font-bold">Modules</h3>
                         <p class="text-slate-500 text-sm">{{ $course->modules->count() }}</p>
                     </div>
-                    <a href="{{ route('admin.curriculum.index', $course) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
-                        Manage Curriculum
-                    </a>
+                    <div class="flex gap-2">
+                        <a href="{{ route('admin.curriculum.index', $course) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">Manage Curriculum</a>
+                        <a href="{{ route('admin.task_submissions.index', $course) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">Task Submissions</a>
+                    </div>
                 </div>
 
                 @foreach($course->modules as $module)

@@ -14,6 +14,11 @@ class TaskSubmission extends Model
         'user_id',
         'file_path',
         'answer',
+        'grade',
+    ];
+
+    protected $casts = [
+        'grade' => 'integer',
     ];
 
     public function task()
