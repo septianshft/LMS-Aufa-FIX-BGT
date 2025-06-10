@@ -77,7 +77,7 @@
 
                                 @foreach($module->materials as $material)
                                     <div class="flex items-center gap-2">
-                                        <a href="{{ Storage::url($material->file_path) }}" class="flex-1 group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full hover:bg-[#3525B3] transition-all">
+                                        <a href="{{ route('materials.download', $material) }}" class="flex-1 group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full hover:bg-[#3525B3] transition-all">
                                             <div class="text-black group-hover:text-white">📄</div>
                                             <p class="font-semibold group-hover:text-white">{{ $material->name }}</p>
                                         </a>
