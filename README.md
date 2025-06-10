@@ -64,6 +64,9 @@ cd WebPelatihan
 composer install
 npm install
 
+# Link storage for uploaded files (course materials, task submissions, etc.)
+php artisan storage:link
+
 # Environment setup
 cp .env.example .env
 php artisan key:generate
@@ -78,6 +81,9 @@ npm run build
 # Start development server
 php artisan serve
 ```
+
+Running `php artisan storage:link` ensures that uploaded files such as course
+materials and task submissions can be served properly.
 
 ## 👤 **Default Test Accounts**
 
