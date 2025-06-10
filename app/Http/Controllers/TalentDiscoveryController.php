@@ -25,7 +25,7 @@ class TalentDiscoveryController extends Controller
     }
 
     /**
-     * Search for talents based on filters
+     * Search for talents based on filters with pagination
      */
     public function search(Request $request): JsonResponse
     {
@@ -36,20 +36,23 @@ class TalentDiscoveryController extends Controller
             'min_experience' => 'nullable|integer|min:1',
             'specializations' => 'nullable|array',
             'specializations.*' => 'string',
+            'per_page' => 'nullable|integer|min:5|max:50'
         ]);
 
-        $talents = $this->matchingService->discoverTalents($filters);
+        $perPage = $filters['per_page'] ?? 12;
+        $talents = $this->matchingService->discoverTalents($filters, $perPage);
 
         return response()->json([
             'success' => true,
             'data' => $talents->values(),
             'total' => $talents->count(),
             'filters_applied' => $filters,
+            'per_page' => $perPage
         ]);
     }
 
     /**
-     * Find talents matching specific project requirements
+     * Find talents matching specific project requirements with optimization
      */
     public function match(Request $request): JsonResponse
     {
@@ -58,18 +61,21 @@ class TalentDiscoveryController extends Controller
             'skills' => 'nullable|array',
             'skills.*.name' => 'required|string',
             'skills.*.level' => 'nullable|string|in:beginner,intermediate,advanced',
+            'limit' => 'nullable|integer|min:5|max:50'
         ]);
 
         // Use structured skills if provided, otherwise parse requirements string
         $requirements = $validated['skills'] ?? $validated['requirements'];
+        $limit = $validated['limit'] ?? 20;
 
-        $matches = $this->matchingService->findMatchingTalents($requirements);
+        $matches = $this->matchingService->findMatchingTalents($requirements, $limit);
 
         return response()->json([
             'success' => true,
             'data' => $matches->values(),
             'total' => $matches->count(),
             'requirements' => $requirements,
+            'limit' => $limit
         ]);
     }    /**
      * Get talent recommendations

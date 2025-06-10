@@ -225,7 +225,7 @@
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-2 mb-2">
                                             <h3 class="font-semibold text-gray-800">{{ $job['project_title'] }}</h3>
-                                            <span class="px-2 py-1 text-xs rounded-full 
+                                            <span class="px-2 py-1 text-xs rounded-full
                                                 @if($job['status_color'] === 'green') bg-green-100 text-green-800
                                                 @elseif($job['status_color'] === 'blue') bg-blue-100 text-blue-800
                                                 @elseif($job['status_color'] === 'yellow') bg-yellow-100 text-yellow-800
@@ -497,7 +497,7 @@ function viewJobDetails(jobId) {
     .then(data => {
         if (data.success && data.requests) {
             const job = data.requests.find(r => r.id == jobId);
-            
+
             if (job) {
                 modalContent.innerHTML = `
                     <div class="space-y-6">
@@ -520,7 +520,7 @@ function viewJobDetails(jobId) {
                             <div class="bg-blue-50 p-4 rounded-xl">
                                 <h4 class="font-semibold text-blue-900 mb-3">📊 Progress & Timeline</h4>
                                 <div class="space-y-2">
-                                    <div><span class="font-medium">Status:</span> 
+                                    <div><span class="font-medium">Status:</span>
                                         <span class="px-2 py-1 text-xs rounded-full ${job.both_parties_accepted ? 'bg-green-100 text-green-800' : (job.talent_accepted ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">
                                             ${job.acceptance_status || 'In Progress'}
                                         </span>

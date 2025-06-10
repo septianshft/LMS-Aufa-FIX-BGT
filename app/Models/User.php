@@ -68,6 +68,27 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Get the avatar URL with fallback to default
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->avatar && file_exists(public_path($this->avatar))) {
+            return asset($this->avatar);
+        }
+
+        // Fallback to default avatar
+        return asset('images/default-avatar.svg');
+    }
+
+    /**
+     * Get the avatar path for storage with fallback
+     */
+    public function getAvatarPathAttribute(): string
+    {
+        return $this->avatar ?: 'images/default-avatar.svg';
+    }
+
     public function courses(){
         return $this->belongsToMany(Course::class, 'course_trainees');
     }

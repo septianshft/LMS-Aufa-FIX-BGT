@@ -35,17 +35,17 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'pekerjaan' => ['required', 'string', 'max:255'],
-            'avatar' => ['required', 'image', 'mimes:png,jpg,jpeg'],
+            'avatar' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'], // Made optional and added size limit
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'string', 'in:trainee,talent,recruiter'],
         ]);
 
-        // Proses upload file photo
+        // Proses upload file photo or use default
         if($request->hasFile('avatar')){
             $avatarPath = $request->file('avatar')->store('avatars','public');
         } else {
-            $avatarPath = 'public\images\default-avatar.png';
+            $avatarPath = 'images/default-avatar.svg'; // Provide a default avatar
         }
 
         $user = User::create([

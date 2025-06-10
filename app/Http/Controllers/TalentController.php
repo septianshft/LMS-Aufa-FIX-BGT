@@ -227,7 +227,7 @@ class TalentController extends Controller
         if ($user->name) $completeness += 10;
         if ($user->email) $completeness += 10;
         if ($user->pekerjaan) $completeness += 10;
-        if ($user->avatar) $completeness += 10;
+        if ($user->avatar && $user->avatar !== 'images/default-avatar.svg') $completeness += 10; // Only custom avatars count
 
         // Skills (30 points)
         if ($user->talent_skills && !empty(json_decode($user->talent_skills, true))) {
@@ -283,8 +283,8 @@ class TalentController extends Controller
                     'is_in_progress' => $request->talent_accepted && !$request->both_parties_accepted,
                     'formatted_status' => $request->getAcceptanceStatus(),
                     'status_color' => $this->getStatusColor($request),
-                    'duration_worked' => $request->talent_accepted_at 
-                        ? ($request->workflow_completed_at 
+                    'duration_worked' => $request->talent_accepted_at
+                        ? ($request->workflow_completed_at
                             ? $request->talent_accepted_at->diffInDays($request->workflow_completed_at) . ' days'
                             : $request->talent_accepted_at->diffInDays(now()) . ' days (ongoing)')
                         : 'Not started'
@@ -390,7 +390,7 @@ class TalentController extends Controller
     }
 
     /**
-     * Get talent's pending requests
+     * Get talent's pending requests with optimization
      */
     public function getMyRequests()
     {
@@ -401,6 +401,7 @@ class TalentController extends Controller
                 $query->where('id', $user->id);
             })
             ->orderBy('created_at', 'desc')
+            ->take(50) // Limit results for better performance
             ->get()
             ->map(function($request) {
                 return [

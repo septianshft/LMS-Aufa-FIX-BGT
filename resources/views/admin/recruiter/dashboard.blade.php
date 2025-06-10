@@ -128,15 +128,9 @@
                         <div class="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow">
                             <!-- Profile -->
                             <div class="text-center mb-4">
-                                @if($request->talent->user->avatar)
-                                    <img class="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
-                                         src="{{ asset('storage/' . $request->talent->user->avatar) }}"
-                                         alt="{{ $request->talent->user->name }}">
-                                @else
-                                    <div class="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                                        <i class="fas fa-user text-white text-xl"></i>
-                                    </div>
-                                @endif
+                                <img class="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
+                                     src="{{ $request->talent->user->avatar_url }}"
+                                     alt="{{ $request->talent->user->name }}">
 
                                 <h3 class="font-bold text-lg text-gray-900">{{ $request->talent->user->name }}</h3>
                                 @if($request->talent->user->pekerjaan)
@@ -231,9 +225,11 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <select class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500">
                     <option value="">All Performance Levels</option>
-                    <option value="5">⭐⭐⭐⭐⭐ Elite (5★)</option>
-                    <option value="4">⭐⭐⭐⭐ High (4★)</option>
-                    <option value="3">⭐⭐⭐ Good (3★)</option>
+                    <option value="5">Elite Performance (95-100%)</option>
+                    <option value="4">High Performance (85-94%)</option>
+                    <option value="3">Good Performance (75-84%)</option>
+                    <option value="2">Average Performance (65-74%)</option>
+                    <option value="1">Below Average (50-64%)</option>
                 </select>
                 <select class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500">
                     <option value="">All Skill Levels</option>
@@ -286,15 +282,9 @@
 
                             <!-- Profile -->
                             <div class="text-center mb-4">
-                                @if($talent->user->avatar)
-                                    <img class="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
-                                         src="{{ asset('storage/' . $talent->user->avatar) }}"
-                                         alt="{{ $talent->user->name }}">
-                                @else
-                                    <div class="w-16 h-16 bg-emerald-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                                        <i class="fas fa-user text-white text-xl"></i>
-                                    </div>
-                                @endif
+                                <img class="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
+                                     src="{{ $talent->user->avatar_url }}"
+                                     alt="{{ $talent->user->name }}">
 
                                 <h3 class="font-bold text-lg text-gray-900">{{ $talent->user->name }}</h3>
                                 @if($talent->user->pekerjaan)
@@ -325,6 +315,33 @@
                                 </div>
                             </div>
 
+                            <!-- Availability Status -->
+                            <div class="mb-4 text-center">
+                                @if(isset($talent->availability_status))
+                                    @if($talent->availability_status['available'])
+                                        <div class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                                            Available Now
+                                        </div>
+                                    @else
+                                        <div class="inline-flex items-center px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-medium">
+                                            <div class="w-2 h-2 bg-orange-500 rounded-full mr-2"></div>
+                                            {{ $talent->availability_status['status'] }}
+                                        </div>
+                                        @if(isset($talent->availability_status['next_available_date']))
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                Available: {{ \Carbon\Carbon::parse($talent->availability_status['next_available_date'])->format('M d, Y') }}
+                                            </div>
+                                        @endif
+                                    @endif
+                                @else
+                                    <div class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
+                                        <div class="w-2 h-2 bg-gray-500 rounded-full mr-2"></div>
+                                        Status Unknown
+                                    </div>
+                                @endif
+                            </div>
+
                             <!-- Status -->
                             @php $existingRequest = $talent->talentRequests->first(); @endphp
                             @if($existingRequest)
@@ -343,10 +360,22 @@
                             <!-- Actions -->
                             <div class="space-y-2">
                                 @if(!$existingRequest || $existingRequest->status == 'rejected')
-                                    <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
-                                            class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
-                                        <i class="fas fa-handshake mr-2"></i>Request Talent
-                                    </button>
+                                    @if(isset($talent->availability_status) && $talent->availability_status['available'])
+                                        <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                                class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                                            <i class="fas fa-handshake mr-2"></i>Request Talent
+                                        </button>
+                                    @elseif(isset($talent->availability_status) && !$talent->availability_status['available'])
+                                        <button onclick="showAvailabilityInfo('{{ $talent->user->name }}', @json($talent->availability_status))"
+                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
+                                            <i class="fas fa-clock mr-2"></i>Check Availability
+                                        </button>
+                                    @else
+                                        <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                                class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                                            <i class="fas fa-handshake mr-2"></i>Request Talent
+                                        </button>
+                                    @endif
                                 @endif
                                 <div class="grid grid-cols-2 gap-2">
                                     <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}')"
@@ -495,9 +524,11 @@
                             </div>
 
                             <div>
-                                <label for="projectDuration" class="block text-sm font-semibold text-gray-700 mb-2">Project Duration</label>
+                                <label for="projectDuration" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Project Duration <span class="text-red-500">*</span>
+                                </label>
                                 <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                        id="projectDuration" name="project_duration">
+                                        id="projectDuration" name="project_duration" required>
                                     <option value="">Select duration</option>
                                     <option value="1-2 weeks">1-2 weeks</option>
                                     <option value="1 month">1 month</option>
@@ -506,6 +537,7 @@
                                     <option value="6+ months">6+ months</option>
                                     <option value="Ongoing">Ongoing</option>
                                 </select>
+                                <p class="text-xs text-gray-500 mt-1">Required for time-blocking to prevent overlapping projects</p>
                             </div>
 
                             <div>
@@ -592,6 +624,129 @@ function openRequestModal(talentId, talentName) {
     $('#talentRequestModal').modal('show');
 }
 
+function showAvailabilityInfo(talentName, availabilityStatus) {
+    let blockingProjectsHtml = '';
+    if (availabilityStatus.blocking_projects && availabilityStatus.blocking_projects.length > 0) {
+        blockingProjectsHtml = '<div class="mt-4"><h6 class="font-semibold text-gray-900 mb-2">Current Projects:</h6><ul class="space-y-2">';
+        availabilityStatus.blocking_projects.forEach(project => {
+            blockingProjectsHtml += `
+                <li class="bg-gray-50 p-3 rounded-lg">
+                    <div class="font-medium text-gray-900">${project.title}</div>
+                    <div class="text-sm text-gray-600">Company: ${project.company}</div>
+                    <div class="text-sm text-gray-600">Until: ${project.end_date}</div>
+                </li>`;
+        });
+        blockingProjectsHtml += '</ul></div>';
+    }
+
+    const availabilityDate = availabilityStatus.next_available_date ?
+        new Date(availabilityStatus.next_available_date).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        }) : 'Unknown';
+
+    const modalHtml = `
+        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-clock text-orange-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">${talentName} is Currently Busy</h3>
+                        <p class="text-gray-600 mt-2">${availabilityStatus.status}</p>
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="text-sm font-medium text-blue-800">Next Available:</div>
+                            <div class="text-lg font-bold text-blue-900">${availabilityDate}</div>
+                        </div>
+                    </div>
+
+                    ${blockingProjectsHtml}
+
+                    <div class="mt-6 space-y-3">
+                        <button onclick="openRequestModal('${currentRequestTalentId}', '${talentName}')"
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-calendar-plus mr-2"></i>Schedule Future Request
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()"
+                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function showTimeBlockingConflict(errorData) {
+    // Close the request modal first
+    $('#talentRequestModal').modal('hide');
+
+    let blockingProjectsHtml = '';
+    if (errorData.blocking_projects && errorData.blocking_projects.length > 0) {
+        blockingProjectsHtml = '<div class="mt-4"><h6 class="font-semibold text-gray-900 mb-3">Conflicting Projects:</h6><div class="space-y-2">';
+        errorData.blocking_projects.forEach(project => {
+            blockingProjectsHtml += `
+                <div class="bg-red-50 border border-red-200 p-3 rounded-lg">
+                    <div class="font-medium text-red-900">${project.title}</div>
+                    <div class="text-sm text-red-700">Company: ${project.company}</div>
+                    <div class="text-sm text-red-700">Until: ${project.end_date}</div>
+                </div>`;
+        });
+        blockingProjectsHtml += '</div></div>';
+    }
+
+    const nextAvailableDate = errorData.next_available_date ?
+        new Date(errorData.next_available_date).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'long', day: 'numeric'
+        }) : 'Unknown';
+
+    const modalHtml = `
+        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-calendar-times text-red-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Talent Not Available</h3>
+                        <p class="text-gray-600 mt-2">${errorData.message || 'This talent is currently committed to other projects.'}</p>
+                    </div>
+
+                    ${errorData.next_available_date ? `
+                        <div class="text-center mb-4">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="text-sm font-medium text-blue-800">Next Available:</div>
+                                <div class="text-lg font-bold text-blue-900">${nextAvailableDate}</div>
+                            </div>
+                        </div>
+                    ` : ''}
+
+                    ${blockingProjectsHtml}
+
+                    <div class="mt-6 space-y-3">
+                        <button onclick="openRequestModal('${currentRequestTalentId}', '${currentRequestTalentName}')"
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-calendar-plus mr-2"></i>Try Different Duration
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()"
+                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
 function contactTalent() {
     if (currentTalentEmail) {
         window.location.href = 'mailto:' + currentTalentEmail;
@@ -674,9 +829,9 @@ function viewScoutingReport(talentId, talentName) {
                     <div class="bg-blue-50 p-4 rounded-xl">
                         <h3 class="font-semibold text-blue-900 mb-3">Learning Performance</h3>
                         <div class="space-y-2">
-                            <div class="flex justify-between"><span>Velocity:</span><span class="font-semibold">⭐⭐⭐⭐</span></div>
-                            <div class="flex justify-between"><span>Consistency:</span><span class="font-semibold">⭐⭐⭐⭐⭐</span></div>
-                            <div class="flex justify-between"><span>Adaptability:</span><span class="font-semibold">⭐⭐⭐</span></div>
+                            <div class="flex justify-between"><span>Learning Velocity:</span><span class="font-semibold text-blue-600">High (87%)</span></div>
+                            <div class="flex justify-between"><span>Performance Consistency:</span><span class="font-semibold text-green-600">Excellent (94%)</span></div>
+                            <div class="flex justify-between"><span>Skill Adaptability:</span><span class="font-semibold text-orange-600">Good (78%)</span></div>
                         </div>
                     </div>
                     <div class="bg-green-50 p-4 rounded-xl">
@@ -1137,13 +1292,25 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw { status: response.status, data: data };
+            });
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            // Show success message with better styling
+            // Show success message with timeline info if available
+            let successMessage = 'Success! Your talent request has been submitted.';
+            if (data.project_timeline) {
+                successMessage += ` Project scheduled: ${data.project_timeline.start_date} - ${data.project_timeline.end_date}`;
+            }
+
             const successAlert = document.createElement('div');
-            successAlert.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg z-50';
-            successAlert.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Success! Your talent request has been submitted.';
+            successAlert.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-xl shadow-lg z-50 max-w-md';
+            successAlert.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + successMessage;
             document.body.appendChild(successAlert);
 
             // Close modal and refresh page
@@ -1151,29 +1318,29 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
             setTimeout(() => {
                 successAlert.remove();
                 location.reload();
-            }, 2000);
+            }, 3000);
         } else {
-            // Show error message
+            throw { status: 400, data: data };
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+
+        if (error.status === 409 && error.data) {
+            // Time-blocking conflict - show detailed availability info
+            showTimeBlockingConflict(error.data);
+        } else {
+            // Regular error message
             const errorAlert = document.createElement('div');
-            errorAlert.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg z-50';
-            errorAlert.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Error: ' + (data.message || 'Something went wrong.');
+            errorAlert.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg z-50 max-w-md';
+            errorAlert.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Error: ' +
+                (error.data?.message || error.data?.error || 'Failed to submit request. Please try again.');
             document.body.appendChild(errorAlert);
 
             setTimeout(() => {
                 errorAlert.remove();
             }, 5000);
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        const errorAlert = document.createElement('div');
-        errorAlert.className = 'fixed top-4 right-4 bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-xl shadow-lg z-50';
-        errorAlert.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>Error: Failed to submit request. Please try again.';
-        document.body.appendChild(errorAlert);
-
-        setTimeout(() => {
-            errorAlert.remove();
-        }, 5000);
     })
     .finally(() => {
         // Reset button state

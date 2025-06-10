@@ -1,0 +1,315 @@
+@startuml WebPelatihan_ER_Diagram
+!theme plain
+skinparam backgroundColor #FAFAFA
+skinparam entity {
+    BackgroundColor #E8F4FD
+    BorderColor #2563EB
+    FontColor #1E40AF
+}
+skinparam relationship {
+    BackgroundColor #FEF3C7
+    BorderColor #D97706
+    FontColor #92400E
+}
+
+title WebPelatihan - LMS & Talent Scouting System\nEntity Relationship Diagram
+
+' ===============================================
+' CORE USER MANAGEMENT
+' ===============================================
+
+entity "users" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * name : VARCHAR(255)
+    * email : VARCHAR(255) <<UNIQUE>>
+    * password : VARCHAR(255)
+    * avatar : VARCHAR(255)
+    * pekerjaan : VARCHAR(255)
+    * location : VARCHAR(255)
+    * experience_level : ENUM
+    --
+    **TALENT SCOUTING FIELDS**
+    * available_for_scouting : BOOLEAN
+    * talent_skills : JSON
+    * hourly_rate : DECIMAL(8,2)
+    * talent_bio : TEXT
+    * portfolio_url : VARCHAR(255)
+    * is_active_talent : BOOLEAN
+    --
+    * email_verified_at : TIMESTAMP
+    * remember_token : VARCHAR(100)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "roles" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * name : VARCHAR(255) <<UNIQUE>>
+    * guard_name : VARCHAR(255)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "model_has_roles" {
+    * model_type : VARCHAR(255) <<PK>>
+    * model_id : BIGINT(20) <<PK>>
+    * role_id : BIGINT(20) <<PK,FK>>
+}
+
+' ===============================================
+' TALENT SCOUTING ENTITIES
+' ===============================================
+
+entity "talents" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * user_id : BIGINT(20) <<FK>>
+    * is_active : BOOLEAN
+    * deleted_at : TIMESTAMP
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "talent_admins" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * user_id : BIGINT(20) <<FK>>
+    * is_active : BOOLEAN
+    * deleted_at : TIMESTAMP
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "recruiters" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * user_id : BIGINT(20) <<FK>>
+    * is_active : BOOLEAN
+    * deleted_at : TIMESTAMP
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "talent_requests" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * recruiter_id : BIGINT(20) <<FK>>
+    * talent_id : BIGINT(20) <<FK>>
+    * talent_user_id : BIGINT(20) <<FK>>
+    --
+    **PROJECT DETAILS**
+    * project_title : VARCHAR(255)
+    * project_description : TEXT
+    * requirements : TEXT
+    * budget_range : VARCHAR(255)
+    * project_duration : VARCHAR(255)
+    * timeline : VARCHAR(255)
+    * collaboration_type : VARCHAR(255)
+    --
+    **DUAL ACCEPTANCE WORKFLOW**
+    * status : ENUM('pending','approved','meeting_arranged','agreement_reached','onboarded','completed','rejected')
+    * talent_accepted : BOOLEAN
+    * admin_accepted : BOOLEAN
+    * both_parties_accepted : BOOLEAN
+    * talent_accepted_at : TIMESTAMP
+    * admin_accepted_at : TIMESTAMP
+    * talent_acceptance_notes : TEXT
+    * admin_acceptance_notes : TEXT
+    * workflow_completed_at : TIMESTAMP
+    --
+    * deleted_at : TIMESTAMP
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+' ===============================================
+' LMS COURSE MANAGEMENT
+' ===============================================
+
+entity "categories" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * name : VARCHAR(255)
+    * slug : VARCHAR(255) <<UNIQUE>>
+    * icon : VARCHAR(255)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "course_modes" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * name : VARCHAR(255)
+    * slug : VARCHAR(255)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "course_levels" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * name : VARCHAR(255)
+    * slug : VARCHAR(255)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "courses" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * name : VARCHAR(255)
+    * slug : VARCHAR(255) <<UNIQUE>>
+    * path_trailer : VARCHAR(255)
+    * about : TEXT
+    * category_id : BIGINT(20) <<FK>>
+    * course_mode_id : BIGINT(20) <<FK>>
+    * course_level_id : BIGINT(20) <<FK>>
+    --
+    **TALENT INTEGRATION**
+    * skill_category : VARCHAR(255)
+    * market_demand : ENUM('high','medium','low')
+    --
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "course_modules" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * course_id : BIGINT(20) <<FK>>
+    * name : VARCHAR(255)
+    * order : INT(10)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "course_videos" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * course_id : BIGINT(20) <<FK>>
+    * course_module_id : BIGINT(20) <<FK>>
+    * name : VARCHAR(255)
+    * path_video : VARCHAR(255)
+    * order : INT(10)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "course_materials" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * course_module_id : BIGINT(20) <<FK>>
+    * name : VARCHAR(255)
+    * file_path : VARCHAR(255)
+    * file_type : VARCHAR(20)
+    * order : INT(10)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "module_tasks" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * course_module_id : BIGINT(20) <<FK>>
+    * name : VARCHAR(255)
+    * description : TEXT
+    * order : INT(10)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+' ===============================================
+' STUDENT PROGRESS & ANALYTICS
+' ===============================================
+
+entity "course_progresses" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * user_id : BIGINT(20) <<FK>>
+    * course_id : BIGINT(20) <<FK>>
+    * completed_videos : JSON
+    * quiz_passed : BOOLEAN
+    * progress : INT(10)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "certificates" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * user_id : BIGINT(20) <<FK>>
+    * course_id : BIGINT(20) <<FK>>
+    * path : VARCHAR(255)
+    * generated_at : TIMESTAMP
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "subscribe_transactions" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * user_id : BIGINT(20) <<FK>>
+    * course_id : BIGINT(20) <<FK>>
+    * total_amount : BIGINT(20)
+    * subscription_status : ENUM('pending','success','failed')
+    * snap_token : VARCHAR(255)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+entity "cart_items" {
+    * id : BIGINT(20) <<PK>>
+    --
+    * user_id : BIGINT(20) <<FK>>
+    * course_id : BIGINT(20) <<FK>>
+    * quantity : INT(10)
+    * created_at : TIMESTAMP
+    * updated_at : TIMESTAMP
+}
+
+' ===============================================
+' RELATIONSHIPS
+' ===============================================
+
+' User Role Management
+users ||--o{ model_has_roles : "has roles"
+roles ||--o{ model_has_roles : "assigned to users"
+
+' Talent Scouting Relationships
+users ||--o| talents : "talent profile"
+users ||--o| talent_admins : "admin profile"
+users ||--o| recruiters : "recruiter profile"
+
+' Talent Request Workflow (DUAL ACCEPTANCE)
+recruiters ||--o{ talent_requests : "submits requests"
+talents ||--o{ talent_requests : "receives requests"
+users ||--o{ talent_requests : "direct talent reference"
+
+' Course Structure
+categories ||--o{ courses : "categorizes"
+course_modes ||--o{ courses : "delivery mode"
+course_levels ||--o{ courses : "difficulty level"
+courses ||--o{ course_modules : "contains modules"
+course_modules ||--o{ course_videos : "contains videos"
+course_modules ||--o{ course_materials : "contains materials"
+course_modules ||--o{ module_tasks : "contains tasks"
+
+' Student Progress & LMS-Talent Integration
+users ||--o{ course_progresses : "tracks progress"
+courses ||--o{ course_progresses : "progress tracked"
+users ||--o{ certificates : "earns certificates"
+courses ||--o{ certificates : "certificate for"
+users ||--o{ subscribe_transactions : "purchases courses"
+courses ||--o{ subscribe_transactions : "enrolled in"
+users ||--o{ cart_items : "cart items"
+courses ||--o{ cart_items : "added to cart"
+
+note top of talent_requests : **DUAL ACCEPTANCE WORKFLOW**\n• Both talent_accepted AND admin_accepted must be TRUE\n• Status progression: pending → approved → meeting_arranged → onboarded\n• Notification system alerts all parties\n• canProceedToOnboarding() validates dual acceptance
+
+note top of users : **TALENT CONVERSION**\n• available_for_scouting enables talent discovery\n• talent_skills populated from completed courses\n• Dual role support: trainee + talent\n• Analytics track conversion readiness
+
+note bottom of course_progresses : **LMS-TALENT INTEGRATION**\n• Course completion triggers skill assignment\n• Progress data feeds talent analytics\n• Conversion tracking based on learning velocity
+
+@enduml
