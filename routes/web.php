@@ -172,11 +172,20 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/api/conversion-candidates', [TalentAdminController::class, 'getConversionCandidates'])->name('talent_admin.api.conversion_candidates');
         Route::get('talent-admin/api/skill-analytics', [TalentAdminController::class, 'getSkillAnalytics'])->name('talent_admin.api.skill_analytics');
         Route::get('talent-admin/api/market-demand', [TalentAdminController::class, 'getMarketDemand'])->name('talent_admin.api.market_demand');
+
+        // Details endpoints for modal views
+        Route::get('talent-admin/talents/{talent}/details', [TalentAdminController::class, 'getTalentDetails'])->name('talent_admin.talent_details');
+        Route::get('talent-admin/recruiters/{recruiter}/details', [TalentAdminController::class, 'getRecruiterDetails'])->name('talent_admin.recruiter_details');
     });
 
     // Talent Routes
     Route::middleware('role:talent')->group(function () {
         Route::get('talent/dashboard', [TalentController::class, 'dashboard'])->name('talent.dashboard');
+
+        // Talent Request Management
+        Route::post('talent/request/{talentRequest}/accept', [TalentController::class, 'acceptRequest'])->name('talent.accept_request');
+        Route::post('talent/request/{talentRequest}/reject', [TalentController::class, 'rejectRequest'])->name('talent.reject_request');
+        Route::get('talent/my-requests', [TalentController::class, 'getMyRequests'])->name('talent.my_requests');
     });
 
     // Recruiter Routes
@@ -184,6 +193,14 @@ Route::middleware('auth')->group(function () {
         Route::get('recruiter/dashboard', [RecruiterController::class, 'dashboard'])->name('recruiter.dashboard');
         Route::post('recruiter/talent-request', [RecruiterController::class, 'submitTalentRequest'])->name('recruiter.submit_talent_request');
         Route::get('recruiter/my-requests', [RecruiterController::class, 'myRequests'])->name('recruiter.my_requests');
+        Route::get('recruiter/request-details/{request}', [RecruiterController::class, 'requestDetails'])->name('recruiter.request_details');
+        Route::get('recruiter/scouting-report/{talent}', [RecruiterController::class, 'getScoutingReport'])->name('recruiter.scouting_report');
+
+        // Enhanced Analytics & Recommendations API
+        Route::prefix('recruiter/api')->name('recruiter.api.')->group(function () {
+            Route::get('/analytics', [RecruiterController::class, 'getAnalyticsData'])->name('analytics');
+            Route::get('/recommendations', [RecruiterController::class, 'getTalentRecommendations'])->name('recommendations');
+        });
 
         // Talent Discovery Routes for Recruiters
         Route::prefix('recruiter/discovery')->name('recruiter.discovery.')->group(function () {

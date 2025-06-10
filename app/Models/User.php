@@ -93,6 +93,11 @@ class User extends Authenticatable
         return $this->hasOne(Trainer::class);
     }
 
+    public function recruiter()
+    {
+        return $this->hasOne(Recruiter::class);
+    }
+
     // TALENT SCOUTING INTEGRATION METHODS
 
     /**

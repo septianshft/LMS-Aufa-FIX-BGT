@@ -40,9 +40,14 @@ class AdvancedSkillAnalyticsService
 
         $categories = [];
         foreach ($talents as $talent) {
-            foreach ($talent->talent_skills ?? [] as $skill) {
-                $category = $skill['category'] ?? 'General Technology';
-                $categories[$category] = ($categories[$category] ?? 0) + 1;
+            // Safely decode talent_skills if it's stored as JSON string
+            $talentSkills = $this->getTalentSkills($talent);
+
+            foreach ($talentSkills as $skill) {
+                if (is_array($skill)) {
+                    $category = $skill['category'] ?? 'General Technology';
+                    $categories[$category] = ($categories[$category] ?? 0) + 1;
+                }
             }
         }
 
@@ -67,9 +72,14 @@ class AdvancedSkillAnalyticsService
             ->get();
 
         foreach ($talents as $talent) {
-            foreach ($talent->talent_skills ?? [] as $skill) {
-                $demand = $skill['market_demand'] ?? 'Medium';
-                $skillsByDemand[$demand][] = $skill;
+            // Safely decode talent_skills if it's stored as JSON string
+            $talentSkills = $this->getTalentSkills($talent);
+
+            foreach ($talentSkills as $skill) {
+                if (is_array($skill)) {
+                    $demand = $skill['market_demand'] ?? 'Medium';
+                    $skillsByDemand[$demand][] = $skill;
+                }
             }
         }
 
@@ -119,10 +129,12 @@ class AdvancedSkillAnalyticsService
 
         $progressionData = [];
         foreach ($talents as $talent) {
-            $skills = $talent->talent_skills ?? [];
+            $skills = $this->getTalentSkills($talent);
             foreach ($skills as $skill) {
-                $month = Carbon::parse($skill['acquired_at'] ?? now())->format('Y-m');
-                $progressionData[$month] = ($progressionData[$month] ?? 0) + 1;
+                if (is_array($skill)) {
+                    $month = Carbon::parse($skill['acquired_at'] ?? now())->format('Y-m');
+                    $progressionData[$month] = ($progressionData[$month] ?? 0) + 1;
+                }
             }
         }
 
@@ -146,10 +158,13 @@ class AdvancedSkillAnalyticsService
         $requests = TalentRequest::with('talentUser')->get();
 
         foreach ($requests as $request) {
-            if ($request->talentUser && $request->talentUser->talent_skills) {
-                foreach ($request->talentUser->talent_skills as $skill) {
-                    $skillName = $skill['name'];
-                    $requestedSkills[$skillName] = ($requestedSkills[$skillName] ?? 0) + 1;
+            if ($request->talentUser) {
+                $talentSkills = $this->getTalentSkills($request->talentUser);
+                foreach ($talentSkills as $skill) {
+                    if (is_array($skill)) {
+                        $skillName = $skill['name'] ?? 'Unknown Skill';
+                        $requestedSkills[$skillName] = ($requestedSkills[$skillName] ?? 0) + 1;
+                    }
                 }
             }
         }
@@ -212,7 +227,8 @@ class AdvancedSkillAnalyticsService
         ];
 
         foreach ($talents as $talent) {
-            $skillCount = count($talent->talent_skills ?? []);
+            $talentSkills = $this->getTalentSkills($talent);
+            $skillCount = count($talentSkills);
             $hourlyRate = (float) $talent->hourly_rate;
 
             if (!isset($correlationData['avg_hourly_rate_by_skill_count'][$skillCount])) {
@@ -221,8 +237,8 @@ class AdvancedSkillAnalyticsService
             $correlationData['avg_hourly_rate_by_skill_count'][$skillCount][] = $hourlyRate;
 
             // Analyze by primary skill category
-            if ($talent->talent_skills) {
-                $primaryCategory = $talent->talent_skills[0]['category'] ?? 'General';
+            if (!empty($talentSkills) && is_array($talentSkills[0])) {
+                $primaryCategory = $talentSkills[0]['category'] ?? 'General';
                 if (!isset($correlationData['avg_hourly_rate_by_category'][$primaryCategory])) {
                     $correlationData['avg_hourly_rate_by_category'][$primaryCategory] = [];
                 }
@@ -249,9 +265,10 @@ class AdvancedSkillAnalyticsService
     {
         $skillCounts = [];
         foreach ($talents as $talent) {
-            foreach ($talent->talent_skills ?? [] as $skill) {
-                if (($skill['market_demand'] ?? 'Medium') === 'Very High') {
-                    $skillCounts[$skill['name']] = ($skillCounts[$skill['name']] ?? 0) + 1;
+            foreach ($this->getTalentSkills($talent) as $skill) {
+                if (is_array($skill) && ($skill['market_demand'] ?? 'Medium') === 'Very High') {
+                    $skillName = $skill['name'] ?? 'Unknown Skill';
+                    $skillCounts[$skillName] = ($skillCounts[$skillName] ?? 0) + 1;
                 }
             }
         }
@@ -274,7 +291,7 @@ class AdvancedSkillAnalyticsService
     {
         $talents = User::where('available_for_scouting', true)->get();
         $totalSkills = $talents->sum(function($talent) {
-            return count($talent->talent_skills ?? []);
+            return count($this->getTalentSkills($talent));
         });
         return $talents->count() > 0 ? round($totalSkills / $talents->count(), 2) : 0;
     }
@@ -294,10 +311,13 @@ class AdvancedSkillAnalyticsService
     {
         $velocityData = [];
         foreach ($talents as $talent) {
-            $skills = $talent->talent_skills ?? [];
+            $skills = $this->getTalentSkills($talent);
             if (count($skills) >= 2) {
                 $dates = array_map(function($skill) {
-                    return Carbon::parse($skill['acquired_at'] ?? now());
+                    if (is_array($skill)) {
+                        return Carbon::parse($skill['acquired_at'] ?? now());
+                    }
+                    return Carbon::now();
                 }, $skills);
 
                 sort($dates);
@@ -323,18 +343,26 @@ class AdvancedSkillAnalyticsService
         ];
 
         foreach ($talents as $talent) {
-            $skills = $talent->talent_skills ?? [];
+            $skills = $this->getTalentSkills($talent);
             foreach ($skills as $skill) {
-                $date = Carbon::parse($skill['acquired_at'] ?? now());
-                if ($date->isWeekend()) {
-                    $patterns['weekend_learning']++;
-                } else {
-                    $patterns['weekday_learning']++;
+                if (is_array($skill)) {
+                    $date = Carbon::parse($skill['acquired_at'] ?? now());
+                    if ($date->isWeekend()) {
+                        $patterns['weekend_learning']++;
+                    } else {
+                        $patterns['weekday_learning']++;
+                    }
                 }
             }
 
             // Analyze category diversity
-            $categories = array_unique(array_column($skills, 'category'));
+            $categories = [];
+            foreach ($skills as $skill) {
+                if (is_array($skill) && isset($skill['category'])) {
+                    $categories[] = $skill['category'];
+                }
+            }
+            $categories = array_unique($categories);
             if (count($categories) > 1) {
                 $patterns['diverse_categories']++;
             } else {
@@ -352,8 +380,11 @@ class AdvancedSkillAnalyticsService
 
         foreach ($requestedSkills as $skill => $totalRequests) {
             $successfulRequests = $completedRequests->filter(function($request) use ($skill) {
-                if (!$request->talentUser || !$request->talentUser->talent_skills) return false;
-                return collect($request->talentUser->talent_skills)->contains('name', $skill);
+                if (!$request->talentUser) return false;
+                $talentSkills = $this->getTalentSkills($request->talentUser);
+                return collect($talentSkills)->contains(function($skillItem) use ($skill) {
+                    return is_array($skillItem) && ($skillItem['name'] ?? '') === $skill;
+                });
             })->count();
 
             $successRates[$skill] = $totalRequests > 0 ? round(($successfulRequests / $totalRequests) * 100, 2) : 0;
@@ -370,10 +401,13 @@ class AdvancedSkillAnalyticsService
 
         $talents = User::where('available_for_scouting', true)->get();
         foreach ($talents as $talent) {
-            foreach ($talent->talent_skills ?? [] as $skill) {
-                $acquiredDate = Carbon::parse($skill['acquired_at'] ?? now());
-                if ($acquiredDate->gte($cutoffDate)) {
-                    $recentSkills[$skill['name']] = ($recentSkills[$skill['name']] ?? 0) + 1;
+            foreach ($this->getTalentSkills($talent) as $skill) {
+                if (is_array($skill)) {
+                    $acquiredDate = Carbon::parse($skill['acquired_at'] ?? now());
+                    if ($acquiredDate->gte($cutoffDate)) {
+                        $skillName = $skill['name'] ?? 'Unknown Skill';
+                        $recentSkills[$skillName] = ($recentSkills[$skillName] ?? 0) + 1;
+                    }
                 }
             }
         }
@@ -393,7 +427,7 @@ class AdvancedSkillAnalyticsService
         if ($talents->count() > 0) {
             $avgHourlyRate = $talents->avg('hourly_rate') ?? 0;
             $avgSkillCount = $talents->avg(function($talent) {
-                return count($talent->talent_skills ?? []);
+                return count($this->getTalentSkills($talent));
             });
 
             // Estimate annual earning potential (assumptions: 20 hours/week, 50 weeks/year)
@@ -407,5 +441,56 @@ class AdvancedSkillAnalyticsService
         }
 
         return $roiData;
+    }
+
+    /**
+     * Safely get talent skills as an array, handling JSON string and null cases
+     */
+    private function getTalentSkills(User $talent): array
+    {
+        $talentSkills = $talent->talent_skills;
+
+        if (is_string($talentSkills)) {
+            $decoded = json_decode($talentSkills, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                return $this->normalizeTalentSkills($decoded);
+            }
+            return [];
+        } elseif (is_array($talentSkills)) {
+            return $this->normalizeTalentSkills($talentSkills);
+        }
+
+        return [];
+    }
+
+    /**
+     * Normalize talent skills to ensure consistent structure
+     */
+    private function normalizeTalentSkills(array $skills): array
+    {
+        $normalized = [];
+
+        foreach ($skills as $skill) {
+            // If skill is a string, convert to basic array format
+            if (is_string($skill)) {
+                $normalized[] = [
+                    'name' => $skill,
+                    'category' => 'General Technology',
+                    'market_demand' => 'Medium',
+                    'acquired_at' => now()->toDateString()
+                ];
+            } elseif (is_array($skill)) {
+                // Ensure required keys exist with defaults
+                $normalized[] = [
+                    'name' => $skill['name'] ?? 'Unknown Skill',
+                    'category' => $skill['category'] ?? 'General Technology',
+                    'market_demand' => $skill['market_demand'] ?? 'Medium',
+                    'acquired_at' => $skill['acquired_at'] ?? now()->toDateString()
+                ];
+            }
+            // Skip non-string, non-array items
+        }
+
+        return $normalized;
     }
 }
