@@ -14,6 +14,7 @@ use App\Http\Controllers\{
     ModuleMaterialController,
     ModuleTaskController,
     TaskSubmissionController,
+    TaskSubmissionManagementController,
     SubscribeTransactionController,
     TrainerController,
     FinalQuizController,
