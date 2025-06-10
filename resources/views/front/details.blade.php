@@ -54,12 +54,12 @@
                 class="group p-[12px_16px] flex items-center gap-[10px] rounded-full transition-all duration-300
                     {{ $isActive ? 'bg-[#3525B3]' : 'bg-[#E9EFF3] hover:bg-[#3525B3]' }}"
             >
-                <div class="text-black group-hover:text-white {{ $isActive ? 'text-white' : '' }} transition-all duration-300">
+                <div class="text-black group-hover:text-white {{ $isActive ? 'text-[#3525B3]' : '' }} transition-all duration-300">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                         <path d="M11.97 2C6.45 2 1.97 6.48 1.97 12s4.48 10 10 10 10-4.48 10-10S17.5 2 11.97 2Zm3 12.23-2.9 1.67c-.36.21-.76.31-1.15.31s-.79-.1-1.15-.31c-.72-.42-1.15-1.16-1.15-2V10.55c0-.83.43-1.57 1.15-1.99.72-.42 1.6-.42 2.32 0l2.9 1.67c.72.42 1.15 1.16 1.15 1.99s-.43 1.57-1.15 1.99Z" fill="currentColor"/>
                     </svg>
                 </div>
-                <p class="font-semibold transition-all duration-300 {{ $isActive ? 'text-white' : 'group-hover:text-white text-black' }}">
+                <p class="font-semibold transition-all duration-300 {{ $isActive ? 'text-[#3525B3]' : 'group-hover:text-white text-black' }}">
                     {{ $video->name }}
                 </p>
             </a>
