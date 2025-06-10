@@ -81,19 +81,19 @@
                 <div class="text-xs text-purple-600 font-medium">{{ $talentStats['pending_applications'] }} pending review</div>
             </div>
 
-            {{-- Messages --}}
+            {{-- Completed Collaborations --}}
             <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between mb-4">
                     <div class="bg-orange-100 p-3 rounded-lg">
-                        <i class="fas fa-envelope text-orange-600 text-xl"></i>
+                        <i class="fas fa-trophy text-orange-600 text-xl"></i>
                     </div>
                     <div class="text-right">
-                        <div class="text-2xl font-bold text-gray-800">{{ $talentStats['new_messages'] }}</div>
-                        <div class="text-sm text-gray-500">New</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ $talentStats['completed_collaborations'] }}</div>
+                        <div class="text-sm text-gray-500">Completed</div>
                     </div>
                 </div>
-                <div class="text-sm font-medium text-gray-700">Messages</div>
-                <div class="text-xs text-orange-600 font-medium">{{ $talentStats['approved_applications'] }} from approved projects</div>
+                <div class="text-sm font-medium text-gray-700">Collaborations</div>
+                <div class="text-xs text-orange-600 font-medium">{{ $talentStats['approved_applications'] }} projects delivered successfully</div>
             </div>
         </div>
 
@@ -205,6 +205,77 @@
                                 <i class="fas fa-history text-gray-300 text-4xl mb-4"></i>
                                 <p class="text-gray-500">No recent activity yet.</p>
                                 <p class="text-gray-400 text-sm">Start applying to jobs or completing courses!</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+
+                {{-- Job History (Accepted Collaborations) --}}
+                <div class="bg-white rounded-xl shadow-lg border border-gray-100">
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-bold text-gray-800">🏆 Collaboration History</h2>
+                            <span class="text-sm text-gray-500">{{ $jobHistory->count() }} total</span>
+                        </div>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        @forelse($jobHistory as $job)
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <h3 class="font-semibold text-gray-800">{{ $job['project_title'] }}</h3>
+                                            <span class="px-2 py-1 text-xs rounded-full
+                                                @if($job['status_color'] === 'green') bg-green-100 text-green-800
+                                                @elseif($job['status_color'] === 'blue') bg-blue-100 text-blue-800
+                                                @elseif($job['status_color'] === 'yellow') bg-yellow-100 text-yellow-800
+                                                @elseif($job['status_color'] === 'purple') bg-purple-100 text-purple-800
+                                                @else bg-gray-100 text-gray-800 @endif">
+                                                {{ $job['formatted_status'] }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <p class="text-gray-600 text-sm">{{ $job['company'] }}</p>
+                                            @if($job['company_role'])
+                                                <span class="text-gray-400">•</span>
+                                                <p class="text-gray-500 text-sm">{{ $job['company_role'] }}</p>
+                                            @endif
+                                        </div>
+                                        <div class="flex items-center space-x-4 text-sm text-gray-500 mb-2">
+                                            <span class="flex items-center"><i class="fas fa-dollar-sign mr-1"></i> {{ $job['budget_range'] }}</span>
+                                            <span class="flex items-center"><i class="fas fa-clock mr-1"></i> {{ $job['duration_worked'] }}</span>
+                                            @if($job['talent_accepted_at'])
+                                                <span class="flex items-center"><i class="fas fa-calendar-check mr-1"></i> Started {{ \Carbon\Carbon::parse($job['talent_accepted_at'])->format('M d, Y') }}</span>
+                                            @endif
+                                        </div>
+                                        @if($job['project_description'])
+                                            <p class="text-sm text-gray-600 mt-2">{{ Str::limit($job['project_description'], 120) }}</p>
+                                        @endif
+                                    </div>
+                                    <div class="flex flex-col items-end space-y-2 ml-4">
+                                        @if($job['is_completed'])
+                                            <div class="flex items-center text-green-600 text-sm">
+                                                <i class="fas fa-check-circle mr-1"></i>
+                                                <span>Completed</span>
+                                            </div>
+                                        @elseif($job['is_in_progress'])
+                                            <div class="flex items-center text-blue-600 text-sm">
+                                                <i class="fas fa-spinner fa-pulse mr-1"></i>
+                                                <span>In Progress</span>
+                                            </div>
+                                        @endif
+                                        <button onclick="viewJobDetails({{ $job['id'] }})"
+                                                class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg hover:bg-gray-200 transition-colors">
+                                            <i class="fas fa-eye mr-1"></i> View Details
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center py-8">
+                                <i class="fas fa-briefcase text-gray-300 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No collaboration history yet.</p>
+                                <p class="text-gray-400 text-sm">Accept job opportunities to start building your portfolio!</p>
                             </div>
                         @endforelse
                     </div>
@@ -403,6 +474,120 @@ function rejectRequest(requestId) {
     .catch(error => {
         console.error('Error:', error);
         showAlert('Network error occurred. Please try again.', 'error');
+    });
+}
+
+// View Job Details Function (for history)
+function viewJobDetails(jobId) {
+    const modal = document.getElementById('requestDetailsModal');
+    const modalContent = document.getElementById('modalContent');
+
+    modal.classList.remove('hidden');
+
+    // Show loading state
+    modalContent.innerHTML = `
+        <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+            <p class="text-gray-600">Loading collaboration details...</p>
+        </div>
+    `;
+
+    fetch(`/talent/my-requests`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.requests) {
+            const job = data.requests.find(r => r.id == jobId);
+
+            if (job) {
+                modalContent.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-xl border border-blue-200">
+                            <h4 class="font-bold text-lg text-gray-900 mb-3">📋 ${job.project_title || 'Project Details'}</h4>
+                            <p class="text-gray-700">${job.project_description || 'No description available'}</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-green-50 p-4 rounded-xl">
+                                <h4 class="font-semibold text-green-900 mb-3">🏢 Collaboration Details</h4>
+                                <div class="space-y-2">
+                                    <div><span class="font-medium">Company:</span> ${job.recruiter_name || 'Unknown'}</div>
+                                    <div><span class="font-medium">Role:</span> ${job.recruiter_company || 'Not specified'}</div>
+                                    <div><span class="font-medium">Budget:</span> ${job.budget_range || 'Budget TBD'}</div>
+                                    <div><span class="font-medium">Duration:</span> ${job.project_duration || 'Duration TBD'}</div>
+                                    <div><span class="font-medium">Priority:</span> <span class="capitalize">${job.urgency_level || 'Medium'}</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-xl">
+                                <h4 class="font-semibold text-blue-900 mb-3">📊 Progress & Timeline</h4>
+                                <div class="space-y-2">
+                                    <div><span class="font-medium">Status:</span>
+                                        <span class="px-2 py-1 text-xs rounded-full ${job.both_parties_accepted ? 'bg-green-100 text-green-800' : (job.talent_accepted ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">
+                                            ${job.acceptance_status || 'In Progress'}
+                                        </span>
+                                    </div>
+                                    <div><span class="font-medium">Progress:</span> ${job.workflow_progress || 0}%</div>
+                                    <div><span class="font-medium">Started:</span> ${job.created_at}</div>
+                                    ${job.both_parties_accepted ? '<div><span class="font-medium">Completed:</span> <span class="text-green-600">✓ Finished</span></div>' : ''}
+                                </div>
+                                <div class="mt-3">
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: ${job.workflow_progress || 0}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${job.both_parties_accepted ? `
+                            <div class="bg-green-50 p-4 rounded-xl border border-green-200">
+                                <div class="flex items-center justify-center space-x-2 text-green-700">
+                                    <i class="fas fa-trophy text-2xl"></i>
+                                    <div>
+                                        <h4 class="font-bold text-lg">Collaboration Completed Successfully!</h4>
+                                        <p class="text-sm">This project has been successfully completed and both parties are satisfied.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                                <div class="flex items-center justify-center space-x-2 text-blue-700">
+                                    <i class="fas fa-clock text-xl"></i>
+                                    <div>
+                                        <h4 class="font-semibold">Collaboration In Progress</h4>
+                                        <p class="text-sm">This project is currently active. Keep up the great work!</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            } else {
+                modalContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
+                        <p class="text-gray-600">Collaboration details not found.</p>
+                    </div>
+                `;
+            }
+        } else {
+            modalContent.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-circle text-4xl text-red-600 mb-4"></i>
+                    <p class="text-gray-600">Error loading collaboration details.</p>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-wifi text-4xl text-red-600 mb-4"></i>
+                <p class="text-gray-600">Network error occurred.</p>
+                <button onclick="viewJobDetails(${jobId})" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-refresh mr-2"></i>Retry
+                </button>
+            </div>
+        `;
     });
 }
 

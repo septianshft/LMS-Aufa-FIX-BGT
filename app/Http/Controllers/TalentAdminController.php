@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 
 class TalentAdminController extends Controller
 {
@@ -44,50 +46,77 @@ class TalentAdminController extends Controller
         $skillAnalytics = $this->skillAnalytics->getSkillAnalytics();
         $conversionAnalytics = $this->conversionTracking->getConversionAnalytics();
 
-        // Use the new unified user system instead of separate Talent/Recruiter models
-        // Count users with talent status
-        $activeTalents = User::where('is_active_talent', true)->count();
-        $totalTalents = User::where('is_active_talent', true)->count(); // Total talents for dashboard
-        $availableTalents = User::where('available_for_scouting', true)->count();
+        // Optimized dashboard statistics with caching
+        $dashboardStats = Cache::remember('talent_admin_dashboard_stats', config('talent_performance.caching.analytics_ttl', 600), function() {
+            // Single optimized query for all statistics
+            $stats = DB::select('
+                SELECT
+                    COUNT(CASE WHEN u.is_active_talent = 1 THEN 1 END) as active_talents,
+                    COUNT(CASE WHEN u.available_for_scouting = 1 THEN 1 END) as available_talents,
+                    COUNT(CASE WHEN ur.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as active_recruiters,
+                    COUNT(CASE WHEN ur.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as total_recruiters,
 
-        // Count users with recruiter role
-        $activeRecruiters = User::whereHas('roles', function($query) {
-            $query->where('name', 'recruiter');
-        })->count();
-        $totalRecruiters = $activeRecruiters; // Total recruiters for dashboard
+                    -- Request statistics
+                    (SELECT COUNT(*) FROM talent_requests WHERE deleted_at IS NULL) as total_requests,
+                    (SELECT COUNT(*) FROM talent_requests WHERE status = "pending" AND deleted_at IS NULL) as pending_requests,
+                    (SELECT COUNT(*) FROM talent_requests WHERE status = "approved" AND deleted_at IS NULL) as approved_requests,
+                    (SELECT COUNT(*) FROM talent_requests WHERE status = "rejected" AND deleted_at IS NULL) as rejected_requests,
 
-        // Request statistics
-        $totalRequests = TalentRequest::count();
-        $pendingRequests = TalentRequest::where('status', 'pending')->count();
-        $approvedRequests = TalentRequest::where('status', 'approved')->count();
-        $rejectedRequests = TalentRequest::where('status', 'rejected')->count();
+                    -- Recent registrations (last 30 days)
+                    COUNT(CASE WHEN u.is_active_talent = 1 AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_talents,
+                    COUNT(CASE WHEN ur.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_recruiters
 
-        // Recent registrations (last 30 days)
-        $recentTalents = User::where('is_active_talent', true)
-            ->where('created_at', '>=', Carbon::now()->subDays(30))
-            ->count();
+                FROM users u
+                LEFT JOIN model_has_roles ur ON u.id = ur.model_id AND ur.model_type = "App\\\\Models\\\\User"
+            ')[0];
 
-        $recentRecruiters = User::whereHas('roles', function($query) {
-            $query->where('name', 'recruiter');
-        })->where('created_at', '>=', Carbon::now()->subDays(30))->count();
+            return [
+                'activeTalents' => (int)$stats->active_talents,
+                'totalTalents' => (int)$stats->active_talents,
+                'availableTalents' => (int)$stats->available_talents,
+                'activeRecruiters' => (int)$stats->active_recruiters,
+                'totalRecruiters' => (int)$stats->total_recruiters,
+                'totalRequests' => (int)$stats->total_requests,
+                'pendingRequests' => (int)$stats->pending_requests,
+                'approvedRequests' => (int)$stats->approved_requests,
+                'rejectedRequests' => (int)$stats->rejected_requests,
+                'recentTalents' => (int)$stats->recent_talents,
+                'recentRecruiters' => (int)$stats->recent_recruiters,
+            ];
+        });
 
-        // Recent activity (latest 5 users of each type)
-        $latestTalents = User::where('is_active_talent', true)
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+        // Extract cached values
+        extract($dashboardStats);
 
-        $latestRecruiters = User::whereHas('roles', function($query) {
-            $query->where('name', 'recruiter');
-        })->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+        // Optimized recent activity queries with caching
+        $recentActivity = Cache::remember('talent_admin_recent_activity', 300, function() {
+            return [
+                'latestTalents' => User::select(['id', 'name', 'email', 'created_at'])
+                    ->where('is_active_talent', true)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get(),
 
-        // Recent requests (latest 5)
-        $latestRequests = TalentRequest::with(['recruiter.user', 'talentUser'])
-            ->orderBy('created_at', 'desc')
-            ->limit(5)
-            ->get();
+                'latestRecruiters' => User::select(['id', 'name', 'email', 'created_at'])
+                    ->whereHas('roles', function($query) {
+                        $query->where('name', 'recruiter');
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get(),
+
+                'latestRequests' => TalentRequest::select(['id', 'project_title', 'status', 'created_at', 'recruiter_id', 'talent_user_id'])
+                    ->with(['recruiter:id,user_id', 'recruiter.user:id,name', 'talentUser:id,name'])
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get()
+            ];
+        });
+
+        // Extract recent activity
+        $latestTalents = $recentActivity['latestTalents'];
+        $latestRecruiters = $recentActivity['latestRecruiters'];
+        $latestRequests = $recentActivity['latestRequests'];
 
         return view('talent_admin.dashboard', compact(
             'user', 'title', 'roles', 'assignedKelas',
@@ -158,7 +187,9 @@ class TalentAdminController extends Controller
             });
         }
 
-        $requests = $query->orderBy('created_at', 'desc')->paginate(15);
+        // Optimize pagination size for better performance
+        $perPage = min($request->get('per_page', 15), 50); // Max 50 items per page
+        $requests = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         // Append query parameters to pagination links
         $requests->appends($request->query());

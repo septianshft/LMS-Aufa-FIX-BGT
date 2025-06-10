@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 
 class TalentRequest extends Model
 {
@@ -36,7 +37,12 @@ class TalentRequest extends Model
         'admin_accepted_at',
         'admin_acceptance_notes',
         'both_parties_accepted',
-        'workflow_completed_at'
+        'workflow_completed_at',
+        // Time-blocking fields
+        'project_start_date',
+        'project_end_date',
+        'is_blocking_talent',
+        'blocking_notes'
     ];
 
     protected $casts = [
@@ -49,6 +55,10 @@ class TalentRequest extends Model
         'talent_accepted' => 'boolean',
         'admin_accepted' => 'boolean',
         'both_parties_accepted' => 'boolean',
+        // Time-blocking casts
+        'project_start_date' => 'datetime',
+        'project_end_date' => 'datetime',
+        'is_blocking_talent' => 'boolean',
         'deleted_at' => 'datetime'
     ];
 
@@ -199,6 +209,9 @@ class TalentRequest extends Model
                 'workflow_completed_at' => now(),
                 'status' => 'approved' // Move to approved status when both accept
             ]);
+
+            // Start time-blocking when both parties accept
+            $this->startTimeBlocking();
         }
     }
 
@@ -238,5 +251,297 @@ class TalentRequest extends Model
         }
 
         return min(100, $progress);
+    }
+
+    // ===================================================
+    // TIME-BLOCKING SYSTEM METHODS
+    // ===================================================
+
+    /**
+     * Check if this request is currently blocking the talent
+     */
+    public function isCurrentlyBlockingTalent(): bool
+    {
+        if (!$this->is_blocking_talent) {
+            return false;
+        }
+
+        $now = now();
+        return $this->project_start_date && $this->project_end_date &&
+               $now->between($this->project_start_date, $this->project_end_date);
+    }
+
+    /**
+     * Calculate project end date based on duration string
+     */
+    public function calculateProjectEndDate($startDate = null)
+    {
+        $startDate = $startDate ?: now();
+
+        if (!$this->project_duration) {
+            return null;
+        }
+
+        $duration = strtolower($this->project_duration);
+
+        // Parse various duration formats
+        if (preg_match('/(\d+)\s*(week|weeks)/', $duration, $matches)) {
+            return $startDate->copy()->addWeeks($matches[1]);
+        } elseif (preg_match('/(\d+)\s*(month|months)/', $duration, $matches)) {
+            return $startDate->copy()->addMonths($matches[1]);
+        } elseif (preg_match('/(\d+)\s*(day|days)/', $duration, $matches)) {
+            return $startDate->copy()->addDays($matches[1]);
+        } elseif (preg_match('/(\d+)-(\d+)\s*(month|months)/', $duration, $matches)) {
+            // Handle ranges like "2-3 months" - use the maximum
+            return $startDate->copy()->addMonths($matches[2]);
+        } elseif (preg_match('/(\d+)-(\d+)\s*(week|weeks)/', $duration, $matches)) {
+            return $startDate->copy()->addWeeks($matches[2]);
+        }
+
+        // Default mapping for common durations
+        $durationMap = [
+            '1-2 weeks' => ['weeks' => 2],
+            '1 month' => ['months' => 1],
+            '2-3 months' => ['months' => 3],
+            '3-6 months' => ['months' => 6],
+            '6+ months' => ['months' => 6],
+            'ongoing' => ['months' => 12], // Default for ongoing projects
+        ];
+
+        if (isset($durationMap[$duration])) {
+            $mapping = $durationMap[$duration];
+            $date = $startDate->copy();
+
+            if (isset($mapping['weeks'])) {
+                $date->addWeeks($mapping['weeks']);
+            } elseif (isset($mapping['months'])) {
+                $date->addMonths($mapping['months']);
+            }
+
+            return $date;
+        }
+
+        // Default fallback: 3 months
+        return $startDate->copy()->addMonths(3);
+    }
+
+    /**
+     * Start time-blocking for this talent
+     */
+    public function startTimeBlocking($startDate = null): void
+    {
+        $startDate = $startDate ?: now();
+        $endDate = $this->calculateProjectEndDate($startDate);
+
+        $this->update([
+            'project_start_date' => $startDate,
+            'project_end_date' => $endDate,
+            'is_blocking_talent' => true,
+            'blocking_notes' => "Talent blocked from {$startDate->format('M d, Y')} to {$endDate->format('M d, Y')} for project: {$this->project_title}"
+        ]);
+    }
+
+    /**
+     * Stop time-blocking for this talent
+     */
+    public function stopTimeBlocking(): void
+    {
+        $this->update([
+            'is_blocking_talent' => false,
+            'blocking_notes' => $this->blocking_notes . " - Project completed on " . now()->format('M d, Y')
+        ]);
+    }
+
+    /**
+     * Get formatted availability status
+     */
+    public function getAvailabilityStatus(): string
+    {
+        if (!$this->isCurrentlyBlockingTalent()) {
+            return 'Available';
+        }
+
+        $endDate = $this->project_end_date->format('M d, Y');
+        return "Busy until {$endDate}";
+    }
+
+    /**
+     * Check if talent will be available by a certain date
+     */
+    public function isTalentAvailableBy($date): bool
+    {
+        if (!$this->is_blocking_talent) {
+            return true;
+        }
+
+        return !$this->project_end_date || $date >= $this->project_end_date;
+    }
+
+    /**
+     * Get next available date for this talent
+     */
+    public function getNextAvailableDate()
+    {
+        if (!$this->isCurrentlyBlockingTalent()) {
+            return now();
+        }
+
+        return $this->project_end_date?->copy()->addDay();
+    }
+
+    /**
+     * Parse project duration string to calculate end date
+     */
+    public static function parseDurationToMonths($duration): int
+    {
+        if (!$duration) return 1; // Default to 1 month
+
+        $duration = strtolower($duration);
+
+        if (str_contains($duration, 'week')) {
+            preg_match('/(\d+)/', $duration, $matches);
+            $weeks = isset($matches[0]) ? (int)$matches[0] : 1;
+            return max(1, (int)($weeks / 4)); // Convert weeks to months (minimum 1 month)
+        }
+
+        if (str_contains($duration, 'month')) {
+            preg_match('/(\d+)/', $duration, $matches);
+            return isset($matches[0]) ? (int)$matches[0] : 1;
+        }
+
+        if (str_contains($duration, 'ongoing')) {
+            return 12; // Default to 1 year for ongoing projects
+        }
+
+        // Default fallback
+        return 1;
+    }
+
+    /**
+     * Auto-calculate and set project dates based on duration
+     */
+    public function calculateProjectDates($startDate = null): void
+    {
+        $startDate = $startDate ? \Carbon\Carbon::parse($startDate) : now();
+        $months = self::parseDurationToMonths($this->project_duration);
+
+        $this->update([
+            'project_start_date' => $startDate,
+            'project_end_date' => $startDate->copy()->addMonths($months),
+        ]);
+    }
+
+    /**
+     * Check if a talent is available for a new project during specific dates
+     */
+    public static function isTalentAvailableForPeriod($talentId, $startDate, $endDate): bool
+    {
+        $conflictingRequests = self::where('talent_user_id', $talentId)
+            ->where('is_blocking_talent', true)
+            ->where(function($query) use ($startDate, $endDate) {
+                $query->whereBetween('project_start_date', [$startDate, $endDate])
+                      ->orWhereBetween('project_end_date', [$startDate, $endDate])
+                      ->orWhere(function($subQuery) use ($startDate, $endDate) {
+                          $subQuery->where('project_start_date', '<=', $startDate)
+                                   ->where('project_end_date', '>=', $endDate);
+                      });
+            })
+            ->exists();
+
+        return !$conflictingRequests;
+    }
+
+    /**
+     * Simple availability check - alias for isTalentAvailableForPeriod with default dates
+     */
+    public static function isTalentAvailable($talentId, $startDate = null, $endDate = null): bool
+    {
+        $startDate = $startDate ?: now()->addDays(7);
+        $endDate = $endDate ?: $startDate->copy()->addMonths(1);
+
+        return self::isTalentAvailableForPeriod($talentId, $startDate, $endDate);
+    }
+
+    /**
+     * Get all active blocking requests for a talent
+     */
+    public static function getActiveBlockingRequestsForTalent($talentId)
+    {
+        return self::where('talent_user_id', $talentId)
+            ->where('is_blocking_talent', true)
+            ->where('project_end_date', '>', now())
+            ->orderBy('project_end_date')
+            ->get();
+    }
+
+    /**
+     * Get cached talent availability status
+     */
+    public static function getCachedTalentAvailability($talentId): array
+    {
+        return cache()->remember("talent_availability_{$talentId}", 300, function() use ($talentId) {
+            $activeRequests = self::getActiveBlockingRequestsForTalent($talentId);
+
+            if ($activeRequests->isEmpty()) {
+                return [
+                    'available' => true,
+                    'status' => 'Available',
+                    'next_available_date' => null,
+                    'blocking_projects' => []
+                ];
+            }
+
+            $nextAvailable = $activeRequests->max('project_end_date');
+
+            return [
+                'available' => false,
+                'status' => "Busy until " . $nextAvailable->format('M d, Y'),
+                'next_available_date' => $nextAvailable->copy()->addDay(),
+                'blocking_projects' => $activeRequests->map(function($req) {
+                    return [
+                        'title' => $req->project_title,
+                        'end_date' => $req->project_end_date->format('M d, Y')
+                    ];
+                })->toArray()
+            ];
+        });
+    }
+
+    /**
+     * Clear talent availability cache
+     */
+    public static function clearTalentAvailabilityCache($talentId): void
+    {
+        cache()->forget("talent_availability_{$talentId}");
+    }
+
+    /**
+     * Boot method to clear cache when talent request is saved/deleted
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($request) {
+            if ($request->talent_user_id) {
+                // Clear talent availability cache
+                self::clearTalentAvailabilityCache($request->talent_user_id);
+
+                // Clear discovery and recommendation caches
+                \Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
+                \Cache::flush(); // Clear all discovery caches (they have complex keys)
+            }
+        });
+
+        static::deleted(function ($request) {
+            if ($request->talent_user_id) {
+                // Clear talent availability cache
+                self::clearTalentAvailabilityCache($request->talent_user_id);
+
+                // Clear discovery and recommendation caches
+                \Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
+                \Cache::flush(); // Clear all discovery caches
+            }
+        });
     }
 }

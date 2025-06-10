@@ -126,19 +126,25 @@
 
                     <!-- Avatar -->
                     <div class="space-y-2">
-                        <x-input-label for="avatar" :value="__('Profile Picture')" class="text-sm font-semibold text-gray-700" />
+                        <div class="flex items-center justify-between">
+                            <x-input-label for="avatar" :value="__('Profile Picture')" class="text-sm font-semibold text-gray-700" />
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-md">Optional</span>
+                        </div>
                         <div class="flex items-center justify-center w-full">
                             <label for="avatar" class="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition duration-200">
                                 <div class="flex flex-col items-center justify-center pt-5 pb-6">
                                     <svg class="w-8 h-8 mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                                     </svg>
-                                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span></p>
+                                    <p class="mb-2 text-sm text-gray-500"><span class="font-semibold">Click to upload</span> or skip for now</p>
                                     <p class="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 2MB)</p>
                                 </div>
-                                <input id="avatar" type="file" name="avatar" class="hidden" accept="image/*" required />
+                                <input id="avatar" type="file" name="avatar" class="hidden" accept="image/*" />
                             </label>
                         </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            You can add a profile picture now or upload one later from your profile settings.
+                        </p>
                         <x-input-error :messages="$errors->get('avatar')" class="mt-1" />
                     </div>
 

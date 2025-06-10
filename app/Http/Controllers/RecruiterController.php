@@ -10,6 +10,7 @@ use App\Models\Talent;
 use App\Models\TalentRequest;
 use App\Models\Recruiter;
 use App\Services\TalentScoutingService;
+use App\Services\TalentMatchingService;
 use App\Services\AdvancedSkillAnalyticsService;
 use App\Services\TalentRequestNotificationService;
 
@@ -18,15 +19,18 @@ class RecruiterController extends Controller
     protected $scoutingService;
     protected $analyticsService;
     protected $notificationService;
+    protected $matchingService;
 
     public function __construct(
         TalentScoutingService $scoutingService,
         AdvancedSkillAnalyticsService $analyticsService,
-        TalentRequestNotificationService $notificationService
+        TalentRequestNotificationService $notificationService,
+        TalentMatchingService $matchingService
     ) {
         $this->scoutingService = $scoutingService;
         $this->analyticsService = $analyticsService;
         $this->notificationService = $notificationService;
+        $this->matchingService = $matchingService;
     }
 
     public function dashboard()
@@ -49,36 +53,56 @@ class RecruiterController extends Controller
 
         // Only proceed if user has a recruiter profile
         if ($recruiter) {
-            // Get active talents for discovery with request status
+            // Get active talents for discovery with optimized queries
             $talents = Talent::with(['user', 'talentRequests' => function($query) use ($recruiter) {
                 $query->where('recruiter_id', $recruiter->id ?? 0);
             }])
                 ->where('is_active', true)
                 ->whereHas('user', function($query) {
                     $query->whereNotNull('name')
-                          ->whereNotNull('email');
+                          ->whereNotNull('email')
+                          ->where('available_for_scouting', true);
                 })
                 ->latest()
                 ->paginate(12);
 
-            // Add scouting metrics to each talent
-            $talents->getCollection()->transform(function ($talent) {
-                $talent->scouting_metrics = $this->scoutingService->getTalentScoutingMetrics($talent);
+            // Optimize: Batch load availability status to prevent N+1 queries
+            $talentIds = $talents->getCollection()->pluck('user_id');
+            $availabilityCache = [];
+
+            // Pre-calculate availability for all talents
+            foreach ($talentIds as $userId) {
+                $availabilityCache[$userId] = $this->matchingService->isTalentAvailable($userId);
+            }
+
+            // Add scouting metrics and availability status to each talent
+            $talents->getCollection()->transform(function ($talent) use ($availabilityCache) {
+                // Use cached availability to avoid repeated database calls
+                $talent->availability_status = $availabilityCache[$talent->user_id] ?? ['available' => false];
+
+                // Only get scouting metrics if explicitly requested to improve performance
+                if (request('show_metrics', false)) {
+                    $talent->scouting_metrics = $this->scoutingService->getTalentScoutingMetrics($talent);
+                }
+
                 return $talent;
             });
 
-            // Get my talent requests summary
+            // Get my talent requests summary with eager loading
             $myRequests = TalentRequest::with(['talent.user'])
                 ->where('recruiter_id', $recruiter->id)
                 ->latest()
                 ->take(5)
                 ->get();
 
-            // Get top talents for recommendations
-            $topTalents = $this->scoutingService->getTopTalents(6);
+            // Cache top talents and analytics for better performance
+            $topTalents = cache()->remember("top_talents_{$recruiter->id}", 300, function() {
+                return $this->scoutingService->getTopTalents(6);
+            });
 
-            // Get comprehensive analytics
-            $analytics = $this->analyticsService->getSkillAnalytics();
+            $analytics = cache()->remember("recruiter_analytics_{$recruiter->id}", 600, function() {
+                return $this->analyticsService->getSkillAnalytics();
+            });
 
             // Get recruiter-specific dashboard statistics
             $dashboardStats = $this->getRecruiterDashboardStats($recruiter);
@@ -202,7 +226,7 @@ class RecruiterController extends Controller
             'project_description' => 'required|string',
             'requirements' => 'nullable|string',
             'budget_range' => 'nullable|string|max:100',
-            'project_duration' => 'nullable|string|max:100',
+            'project_duration' => 'required|string|max:100',
             'urgency_level' => 'required|in:low,medium,high',
             'recruiter_message' => 'nullable|string'
         ]);
@@ -212,6 +236,37 @@ class RecruiterController extends Controller
 
         if (!$recruiter) {
             return response()->json(['error' => 'Recruiter profile not found'], 404);
+        }
+
+        // Get talent user ID for time-blocking check
+        $talent = \App\Models\Talent::findOrFail($request->talent_id);
+        $talentUserId = $talent->user_id;
+
+        // Calculate project start and end dates based on duration
+        $projectDuration = $request->project_duration;
+        $durationInMonths = TalentRequest::parseDurationToMonths($projectDuration);
+        $projectStartDate = now()->addDays(7); // Projects start 1 week from request
+        $projectEndDate = $projectStartDate->copy()->addMonths($durationInMonths);
+
+        // Check if talent is available for the proposed project duration
+        if (!TalentRequest::isTalentAvailable($talentUserId, $projectStartDate, $projectEndDate)) {
+            $activeRequests = TalentRequest::getActiveBlockingRequestsForTalent($talentUserId);
+            $nextAvailable = $activeRequests->max('project_end_date');
+
+            return response()->json([
+                'error' => 'Talent is not available for the requested project duration',
+                'message' => "This talent is already committed to other projects until " .
+                           $nextAvailable->format('M d, Y') . ". Please consider a different talent or wait until " .
+                           $nextAvailable->copy()->addDay()->format('M d, Y') . ".",
+                'next_available_date' => $nextAvailable->copy()->addDay()->format('Y-m-d'),
+                'blocking_projects' => $activeRequests->map(function($req) {
+                    return [
+                        'title' => $req->project_title,
+                        'company' => $req->recruiter->user->name ?? 'Unknown',
+                        'end_date' => $req->project_end_date->format('M d, Y')
+                    ];
+                })->toArray()
+            ], 409); // 409 Conflict status code
         }
 
         // Check if request already exists for this talent
@@ -227,6 +282,7 @@ class RecruiterController extends Controller
         $talentRequest = TalentRequest::create([
             'recruiter_id' => $recruiter->id,
             'talent_id' => $request->talent_id,
+            'talent_user_id' => $talentUserId, // Add for direct user reference
             'project_title' => $request->project_title,
             'project_description' => $request->project_description,
             'requirements' => $request->requirements,
@@ -234,7 +290,12 @@ class RecruiterController extends Controller
             'project_duration' => $request->project_duration,
             'urgency_level' => $request->urgency_level,
             'recruiter_message' => $request->recruiter_message,
-            'status' => 'pending'
+            'status' => 'pending',
+            // Time-blocking fields
+            'project_start_date' => $projectStartDate,
+            'project_end_date' => $projectEndDate,
+            'is_blocking_talent' => true, // This request will block the talent if approved
+            'blocking_notes' => "Project duration: {$projectDuration}, estimated from {$projectStartDate->format('M d, Y')} to {$projectEndDate->format('M d, Y')}"
         ]);
 
         // Send notifications to both talent and admin
@@ -244,7 +305,12 @@ class RecruiterController extends Controller
             'success' => true,
             'message' => 'Talent request submitted successfully! Both the talent and admin have been notified.',
             'request_id' => $talentRequest->id,
-            'notifications_sent' => $notificationsSent
+            'notifications_sent' => $notificationsSent,
+            'project_timeline' => [
+                'start_date' => $projectStartDate->format('M d, Y'),
+                'end_date' => $projectEndDate->format('M d, Y'),
+                'duration' => $projectDuration
+            ]
         ]);
     }
 

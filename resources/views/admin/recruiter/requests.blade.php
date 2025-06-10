@@ -139,22 +139,22 @@
                                     <div class="p-4">
                                         <h4 class="font-semibold text-gray-800 mb-3">Sort by</h4>
                                         <div class="space-y-2">
-                                            <button onclick="sortRequests('date_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                            <button onclick="sortRequests('date_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
                                                 <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>Newest First
                                             </button>
-                                            <button onclick="sortRequests('date_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                            <button onclick="sortRequests('date_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
                                                 <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>Oldest First
                                             </button>
-                                            <button onclick="sortRequests('title_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                            <button onclick="sortRequests('title_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
                                                 <i class="fas fa-sort-alpha-down mr-2 text-gray-500"></i>Project Title A-Z
                                             </button>
-                                            <button onclick="sortRequests('title_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                            <button onclick="sortRequests('title_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
                                                 <i class="fas fa-sort-alpha-up mr-2 text-gray-500"></i>Project Title Z-A
                                             </button>
-                                            <button onclick="sortRequests('status')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                            <button onclick="sortRequests('status')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
                                                 <i class="fas fa-tasks mr-2 text-gray-500"></i>Status
                                             </button>
-                                            <button onclick="sortRequests('urgency')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                            <button onclick="sortRequests('urgency')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
                                                 <i class="fas fa-exclamation-triangle mr-2 text-gray-500"></i>Priority Level
                                             </button>
                                         </div>

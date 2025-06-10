@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test View Details Modal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold mb-8">Test View Details Modal</h1>
+
+        <div class="bg-white rounded-lg p-6 shadow-lg">
+            <h2 class="text-xl font-semibold mb-4">Test Buttons</h2>
+
+            <button
+                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 font-medium mr-4"
+                onclick="viewRequestDetails(
+                    'Test Project Title',
+                    'This is a test project description with some special characters: &quot;quotes&quot; and newlines.\nLine 2 of description.',
+                    'React, Vue.js, Laravel\nExperience with APIs',
+                    '$5,000 - $10,000',
+                    '2-3 months',
+                    'High',
+                    'Looking forward to working with you!\nBest regards.'
+                )">
+                Test View Details
+            </button>
+
+            <button
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium"
+                onclick="testWithJsonData()">
+                Test with JSON Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal (copied from requests.blade.php) -->
+    <div id="requestDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <!-- Background overlay -->
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeRequestModal()"></div>
+
+            <!-- Modal panel -->
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <!-- Modal Header -->
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-3">
+                                <i class="fas fa-clipboard-list text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-white" id="modal-title">Request Details</h3>
+                        </div>
+                        <button type="button"
+                                class="text-white hover:text-gray-200 transition-colors duration-200 p-2 hover:bg-white hover:bg-opacity-20 rounded-lg"
+                                onclick="closeRequestModal()">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Modal Body -->
+                <div class="bg-white px-6 py-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Left Column -->
+                        <div class="space-y-6">
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Project Title</label>
+                                <p id="modalProjectTitle" class="text-gray-900 text-lg font-medium"></p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Budget Range</label>
+                                <p id="modalBudgetRange" class="text-gray-900 font-medium"></p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Project Duration</label>
+                                <p id="modalProjectDuration" class="text-gray-900 font-medium"></p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Urgency Level</label>
+                                <p id="modalUrgencyLevel" class="text-gray-900 font-medium"></p>
+                            </div>
+                        </div>
+
+                        <!-- Right Column -->
+                        <div class="space-y-6">
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Project Description</label>
+                                <p id="modalProjectDescription" class="text-gray-900 leading-relaxed"></p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Requirements</label>
+                                <p id="modalRequirements" class="text-gray-900 leading-relaxed"></p>
+                            </div>
+
+                            <div class="bg-gray-50 rounded-xl p-4">
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Personal Message</label>
+                                <p id="modalRecruiterMessage" class="text-gray-900 leading-relaxed"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                    <div class="flex justify-end">
+                        <button type="button"
+                                class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 font-medium shadow-lg"
+                                onclick="closeRequestModal()">
+                            <i class="fas fa-times mr-2"></i>Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function viewRequestDetails(title, description, requirements, budget, duration, urgency, message) {
+            console.log('viewRequestDetails called with:', {
+                title, description, requirements, budget, duration, urgency, message
+            });
+
+            try {
+                // Populate modal content
+                document.getElementById('modalProjectTitle').textContent = title;
+                document.getElementById('modalProjectDescription').textContent = description;
+                document.getElementById('modalRequirements').textContent = requirements || 'Not specified';
+                document.getElementById('modalBudgetRange').textContent = budget;
+                document.getElementById('modalProjectDuration').textContent = duration;
+                document.getElementById('modalUrgencyLevel').textContent = urgency;
+                document.getElementById('modalRecruiterMessage').textContent = message || 'No personal message';
+
+                // Show modal
+                const modal = document.getElementById('requestDetailsModal');
+                if (!modal) {
+                    console.error('Modal element not found!');
+                    return;
+                }
+
+                modal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+
+                // Add fade-in animation
+                setTimeout(() => {
+                    modal.classList.add('animate-fade-in');
+                }, 10);
+
+                console.log('Modal opened successfully');
+            } catch (error) {
+                console.error('Error in viewRequestDetails:', error);
+                alert('Error opening request details. Please check the console for more information.');
+            }
+        }
+
+        function closeRequestModal() {
+            const modal = document.getElementById('requestDetailsModal');
+            modal.classList.add('animate-fade-out');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('animate-fade-in', 'animate-fade-out');
+                document.body.style.overflow = 'auto';
+            }, 200);
+        }
+
+        function testWithJsonData() {
+            // Simulate JSON-encoded data like in the Blade template
+            const data = {
+                title: "Mobile App Development",
+                description: "We need a mobile app with complex features:\n- User authentication\n- Real-time messaging\n- Push notifications\n\nSpecial characters: \"quotes\", 'apostrophes', & symbols.",
+                requirements: "React Native or Flutter\nExperience with Firebase\n3+ years experience",
+                budget: "$10,000 - $15,000",
+                duration: "3-4 months",
+                urgency: "High",
+                message: "Dear developer,\n\nWe're excited about this project!\n\nBest regards,\nThe Team"
+            };
+
+            viewRequestDetails(
+                data.title,
+                data.description,
+                data.requirements,
+                data.budget,
+                data.duration,
+                data.urgency,
+                data.message
+            );
+        }
+
+        // Close modal when pressing Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('requestDetailsModal');
+                if (!modal.classList.contains('hidden')) {
+                    closeRequestModal();
+                }
+            }
+        });
+    </script>
+
+    <style>
+        /* Custom animations for modal */
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .animate-fade-out {
+            animation: fadeOut 0.2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+        }
+    </style>
+</body>
+</html>
