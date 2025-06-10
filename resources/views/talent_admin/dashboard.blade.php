@@ -7,6 +7,10 @@
 @endpush
 
 @section('container')
+
+{{-- Include Talent Request Notifications --}}
+@include('components.talent-request-notifications')
+
 <div class="min-h-screen bg-gray-50 p-6">
     <!-- Page Heading with Welcome Message -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">

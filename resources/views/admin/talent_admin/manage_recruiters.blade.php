@@ -99,16 +99,22 @@
                                         <div class="text-gray-500 text-xs">{{ $recruiter->created_at->format('H:i') }}</div>
                                     </td>
                                     <td class="py-6 px-4">
-                                        <form action="{{ route('talent_admin.toggle_recruiter_status', $recruiter) }}" method="POST" class="inline-block">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit"
-                                                    class="inline-flex items-center px-4 py-2 {{ $recruiter->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl"
-                                                    onclick="return confirm('Are you sure you want to {{ $recruiter->is_active ? 'deactivate' : 'activate' }} this recruiter?')">
-                                                <i class="fas fa-{{ $recruiter->is_active ? 'pause' : 'play' }} mr-2"></i>
-                                                {{ $recruiter->is_active ? 'Deactivate' : 'Activate' }}
+                                        <div class="flex space-x-2">
+                                            <button onclick="viewRecruiterDetails({{ $recruiter->id }})"
+                                                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl">
+                                                <i class="fas fa-eye mr-2"></i>
+                                                View Details
                                             </button>
-                                        </form>
+                                            <form action="{{ route('talent_admin.toggle_recruiter_status', $recruiter) }}" method="POST" class="inline-block">
+                                                @csrf
+                                                @method('PATCH')
+                                                <button type="submit"
+                                                        class="inline-flex items-center px-3 py-2 {{ $recruiter->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl"
+                                                        onclick="return confirm('Are you sure you want to {{ $recruiter->is_active ? 'deactivate' : 'activate' }} this recruiter?')">
+                                                    <i class="fas fa-{{ $recruiter->is_active ? 'pause' : 'play' }} mr-1"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -165,15 +171,19 @@
                             </div>
 
                             <!-- Actions -->
-                            <div class="flex justify-center">
-                                <form action="{{ route('talent_admin.toggle_recruiter_status', $recruiter) }}" method="POST" class="w-full">
+                            <div class="flex space-x-3">
+                                <button onclick="viewRecruiterDetails({{ $recruiter->id }})"
+                                        class="flex-1 px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    View Details
+                                </button>
+                                <form action="{{ route('talent_admin.toggle_recruiter_status', $recruiter) }}" method="POST" class="flex-shrink-0">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit"
-                                            class="w-full px-4 py-3 {{ $recruiter->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                                            class="px-4 py-3 {{ $recruiter->is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700' }} text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
                                             onclick="return confirm('Are you sure you want to {{ $recruiter->is_active ? 'deactivate' : 'activate' }} this recruiter?')">
-                                        <i class="fas fa-{{ $recruiter->is_active ? 'pause' : 'play' }} mr-2"></i>
-                                        {{ $recruiter->is_active ? 'Deactivate' : 'Activate' }}
+                                        <i class="fas fa-{{ $recruiter->is_active ? 'pause' : 'play' }}"></i>
                                     </button>
                                 </form>
                             </div>
@@ -199,6 +209,258 @@
         </div>
     </div>
 </div>
+
+<!-- Recruiter Details Modal -->
+<div id="recruiterDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-2xl bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-building text-indigo-600 mr-3"></i>
+                    Recruiter Details
+                </h3>
+                <button onclick="closeRecruiterModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Content -->
+            <div id="recruiterDetailsContent" class="space-y-6">
+                <!-- Content will be loaded here -->
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-3xl text-indigo-600 mb-4"></i>
+                    <p class="text-gray-600">Loading recruiter details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Recruiter details functionality
+function viewRecruiterDetails(recruiterId) {
+    document.getElementById('recruiterDetailsModal').classList.remove('hidden');
+
+    // Reset content
+    document.getElementById('recruiterDetailsContent').innerHTML = `
+        <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-3xl text-indigo-600 mb-4"></i>
+            <p class="text-gray-600">Loading recruiter details...</p>
+        </div>
+    `;
+
+    // Fetch recruiter details (you would implement this endpoint)
+    fetch(`/talent-admin/recruiters/${recruiterId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            displayRecruiterDetails(data);
+        })
+        .catch(error => {
+            document.getElementById('recruiterDetailsContent').innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-3xl text-red-600 mb-4"></i>
+                    <p class="text-red-600">Error loading recruiter details</p>
+                    <p class="text-gray-600 text-sm mt-2">Please try again later</p>
+                </div>
+            `;
+        });
+}
+
+function displayRecruiterDetails(recruiter) {
+    const content = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Profile Info -->
+            <div class="lg:col-span-1">
+                <div class="bg-gradient-to-br from-indigo-50 to-purple-100 rounded-2xl p-6 text-center">
+                    ${recruiter.avatar ?
+                        `<img class="w-24 h-24 rounded-2xl object-cover mx-auto mb-4 shadow-lg" src="${recruiter.avatar}" alt="${recruiter.name}">` :
+                        `<div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <i class="fas fa-building text-white text-2xl"></i>
+                        </div>`
+                    }
+                    <h4 class="text-xl font-bold text-gray-900 mb-2">${recruiter.name}</h4>
+                    <p class="text-gray-600 mb-2">${recruiter.company || 'Company not specified'}</p>
+                    <p class="text-gray-500 text-sm mb-4">${recruiter.job || 'Position not specified'}</p>
+                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${recruiter.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
+                        <i class="fas fa-${recruiter.is_active ? 'check-circle' : 'pause-circle'} mr-1"></i>
+                        ${recruiter.is_active ? 'Active' : 'Inactive'}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Contact Information -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                    <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-address-card text-indigo-600 mr-2"></i>
+                        Contact Information
+                    </h5>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email</label>
+                            <p class="text-gray-900 font-medium">${recruiter.email}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Phone</label>
+                            <p class="text-gray-900 font-medium">${recruiter.phone || 'Not provided'}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</label>
+                            <p class="text-gray-900 font-medium">${recruiter.company || 'Not provided'}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Joined Date</label>
+                            <p class="text-gray-900 font-medium">${recruiter.joined_date}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Company Information -->
+                ${recruiter.company_details ? `
+                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                    <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-building text-purple-600 mr-2"></i>
+                        Company Information
+                    </h5>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Industry</label>
+                            <p class="text-gray-900 font-medium">${recruiter.company_details.industry || 'Not specified'}</p>
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company Size</label>
+                            <p class="text-gray-900 font-medium">${recruiter.company_details.size || 'Not specified'}</p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Website</label>
+                            <p class="text-gray-900 font-medium">
+                                ${recruiter.company_details.website ?
+                                    `<a href="${recruiter.company_details.website}" target="_blank" class="text-indigo-600 hover:text-indigo-700">
+                                        ${recruiter.company_details.website}
+                                        <i class="fas fa-external-link-alt ml-1 text-xs"></i>
+                                    </a>` :
+                                    'Not provided'
+                                }
+                            </p>
+                        </div>
+                        ${recruiter.company_details.description ? `
+                        <div class="sm:col-span-2">
+                            <label class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</label>
+                            <p class="text-gray-900 font-medium">${recruiter.company_details.description}</p>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                ` : ''}
+
+                <!-- Recruitment Activity -->
+                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                    <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-chart-bar text-green-600 mr-2"></i>
+                        Recruitment Activity
+                    </h5>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-blue-600">${recruiter.stats?.total_requests || 0}</div>
+                            <div class="text-xs text-gray-500">Total Requests</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-green-600">${recruiter.stats?.approved_requests || 0}</div>
+                            <div class="text-xs text-gray-500">Approved</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-orange-600">${recruiter.stats?.pending_requests || 0}</div>
+                            <div class="text-xs text-gray-500">Pending</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl font-bold text-purple-600">${recruiter.stats?.success_rate || 0}%</div>
+                            <div class="text-xs text-gray-500">Success Rate</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Requests -->
+                ${recruiter.recent_requests && recruiter.recent_requests.length > 0 ? `
+                <div class="bg-white border border-gray-200 rounded-2xl p-6">
+                    <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-history text-yellow-600 mr-2"></i>
+                        Recent Talent Requests
+                    </h5>
+                    <div class="space-y-3">
+                        ${recruiter.recent_requests.slice(0, 3).map(request => `
+                            <div class="border border-gray-100 rounded-lg p-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h6 class="font-semibold text-gray-900">${request.project_title}</h6>
+                                        <p class="text-gray-600 text-sm mt-1">${request.description}</p>
+                                        <p class="text-xs text-gray-500 mt-2">${request.created_at}</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
+                                        ${request.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                          request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                          'bg-red-100 text-red-800'}">
+                                        ${request.status}
+                                    </span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
+            <button onclick="closeRecruiterModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                Close
+            </button>
+            <button onclick="toggleRecruiterStatus(${recruiter.id}, ${recruiter.is_active})" class="px-6 py-2 ${recruiter.is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition-colors">
+                ${recruiter.is_active ? 'Deactivate' : 'Activate'} Recruiter
+            </button>
+        </div>
+    `;
+
+    document.getElementById('recruiterDetailsContent').innerHTML = content;
+}
+
+function closeRecruiterModal() {
+    document.getElementById('recruiterDetailsModal').classList.add('hidden');
+}
+
+function toggleRecruiterStatus(recruiterId, isActive) {
+    if (confirm(`Are you sure you want to ${isActive ? 'deactivate' : 'activate'} this recruiter?`)) {
+        // Submit the form or make an AJAX request
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/talent-admin/recruiters/${recruiterId}/toggle-status`;
+
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        const methodField = document.createElement('input');
+        methodField.type = 'hidden';
+        methodField.name = '_method';
+        methodField.value = 'PATCH';
+
+        form.appendChild(csrfToken);
+        form.appendChild(methodField);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('recruiterDetailsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeRecruiterModal();
+    }
+});
+</script>
 
 <style>
 /* Enhanced pagination styling */

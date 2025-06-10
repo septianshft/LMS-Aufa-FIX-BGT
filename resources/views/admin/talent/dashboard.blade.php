@@ -2,6 +2,10 @@
 
 @section('title', 'Talent Dashboard')
 @section('container')
+
+{{-- Include Talent Request Notifications --}}
+@include('components.talent-request-notifications')
+
 <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-6">
     <div class="max-w-7xl mx-auto space-y-8">
 
@@ -31,13 +35,13 @@
                         <i class="fas fa-user-circle text-blue-600 text-xl"></i>
                     </div>
                     <div class="text-right">
-                        <div class="text-2xl font-bold text-gray-800">85%</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ $profileCompleteness }}%</div>
                         <div class="text-sm text-gray-500">Complete</div>
                     </div>
                 </div>
                 <div class="text-sm font-medium text-gray-700 mb-2">Profile Status</div>
                 <div class="w-full bg-gray-200 rounded-full h-2">
-                    <div class="bg-blue-600 h-2 rounded-full" style="width: 85%"></div>
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $profileCompleteness }}%"></div>
                 </div>
             </div>
 
@@ -48,12 +52,18 @@
                         <i class="fas fa-briefcase text-green-600 text-xl"></i>
                     </div>
                     <div class="text-right">
-                        <div class="text-2xl font-bold text-gray-800">7</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ $jobOpportunities->count() }}</div>
                         <div class="text-sm text-gray-500">Available</div>
                     </div>
                 </div>
                 <div class="text-sm font-medium text-gray-700">Job Opportunities</div>
-                <div class="text-xs text-green-600 font-medium">+3 new this week</div>
+                <div class="text-xs text-green-600 font-medium">
+                    @if($jobOpportunities->where('created_at', '>=', now()->subDays(7))->count() > 0)
+                        +{{ $jobOpportunities->where('created_at', '>=', now()->subDays(7))->count() }} new this week
+                    @else
+                        Check back for new opportunities
+                    @endif
+                </div>
             </div>
 
             {{-- Applications Sent --}}
@@ -63,12 +73,12 @@
                         <i class="fas fa-paper-plane text-purple-600 text-xl"></i>
                     </div>
                     <div class="text-right">
-                        <div class="text-2xl font-bold text-gray-800">12</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ $talentStats['total_applications'] }}</div>
                         <div class="text-sm text-gray-500">Sent</div>
                     </div>
                 </div>
                 <div class="text-sm font-medium text-gray-700">Applications</div>
-                <div class="text-xs text-purple-600 font-medium">3 pending review</div>
+                <div class="text-xs text-purple-600 font-medium">{{ $talentStats['pending_applications'] }} pending review</div>
             </div>
 
             {{-- Messages --}}
@@ -78,12 +88,12 @@
                         <i class="fas fa-envelope text-orange-600 text-xl"></i>
                     </div>
                     <div class="text-right">
-                        <div class="text-2xl font-bold text-gray-800">5</div>
+                        <div class="text-2xl font-bold text-gray-800">{{ $talentStats['new_messages'] }}</div>
                         <div class="text-sm text-gray-500">New</div>
                     </div>
                 </div>
                 <div class="text-sm font-medium text-gray-700">Messages</div>
-                <div class="text-xs text-orange-600 font-medium">2 from recruiters</div>
+                <div class="text-xs text-orange-600 font-medium">{{ $talentStats['approved_applications'] }} from approved projects</div>
             </div>
         </div>
 
@@ -100,68 +110,77 @@
                         </div>
                     </div>
                     <div class="p-6 space-y-4">
-                        {{-- Job Opportunity 1 --}}
-                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <h3 class="font-semibold text-gray-800">Senior Frontend Developer</h3>
-                                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">New</span>
-                                    </div>
-                                    <p class="text-gray-600 text-sm mb-2">Tech Innovations Inc. • Remote</p>
-                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                        <span class="flex items-center"><i class="fas fa-dollar-sign mr-1"></i> $80k - $120k</span>
-                                        <span class="flex items-center"><i class="fas fa-clock mr-1"></i> Full-time</span>
-                                        <span class="flex items-center"><i class="fas fa-calendar mr-1"></i> Posted 2 days ago</span>
-                                    </div>
-                                </div>
-                                <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                                    Apply Now
-                                </button>
-                            </div>
-                        </div>
+                        @forelse($jobOpportunities->take(3) as $opportunity)
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all">
+                                <div class="flex items-start justify-between">
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <h3 class="font-semibold text-gray-800">{{ $opportunity['title'] }}</h3>
+                                            @if($opportunity['posted_date']->diffInDays() <= 3)
+                                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">New</span>
+                                            @elseif($opportunity['urgency'] === 'high')
+                                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">Urgent</span>
+                                            @else
+                                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">Available</span>
+                                            @endif
+                                        </div>
+                                        <p class="text-gray-600 text-sm mb-2">{{ $opportunity['company'] }} • Remote</p>
+                                        <div class="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                                            <span class="flex items-center"><i class="fas fa-dollar-sign mr-1"></i> {{ $opportunity['budget'] }}</span>
+                                            <span class="flex items-center"><i class="fas fa-clock mr-1"></i> {{ $opportunity['duration'] }}</span>
+                                            <span class="flex items-center"><i class="fas fa-calendar mr-1"></i> {{ $opportunity['posted_date']->diffForHumans() }}</span>
+                                        </div>
 
-                        {{-- Job Opportunity 2 --}}
-                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <h3 class="font-semibold text-gray-800">UX/UI Designer</h3>
-                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">Trending</span>
+                                        {{-- Acceptance Status --}}
+                                        @if(isset($opportunity['acceptance_status']))
+                                            <div class="mb-3">
+                                                <div class="text-xs font-medium text-gray-600 mb-1">Status:</div>
+                                                <span class="px-2 py-1 text-xs rounded-full
+                                                    @if($opportunity['both_parties_accepted']) bg-green-100 text-green-800
+                                                    @elseif($opportunity['talent_accepted']) bg-blue-100 text-blue-800
+                                                    @else bg-yellow-100 text-yellow-800 @endif">
+                                                    {{ $opportunity['acceptance_status'] }}
+                                                </span>
+                                            </div>
+                                        @endif
                                     </div>
-                                    <p class="text-gray-600 text-sm mb-2">Creative Solutions Ltd. • Jakarta</p>
-                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                        <span class="flex items-center"><i class="fas fa-dollar-sign mr-1"></i> $60k - $90k</span>
-                                        <span class="flex items-center"><i class="fas fa-clock mr-1"></i> Full-time</span>
-                                        <span class="flex items-center"><i class="fas fa-calendar mr-1"></i> Posted 1 week ago</span>
-                                    </div>
-                                </div>
-                                <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                                    Apply Now
-                                </button>
-                            </div>
-                        </div>
 
-                        {{-- Job Opportunity 3 --}}
-                        <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all cursor-pointer">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <h3 class="font-semibold text-gray-800">Data Scientist</h3>
-                                        <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full font-medium">Hot</span>
-                                    </div>
-                                    <p class="text-gray-600 text-sm mb-2">Data Analytics Corp. • Hybrid</p>
-                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
-                                        <span class="flex items-center"><i class="fas fa-dollar-sign mr-1"></i> $90k - $140k</span>
-                                        <span class="flex items-center"><i class="fas fa-clock mr-1"></i> Full-time</span>
-                                        <span class="flex items-center"><i class="fas fa-calendar mr-1"></i> Posted 3 days ago</span>
+                                    {{-- Action Buttons --}}
+                                    <div class="flex flex-col space-y-2 ml-4">
+                                        @if(isset($opportunity['can_accept']) && $opportunity['can_accept'])
+                                            <button onclick="acceptRequest({{ $opportunity['request_id'] }})"
+                                                    class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors">
+                                                <i class="fas fa-check mr-1"></i> Accept
+                                            </button>
+                                            <button onclick="rejectRequest({{ $opportunity['request_id'] }})"
+                                                    class="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors">
+                                                <i class="fas fa-times mr-1"></i> Decline
+                                            </button>
+                                        @elseif(isset($opportunity['can_reject']) && $opportunity['can_reject'])
+                                            <button onclick="rejectRequest({{ $opportunity['request_id'] }})"
+                                                    class="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-colors">
+                                                <i class="fas fa-times mr-1"></i> Decline
+                                            </button>
+                                        @else
+                                            <button class="px-4 py-2 bg-gray-400 text-white text-sm rounded-lg cursor-not-allowed" disabled>
+                                                {{ isset($opportunity['both_parties_accepted']) && $opportunity['both_parties_accepted'] ? 'Accepted' : 'Pending' }}
+                                            </button>
+                                        @endif
+
+                                        <button onclick="viewRequestDetails({{ $opportunity['request_id'] }})"
+                                                class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
+                                            <i class="fas fa-eye mr-1"></i> Details
+                                        </button>
                                     </div>
                                 </div>
-                                <button class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 transition-colors">
-                                    Apply Now
-                                </button>
                             </div>
-                        </div>
+                        @empty
+                            <div class="text-center py-8">
+                                <i class="fas fa-briefcase text-gray-300 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No job opportunities available at the moment.</p>
+                                <p class="text-gray-400 text-sm">Check back later for new opportunities!</p>
+                            </div>
+                        @endforelse
                     </div>
                 </div>
 
@@ -171,33 +190,23 @@
                         <h2 class="text-xl font-bold text-gray-800">📋 Recent Activity</h2>
                     </div>
                     <div class="p-6 space-y-4">
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-green-100 p-2 rounded-full">
-                                <i class="fas fa-check text-green-600"></i>
+                        @forelse($recentActivity as $activity)
+                            <div class="flex items-center space-x-3">
+                                <div class="bg-{{ $activity['color'] }}-100 p-2 rounded-full">
+                                    <i class="{{ $activity['icon'] }} text-{{ $activity['color'] }}-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm font-medium text-gray-800">{{ $activity['title'] }}</p>
+                                    <p class="text-xs text-gray-500">{{ $activity['time'] }}</p>
+                                </div>
                             </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-800">Application submitted to Tech Innovations Inc.</p>
-                                <p class="text-xs text-gray-500">2 hours ago</p>
+                        @empty
+                            <div class="text-center py-8">
+                                <i class="fas fa-history text-gray-300 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No recent activity yet.</p>
+                                <p class="text-gray-400 text-sm">Start applying to jobs or completing courses!</p>
                             </div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-blue-100 p-2 rounded-full">
-                                <i class="fas fa-eye text-blue-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-800">Your profile was viewed by Creative Solutions Ltd.</p>
-                                <p class="text-xs text-gray-500">1 day ago</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <div class="bg-purple-100 p-2 rounded-full">
-                                <i class="fas fa-star text-purple-600"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-800">New skill badge earned: React Advanced</p>
-                                <p class="text-xs text-gray-500">3 days ago</p>
-                            </div>
-                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -246,33 +255,27 @@
                         <h2 class="text-lg font-bold text-gray-800">🎯 Skill Progress</h2>
                     </div>
                     <div class="p-6 space-y-4">
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-medium text-gray-700">JavaScript</span>
-                                <span class="text-sm text-gray-500">90%</span>
+                        @forelse($userSkills as $skill)
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-medium text-gray-700">{{ $skill['name'] }}</span>
+                                    <span class="text-sm text-gray-500">{{ $skill['percentage'] }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    @php
+                                        $colorClass = $skill['percentage'] >= 80 ? 'bg-green-600' :
+                                                     ($skill['percentage'] >= 60 ? 'bg-blue-600' : 'bg-purple-600');
+                                    @endphp
+                                    <div class="{{ $colorClass }} h-2 rounded-full" style="width: {{ $skill['percentage'] }}%"></div>
+                                </div>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full" style="width: 90%"></div>
+                        @empty
+                            <div class="text-center py-8">
+                                <i class="fas fa-cogs text-gray-300 text-4xl mb-4"></i>
+                                <p class="text-gray-500">No skills tracked yet.</p>
+                                <p class="text-gray-400 text-sm">Complete courses to build your skill profile!</p>
                             </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-medium text-gray-700">React</span>
-                                <span class="text-sm text-gray-500">85%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-green-600 h-2 rounded-full" style="width: 85%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-sm font-medium text-gray-700">Node.js</span>
-                                <span class="text-sm text-gray-500">75%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2">
-                                <div class="bg-purple-600 h-2 rounded-full" style="width: 75%"></div>
-                            </div>
-                        </div>
+                        @endforelse
                     </div>
                 </div>
 
@@ -281,30 +284,233 @@
                     <div class="p-6 border-b border-gray-100">
                         <div class="flex items-center justify-between">
                             <h2 class="text-lg font-bold text-gray-800">💬 Messages</h2>
-                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">5</span>
+                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ $talentStats['new_messages'] }}</span>
                         </div>
                     </div>
                     <div class="p-6 space-y-4">
-                        <div class="flex items-center space-x-3">
-                            <img src="/asset/icons/profile-women.svg" alt="Recruiter" class="w-8 h-8 rounded-full">
-                            <div class="flex-1">
-                                <div class="text-sm font-medium text-gray-800">Sarah Chen</div>
-                                <div class="text-xs text-gray-500">Interested in your profile...</div>
+                        @forelse($recentRequests->take(2) as $request)
+                            <div class="flex items-center space-x-3">
+                                <img src="/asset/icons/profile-women.svg" alt="Recruiter" class="w-8 h-8 rounded-full">
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-800">{{ $request->recruiter->user->name ?? 'Recruiter' }}</div>
+                                    <div class="text-xs text-gray-500">{{ Str::limit($request->project_title ?? 'New opportunity', 30) }}</div>
+                                </div>
+                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                             </div>
-                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        </div>
-                        <div class="flex items-center space-x-3">
-                            <img src="/asset/icons/profile-women.svg" alt="Recruiter" class="w-8 h-8 rounded-full">
-                            <div class="flex-1">
-                                <div class="text-sm font-medium text-gray-800">Tech Innovations</div>
-                                <div class="text-xs text-gray-500">Interview invitation</div>
+                        @empty
+                            <div class="text-center py-4">
+                                <i class="fas fa-envelope-open text-gray-300 text-2xl mb-2"></i>
+                                <p class="text-gray-500 text-sm">No messages yet</p>
                             </div>
-                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{{-- Request Details Modal --}}
+<div id="requestDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeRequestModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-white" id="modal-title">Request Details</h3>
+                    <button type="button" class="text-white hover:text-gray-200 transition-colors" onclick="closeRequestModal()">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div id="modalContent" class="px-6 py-6">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Loading request details...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Accept Request Function
+function acceptRequest(requestId) {
+    if (!confirm('Are you sure you want to accept this collaboration request?')) {
+        return;
+    }
+
+    const notes = prompt('Optional: Add a note about your acceptance:') || '';
+
+    fetch(`/talent/request/${requestId}/accept`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            acceptance_notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Request accepted successfully! ' + data.message, 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showAlert('Error: ' + (data.message || 'Failed to accept request'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Network error occurred. Please try again.', 'error');
+    });
+}
+
+// Reject Request Function
+function rejectRequest(requestId) {
+    if (!confirm('Are you sure you want to decline this collaboration request?')) {
+        return;
+    }
+
+    const notes = prompt('Please provide a reason for declining (optional):') || '';
+
+    fetch(`/talent/request/${requestId}/reject`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            rejection_notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Request declined successfully.', 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showAlert('Error: ' + (data.message || 'Failed to decline request'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Network error occurred. Please try again.', 'error');
+    });
+}
+
+// View Request Details Function
+function viewRequestDetails(requestId) {
+    const modal = document.getElementById('requestDetailsModal');
+    const modalContent = document.getElementById('modalContent');
+
+    modal.classList.remove('hidden');
+
+    fetch(`/talent/my-requests`)
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const request = data.requests.find(r => r.id == requestId);
+            if (request) {
+                modalContent.innerHTML = `
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-blue-50 p-4 rounded-xl">
+                                <h4 class="font-semibold text-blue-900 mb-3">Project Information</h4>
+                                <div class="space-y-2">
+                                    <div><span class="font-medium">Title:</span> ${request.project_title}</div>
+                                    <div><span class="font-medium">Description:</span> ${request.project_description}</div>
+                                    <div><span class="font-medium">Budget:</span> ${request.budget}</div>
+                                    <div><span class="font-medium">Duration:</span> ${request.duration}</div>
+                                    <div><span class="font-medium">Urgency:</span> ${request.urgency}</div>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-xl">
+                                <h4 class="font-semibold text-green-900 mb-3">Recruiter Information</h4>
+                                <div class="space-y-2">
+                                    <div><span class="font-medium">Name:</span> ${request.recruiter_name}</div>
+                                    <div><span class="font-medium">Company:</span> ${request.company || 'Not specified'}</div>
+                                    <div><span class="font-medium">Submitted:</span> ${request.created_at}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-xl">
+                            <h4 class="font-semibold text-gray-900 mb-3">Status & Progress</h4>
+                            <div class="space-y-2">
+                                <div><span class="font-medium">Current Status:</span>
+                                    <span class="px-2 py-1 text-xs rounded-full ${request.both_parties_accepted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                        ${request.acceptance_status}
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: ${request.workflow_progress}%"></div>
+                                </div>
+                                <div class="text-sm text-gray-600">Progress: ${request.workflow_progress}%</div>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-4">
+                            ${request.can_accept ? `
+                                <button onclick="acceptRequest(${request.id}); closeRequestModal();"
+                                        class="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold">
+                                    <i class="fas fa-check mr-2"></i>Accept Request
+                                </button>
+                            ` : ''}
+                            ${request.can_reject ? `
+                                <button onclick="rejectRequest(${request.id}); closeRequestModal();"
+                                        class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold">
+                                    <i class="fas fa-times mr-2"></i>Decline Request
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            } else {
+                modalContent.innerHTML = '<div class="text-center py-8"><p class="text-gray-600">Request not found.</p></div>';
+            }
+        } else {
+            modalContent.innerHTML = '<div class="text-center py-8"><p class="text-gray-600">Error loading request details.</p></div>';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        modalContent.innerHTML = '<div class="text-center py-8"><p class="text-gray-600">Error loading request details.</p></div>';
+    });
+}
+
+// Close Request Modal
+function closeRequestModal() {
+    document.getElementById('requestDetailsModal').classList.add('hidden');
+}
+
+// Show Alert Function
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'
+    }`;
+    alertDiv.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
+            ${message}
+        </div>
+    `;
+
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.style.transform = 'translateX(100%)';
+        alertDiv.style.opacity = '0';
+        setTimeout(() => alertDiv.remove(), 300);
+    }, 5000);
+}
+</script>
 @endsection
