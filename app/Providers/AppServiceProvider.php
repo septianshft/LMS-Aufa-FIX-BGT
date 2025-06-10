@@ -31,5 +31,6 @@ class AppServiceProvider extends ServiceProvider
 
         // Set Carbon timezone and locale
         Carbon::setLocale('id'); // Indonesian locale
+        // Carbon will use the application timezone set by date_default_timezone_set() above
     }
 }
