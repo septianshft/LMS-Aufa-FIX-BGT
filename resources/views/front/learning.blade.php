@@ -54,8 +54,8 @@
                                     @if($hasAccess || $course->price == 0)
                                         <div class="flex items-center gap-2">
                                             <a href="{{ route('front.learning', [$course, 'courseVideoId' => $video->id]) }}" class="flex-1 group p-[12px_16px] flex items-center gap-[10px] rounded-full transition-all duration-300 {{ $isActive ? 'bg-[#3525B3] active-video' : 'bg-[#E9EFF3] hover:bg-[#3525B3]' }}">
-                                                <div class="text-black group-hover:text-white {{ $isActive ? 'text-white' : '' }}">▶️</div>
-                                                <p class="font-semibold {{ $isActive ? 'text-white' : 'group-hover:text-white text-black' }}">{{ $video->name }}</p>
+                                                <div class="text-black group-hover:text-white {{ $isActive ? 'text-[#3525B3]' : '' }}">▶️</div>
+                                                <p class="font-semibold {{ $isActive ? 'text-[#3525B3]' : 'group-hover:text-white text-black' }}">{{ $video->name }}</p>
                                             </a>
                                             @if(in_array($video->id, $progress->completed_videos ?? []))
                                                 <span class="text-green-600">✔</span>
