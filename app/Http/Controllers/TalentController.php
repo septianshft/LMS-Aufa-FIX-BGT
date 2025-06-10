@@ -49,11 +49,14 @@ class TalentController extends Controller
         // Get profile completeness
         $profileCompleteness = $this->calculateProfileCompleteness($user);
 
+        // Get job history (accepted/completed collaborations)
+        $jobHistory = $this->getJobHistory($user);
+
         return view('admin.talent.dashboard', compact(
             'user', 'title', 'roles', 'assignedKelas',
             'talentStats', 'skillAnalytics', 'userSkills',
             'recentRequests', 'jobOpportunities', 'recentActivity',
-            'profileCompleteness'
+            'profileCompleteness', 'jobHistory'
         ));
     }
 
@@ -72,6 +75,11 @@ class TalentController extends Controller
             $query->where('user_id', $user->id);
         })->where('status', 'approved')->count();
 
+        // Count completed collaborations
+        $completedCollaborations = TalentRequest::whereHas('talent', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->where('both_parties_accepted', true)->count();
+
         // Count messages (for now, simulated - could be connected to real messaging system)
         $newMessages = 5; // This could be connected to a real messaging system
 
@@ -79,6 +87,7 @@ class TalentController extends Controller
             'total_applications' => $totalApplications,
             'pending_applications' => $pendingApplications,
             'approved_applications' => $approvedApplications,
+            'completed_collaborations' => $completedCollaborations,
             'new_messages' => $newMessages,
         ];
     }
@@ -235,6 +244,66 @@ class TalentController extends Controller
         if ($user->available_for_scouting) $completeness += 10;
 
         return min(100, $completeness);
+    }
+
+    private function getJobHistory($user)
+    {
+        // Get accepted and completed talent requests
+        return TalentRequest::with(['recruiter.user'])
+            ->whereHas('talent.user', function($query) use ($user) {
+                $query->where('id', $user->id);
+            })
+            ->where(function($query) {
+                // Include requests that are either:
+                // 1. Accepted by talent (regardless of admin status)
+                // 2. Both parties accepted (completed workflow)
+                // 3. Any approved/completed status
+                $query->where('talent_accepted', true)
+                      ->orWhere('both_parties_accepted', true)
+                      ->orWhereIn('status', ['approved', 'completed', 'in_progress']);
+            })
+            ->orderBy('talent_accepted_at', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->take(10) // Show last 10 collaborations
+            ->get()
+            ->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'project_title' => $request->project_title ?? 'Untitled Project',
+                    'company' => $request->recruiter->user->name ?? 'Unknown Company',
+                    'company_role' => $request->recruiter->user->pekerjaan ?? 'Company',
+                    'budget_range' => $request->budget_range ?? 'Budget TBD',
+                    'project_duration' => $request->project_duration ?? 'Duration TBD',
+                    'project_description' => $request->project_description ?? '',
+                    'status' => $request->status,
+                    'talent_accepted_at' => $request->talent_accepted_at,
+                    'workflow_completed_at' => $request->workflow_completed_at,
+                    'created_at' => $request->created_at,
+                    'is_completed' => $request->both_parties_accepted,
+                    'is_in_progress' => $request->talent_accepted && !$request->both_parties_accepted,
+                    'formatted_status' => $request->getAcceptanceStatus(),
+                    'status_color' => $this->getStatusColor($request),
+                    'duration_worked' => $request->talent_accepted_at 
+                        ? ($request->workflow_completed_at 
+                            ? $request->talent_accepted_at->diffInDays($request->workflow_completed_at) . ' days'
+                            : $request->talent_accepted_at->diffInDays(now()) . ' days (ongoing)')
+                        : 'Not started'
+                ];
+            });
+    }
+
+    private function getStatusColor($request)
+    {
+        if ($request->both_parties_accepted) {
+            return 'green'; // Completed
+        } elseif ($request->talent_accepted && $request->admin_accepted) {
+            return 'blue'; // In progress
+        } elseif ($request->talent_accepted) {
+            return 'yellow'; // Waiting for admin
+        } elseif ($request->status === 'approved') {
+            return 'purple'; // Approved
+        }
+        return 'gray'; // Default
     }
 
     /**
