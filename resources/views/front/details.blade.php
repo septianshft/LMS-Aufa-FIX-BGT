@@ -16,20 +16,20 @@
 @include('front.partials.nav')
         </nav>
     </div>
-    <section id="video-content" class="max-w-[1100px] w-full mx-auto mt-[130px] flex flex-col gap-8">
+    <section id="video-content" class="max-w-[1100px] w-full mx-auto mt-[130px] flex flex-col md:flex-row gap-8">
     <!-- Video Player -->
-    <div class="plyr__video-embed w-full overflow-hidden relative rounded-[20px]" id="player">
+    <div class="plyr__video-embed w-full md:w-2/3 overflow-hidden relative rounded-[20px]" id="player">
         <iframe
             src="https://www.youtube.com/embed/{{ $course->path_trailer}}?origin=https://plyr.io&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
             allowfullscreen
             allowtransparency
             allow="autoplay"
-            class="w-full h-[400px] sm:h-[500px]"
+            class="w-full h-[500px] sm:h-[600px]"
         ></iframe>
     </div>
 
     <!-- Sidebar Video List -->
-    <div class="video-player-sidebar flex flex-col w-full bg-[#F5F8FA] rounded-[20px] p-6 gap-5 max-h-[500px] overflow-y-auto">
+    <div class="video-player-sidebar flex flex-col w-full md:w-1/3 bg-[#F5F8FA] rounded-[20px] p-6 gap-5 max-h-[500px] overflow-y-auto">
         <p class="font-bold text-lg text-black">{{ $course->course_videos->count() }} Lessons</p>
         <div class="flex flex-col gap-4">
             <!-- Course Trailer -->

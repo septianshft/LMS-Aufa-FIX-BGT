@@ -18,12 +18,12 @@
         </nav>
     </div>
 
-    <section id="video-content" class="max-w-[1100px] w-full mx-auto mt-[130px] flex flex-col gap-8">
-        <div class="plyr__video-embed w-full overflow-hidden relative rounded-[20px]" id="player">
-            <iframe src="https://www.youtube.com/embed/{{ $course->path_video }}?origin=https://plyr.io&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1" allowfullscreen allowtransparency allow="autoplay" class="w-full h-[400px] sm:h-[500px]"></iframe>
+    <section id="video-content" class="max-w-[1100px] w-full mx-auto mt-[130px] flex flex-col md:flex-row gap-8">
+        <div class="plyr__video-embed w-full md:w-2/3 overflow-hidden relative rounded-[20px]" id="player">
+            <iframe src="https://www.youtube.com/embed/{{ $course->path_video }}?origin=https://plyr.io&iv_load_policy=3&modestbranding=1&playsinline=1&showinfo=0&rel=0&enablejsapi=1" allowfullscreen allowtransparency allow="autoplay" class="w-full h-[500px] sm:h-[600px]"></iframe>
         </div>
 
-        <div class="video-player-sidebar flex flex-col w-full bg-[#F5F8FA] rounded-[20px] p-6 gap-5 max-h-[500px] overflow-y-auto">
+        <div class="video-player-sidebar flex flex-col w-full md:w-1/3 bg-[#F5F8FA] rounded-[20px] p-6 gap-5 max-h-[500px] overflow-y-auto">
             <p class="font-bold text-lg text-black">{{ $course->course_videos->count() }} Lessons</p>
             <div class="flex flex-col gap-4">
                 <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full hover:bg-[#3525B3] transition-all">
