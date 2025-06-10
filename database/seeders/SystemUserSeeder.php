@@ -12,27 +12,16 @@ use Spatie\Permission\Models\Role;
 class SystemUserSeeder extends Seeder
 {
     /**
-     * Seed core system users with proper role separation.
-     *
-     * LMS System:
-     * - Admin: LMS management only
-     * - Trainer: Course management
-     * - Trainee: Course access + talent opt-in capability
-     *
-     * Talent Scouting System:
-     * - Talent Admin: Talent system management only
-     * - Talent: Profile management & opportunities
-     * - Recruiter: Talent discovery only
+     * Seed minimal core system users for manual flow testing.
+     * Only essential accounts + few talents with course-based skills.
      */
     public function run(): void
     {
-        $this->command->info('👥 Creating core system users...');
+        $this->command->info('👥 Creating essential system users...');
 
         // ===============================================
-        // LMS SYSTEM USERS
+        // ESSENTIAL SYSTEM ACCOUNTS
         // ===============================================
-
-        $this->command->info('🏢 Creating LMS system users...');
 
         // LMS Admin - Full LMS access only
         $adminUser = User::firstOrCreate([
@@ -40,41 +29,11 @@ class SystemUserSeeder extends Seeder
         ], [
             'name' => 'LMS Administrator',
             'pekerjaan' => 'System Administrator',
-            'avatar' => 'images/default-avatar.png',
+            'avatar' => null,
             'password' => bcrypt('password123'),
         ]);
         $adminUser->assignRole('admin');
         $this->command->info('   ✓ LMS Admin created: admin@lms.test');
-
-        // Trainer - Course management
-        $trainerUser = User::firstOrCreate([
-            'email' => 'trainer@lms.test'
-        ], [
-            'name' => 'John Trainer',
-            'pekerjaan' => 'Course Instructor',
-            'avatar' => 'images/default-avatar.png',
-            'password' => bcrypt('password123'),
-        ]);
-        $trainerUser->assignRole('trainer');
-        $this->command->info('   ✓ Trainer created: trainer@lms.test');
-
-        // Trainee - LMS access only (can later opt into talent system)
-        $traineeUser = User::firstOrCreate([
-            'email' => 'trainee@lms.test'
-        ], [
-            'name' => 'Sarah Student',
-            'pekerjaan' => 'Software Engineering Student',
-            'avatar' => 'images/default-avatar.png',
-            'password' => bcrypt('password123'),
-        ]);
-        $traineeUser->assignRole('trainee');
-        $this->command->info('   ✓ Trainee created: trainee@lms.test');
-
-        // ===============================================
-        // TALENT SCOUTING SYSTEM USERS
-        // ===============================================
-
-        $this->command->info('🎯 Creating talent scouting system users...');
 
         // Talent Admin - Talent system management only
         $talentAdminUser = User::firstOrCreate([
@@ -82,7 +41,7 @@ class SystemUserSeeder extends Seeder
         ], [
             'name' => 'Emma Talent Admin',
             'pekerjaan' => 'Talent System Administrator',
-            'avatar' => 'images/default-avatar.png',
+            'avatar' => null,
             'password' => bcrypt('password123'),
         ]);
         $talentAdminUser->assignRole('talent_admin');
@@ -93,32 +52,7 @@ class SystemUserSeeder extends Seeder
         ], [
             'is_active' => true
         ]);
-        $this->command->info('   ✓ Talent Admin created: talent.admin@scout.test');        // Talent - Profile management & opportunities
-        $talentUser = User::firstOrCreate([
-            'email' => 'talent@scout.test'
-        ], [
-            'name' => 'Alex Developer',
-            'pekerjaan' => 'Full Stack Developer',
-            'avatar' => 'images/default-avatar.png',
-            'password' => bcrypt('password123'),
-            'available_for_scouting' => true,
-            'talent_skills' => json_encode(['Laravel', 'Vue.js', 'React', 'JavaScript', 'PHP']),
-            'hourly_rate' => 75.00,
-            'talent_bio' => 'Experienced full-stack developer with expertise in Laravel, Vue.js, and React. Passionate about creating scalable web applications.',
-            'portfolio_url' => 'https://github.com/alexdev',
-            'location' => 'Jakarta, Indonesia',
-            'experience_level' => 'advanced',
-            'is_active_talent' => true,
-        ]);
-        $talentUser->assignRole('talent');
-
-        // Create talent relationship record
-        Talent::firstOrCreate([
-            'user_id' => $talentUser->id
-        ], [
-            'is_active' => true
-        ]);
-        $this->command->info('   ✓ Talent created: talent@scout.test');
+        $this->command->info('   ✓ Talent Admin created: talent.admin@scout.test');
 
         // Recruiter - Talent discovery only
         $recruiterUser = User::firstOrCreate([
@@ -126,7 +60,7 @@ class SystemUserSeeder extends Seeder
         ], [
             'name' => 'Michael Recruiter',
             'pekerjaan' => 'Senior Talent Recruiter',
-            'avatar' => 'images/default-avatar.png',
+            'avatar' => null,
             'password' => bcrypt('password123'),
         ]);
         $recruiterUser->assignRole('recruiter');
@@ -140,36 +74,87 @@ class SystemUserSeeder extends Seeder
         $this->command->info('   ✓ Recruiter created: recruiter@scout.test');
 
         // ===============================================
-        // DUAL-ACCESS USER (LMS + TALENT)
+        // SAMPLE TALENTS WITH COURSE-BASED SKILLS
         // ===============================================
 
-        $this->command->info('🔄 Creating dual-access user...');        // Trainee who has opted into talent system
-        $dualUser = User::firstOrCreate([
-            'email' => 'dual.trainee@test.com'
+        $this->command->info('🎯 Creating sample talents with course-based skills...');
+
+        // Talent 1: Frontend Developer
+        $frontendTalent = User::firstOrCreate([
+            'email' => 'sarah.frontend@test.com'
         ], [
-            'name' => 'Jessica Dual',
-            'pekerjaan' => 'Frontend Developer & Student',
-            'avatar' => 'images/default-avatar.png',
+            'name' => 'Sarah Frontend',
+            'pekerjaan' => 'Frontend Developer',
+            'avatar' => null,
             'password' => bcrypt('password123'),
             'available_for_scouting' => true,
-            'talent_skills' => json_encode(['React', 'JavaScript', 'HTML/CSS', 'TypeScript', 'Vue.js']),
+            'talent_skills' => json_encode(['HTML/CSS', 'JavaScript', 'React', 'Vue.js', 'Responsive Design']),
             'hourly_rate' => 45.00,
-            'talent_bio' => 'Frontend developer and continuous learner. Currently studying advanced web technologies while building modern user interfaces.',
-            'portfolio_url' => 'https://github.com/jessicadual',
-            'location' => 'Bandung, Indonesia',
+            'talent_bio' => 'Frontend developer with 3+ years experience. Completed courses in React, Vue.js, and modern CSS. Passionate about creating beautiful, responsive user interfaces.',
+            'portfolio_url' => 'https://github.com/sarahfrontend',
+            'location' => 'Jakarta, Indonesia',
             'experience_level' => 'intermediate',
             'is_active_talent' => true,
         ]);
-        $dualUser->assignRole(['trainee', 'talent']);
+        $frontendTalent->assignRole('talent');
 
-        // Create talent relationship record for the dual user
         Talent::firstOrCreate([
-            'user_id' => $dualUser->id
+            'user_id' => $frontendTalent->id
         ], [
             'is_active' => true
         ]);
-        $this->command->info('   ✓ Dual user created: dual.trainee@test.com (LMS + Talent access)');
 
-        $this->command->info('✅ System users created successfully!');
+        // Talent 2: Backend Developer
+        $backendTalent = User::firstOrCreate([
+            'email' => 'john.backend@test.com'
+        ], [
+            'name' => 'John Backend',
+            'pekerjaan' => 'Backend Developer',
+            'avatar' => null,
+            'password' => bcrypt('password123'),
+            'available_for_scouting' => true,
+            'talent_skills' => json_encode(['PHP', 'Laravel', 'MySQL', 'API Development', 'Server Management']),
+            'hourly_rate' => 60.00,
+            'talent_bio' => 'Backend developer specializing in Laravel and PHP. Completed advanced courses in database design, API development, and server management.',
+            'portfolio_url' => 'https://github.com/johnbackend',
+            'location' => 'Bandung, Indonesia',
+            'experience_level' => 'advanced',
+            'is_active_talent' => true,
+        ]);
+        $backendTalent->assignRole('talent');
+
+        Talent::firstOrCreate([
+            'user_id' => $backendTalent->id
+        ], [
+            'is_active' => true
+        ]);
+
+        // Talent 3: Full Stack Developer
+        $fullstackTalent = User::firstOrCreate([
+            'email' => 'alex.fullstack@test.com'
+        ], [
+            'name' => 'Alex Fullstack',
+            'pekerjaan' => 'Full Stack Developer',
+            'avatar' => null,
+            'password' => bcrypt('password123'),
+            'available_for_scouting' => true,
+            'talent_skills' => json_encode(['JavaScript', 'Node.js', 'React', 'Express.js', 'MongoDB', 'Git']),
+            'hourly_rate' => 75.00,
+            'talent_bio' => 'Full-stack developer with comprehensive training in modern web technologies. Completed courses in MERN stack development and agile methodologies.',
+            'portfolio_url' => 'https://github.com/alexfullstack',
+            'location' => 'Surabaya, Indonesia',
+            'experience_level' => 'advanced',
+            'is_active_talent' => true,
+        ]);
+        $fullstackTalent->assignRole('talent');
+
+        Talent::firstOrCreate([
+            'user_id' => $fullstackTalent->id
+        ], [
+            'is_active' => true
+        ]);
+
+        $this->command->info('   ✓ Created 3 sample talents with course-based skills');
+        $this->command->info('✅ Essential users created successfully!');
     }
 }

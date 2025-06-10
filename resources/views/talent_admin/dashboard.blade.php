@@ -113,7 +113,7 @@
             </div>
         </div>
         <div class="p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 <!-- Analytics Dashboard (Phase 1 Enhancement) -->
                 <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6 hover-lift border border-purple-200">
                     <div class="text-center">
@@ -142,9 +142,6 @@
                             <a href="{{ route('talent_admin.manage_talents') }}" class="block w-full px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium text-sm">
                                 <i class="fas fa-eye mr-2"></i>Lihat Semua Talent
                             </a>
-                            <button class="w-full px-4 py-2 bg-white text-blue-600 border-2 border-blue-600 rounded-xl hover:bg-blue-50 transition-all duration-200 font-medium text-sm" onclick="showComingSoon('Tambah Talent Baru')">
-                                <i class="fas fa-plus mr-2"></i>Tambah Talent Baru
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -161,7 +158,7 @@
                             <a href="{{ route('talent_admin.manage_recruiters') }}" class="block w-full px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-all duration-200 font-medium text-sm">
                                 <i class="fas fa-eye mr-2"></i>Lihat Semua Perekrut
                             </a>
-                            <button class="w-full px-4 py-2 bg-white text-indigo-600 border-2 border-indigo-600 rounded-xl hover:bg-indigo-50 transition-all duration-200 font-medium text-sm" onclick="showComingSoon('Tambah Perekrut Baru')">
+                            <button class="w-full px-4 py-2 bg-white text-indigo-600 border-2 border-indigo-600 rounded-xl hover:bg-indigo-50 transition-all duration-200 font-medium text-sm" onclick="showAddRecruiterModal()">
                                 <i class="fas fa-plus mr-2"></i>Tambah Perekrut Baru
                             </button>
                         </div>
@@ -182,6 +179,25 @@
                             </a>
                             <a href="{{ route('talent_admin.manage_requests', ['status' => 'pending']) }}" class="block w-full px-4 py-2 bg-white text-orange-600 border-2 border-orange-600 rounded-xl hover:bg-orange-50 transition-all duration-200 font-medium text-sm">
                                 <i class="fas fa-clock mr-2"></i>Tertunda ({{ $pendingRequests }})
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manage Talent Admins -->
+                <div class="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-6 hover-lift border border-red-200">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-red-500 to-red-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <i class="fas fa-user-shield text-white text-xl"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Kelola Admin</h4>
+                        <p class="text-gray-600 text-sm mb-6">Kelola akun talent admin, buat, edit, dan hapus admin.</p>
+                        <div class="space-y-3">
+                            <a href="{{ route('talent_admin.manage_talent_admins') }}" class="block w-full px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-medium text-sm">
+                                <i class="fas fa-users-cog mr-2"></i>Kelola Admin
+                            </a>
+                            <a href="{{ route('talent_admin.create_talent_admin') }}" class="block w-full px-4 py-2 bg-white text-red-600 border-2 border-red-600 rounded-xl hover:bg-red-50 transition-all duration-200 font-medium text-sm">
+                                <i class="fas fa-plus mr-2"></i>Tambah Admin
                             </a>
                         </div>
                     </div>
@@ -380,21 +396,436 @@
     </div>
 </div>
 
+<!-- Add Recruiter Modal -->
+<div class="modal fade" id="addRecruiterModal" tabindex="-1" aria-labelledby="addRecruiterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRecruiterModalLabel">
+                    <i class="fas fa-plus-circle text-indigo-600 mr-2"></i>
+                    Tambah Perekrut Baru
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>
+                    <strong>Info:</strong> Form ini menggunakan validasi yang sama dengan sistem registrasi publik.
+                    Perekrut yang dibuat akan memiliki akses dan fitur yang sama seperti yang mendaftar langsung.
+                </div>
+
+                <form id="addRecruiterForm" enctype="multipart/form-data">
+                    @csrf
+
+                    <!-- Basic Information (matches public registration) -->
+                    <div class="mb-3">
+                        <label for="recruiter_name" class="form-label">Nama Lengkap *</label>
+                        <input type="text" class="form-control" id="recruiter_name" name="name" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="recruiter_email" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="recruiter_email" name="email" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="recruiter_pekerjaan" class="form-label">Pekerjaan *</label>
+                        <input type="text" class="form-control" id="recruiter_pekerjaan" name="pekerjaan" placeholder="misal: HR Manager, Talent Acquisition, dll" required>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <!-- Avatar field (optional for admin creation) -->
+                    <div class="mb-3">
+                        <label for="recruiter_avatar" class="form-label">Avatar (Opsional)</label>
+                        <input type="file" class="form-control" id="recruiter_avatar" name="avatar" accept="image/png,image/jpg,image/jpeg">
+                        <div class="form-text">File gambar (PNG, JPG, JPEG) maksimal 2MB. Jika tidak diisi, akan menggunakan avatar default.</div>
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="recruiter_phone" class="form-label">Nomor Telepon</label>
+                        <input type="tel" class="form-control" id="recruiter_phone" name="phone">
+                        <div class="invalid-feedback"></div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="recruiter_password" class="form-label">Password *</label>
+                                <div class="position-relative">
+                                    <input type="password" class="form-control pe-5" id="recruiter_password" name="password" required>
+                                    <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y password-toggle-btn"
+                                            id="toggleRecruiterPassword">
+                                        <i class="fas fa-eye" id="eyeIconPassword"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Minimal 8 karakter</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="recruiter_password_confirmation" class="form-label">Konfirmasi Password *</label>
+                                <div class="position-relative">
+                                    <input type="password" class="form-control pe-5" id="recruiter_password_confirmation" name="password_confirmation" required>
+                                    <button type="button" class="btn btn-link position-absolute top-50 end-0 translate-middle-y password-toggle-btn"
+                                            id="toggleRecruiterPasswordConfirmation">
+                                        <i class="fas fa-eye" id="eyeIconPasswordConfirmation"></i>
+                                    </button>
+                                </div>
+                                <div class="form-text">Harus sama dengan password di atas</div>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Optional Company Information -->
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3">
+                        <i class="fas fa-building mr-2"></i>Informasi Perusahaan (Opsional)
+                    </h6>
+                    <small class="text-muted mb-3 d-block">Informasi ini dapat diisi nanti oleh perekrut di profil mereka</small>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="company_name" class="form-label">Nama Perusahaan</label>
+                                <input type="text" class="form-control" id="company_name" name="company_name">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="industry" class="form-label">Industri</label>
+                                <select class="form-select" id="industry" name="industry">
+                                    <option value="">Pilih Industri</option>
+                                    <option value="Technology">Teknologi</option>
+                                    <option value="Finance">Keuangan</option>
+                                    <option value="Healthcare">Kesehatan</option>
+                                    <option value="Education">Pendidikan</option>
+                                    <option value="Retail">Retail</option>
+                                    <option value="Manufacturing">Manufaktur</option>
+                                    <option value="Construction">Konstruksi</option>
+                                    <option value="Transportation">Transportasi</option>
+                                    <option value="Hospitality">Perhotelan</option>
+                                    <option value="Media">Media</option>
+                                    <option value="Other">Lainnya</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="company_size" class="form-label">Ukuran Perusahaan</label>
+                                <select class="form-select" id="company_size" name="company_size">
+                                    <option value="">Pilih Ukuran</option>
+                                    <option value="1-10">1-10 karyawan</option>
+                                    <option value="11-50">11-50 karyawan</option>
+                                    <option value="51-200">51-200 karyawan</option>
+                                    <option value="201-1000">201-1000 karyawan</option>
+                                    <option value="1000+">1000+ karyawan</option>
+                                </select>
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="address" class="form-label">Alamat</label>
+                                <input type="text" class="form-control" id="address" name="address" placeholder="Alamat perusahaan">
+                                <div class="invalid-feedback"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="company_description" class="form-label">Deskripsi Perusahaan</label>
+                        <textarea class="form-control" id="company_description" name="company_description" rows="3" placeholder="Ceritakan tentang perusahaan..."></textarea>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times mr-2"></i>Batal
+                </button>
+                <button type="button" class="btn btn-indigo" id="saveRecruiterBtn" onclick="saveRecruiter()">
+                    <i class="fas fa-save mr-2"></i>Simpan Perekrut
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-function showComingSoon(feature) {
-    // Try to use SweetAlert if available, otherwise use regular alert
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            title: 'Segera Hadir!',
-            text: `Fitur ${feature} akan tersedia dalam pembaruan berikutnya.`,
-            icon: 'info',
-            confirmButtonText: 'Mengerti!',
-            confirmButtonColor: '#7c3aed'
+function showAddRecruiterModal() {
+    // Reset form
+    document.getElementById('addRecruiterForm').reset();
+    clearFormErrors();
+
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('addRecruiterModal'));
+    modal.show();
+}
+
+function saveRecruiter() {
+    const form = document.getElementById('addRecruiterForm');
+    const formData = new FormData(form);
+    const saveBtn = document.getElementById('saveRecruiterBtn');
+
+    // Clear previous errors
+    clearFormErrors();
+
+    // Frontend validation before sending
+    const name = formData.get('name');
+    const email = formData.get('email');
+    const pekerjaan = formData.get('pekerjaan');
+    const password = formData.get('password');
+    const passwordConfirmation = formData.get('password_confirmation');
+
+    // Basic validation
+    if (!name || name.trim() === '') {
+        showFieldError('name', 'Nama tidak boleh kosong');
+        return;
+    }
+    if (!email || email.trim() === '') {
+        showFieldError('email', 'Email tidak boleh kosong');
+        return;
+    }
+    if (!pekerjaan || pekerjaan.trim() === '') {
+        showFieldError('pekerjaan', 'Pekerjaan tidak boleh kosong');
+        return;
+    }
+    if (!password || password.length < 8) {
+        showFieldError('password', 'Password minimal 8 karakter');
+        return;
+    }
+    if (password !== passwordConfirmation) {
+        showFieldError('password_confirmation', 'Konfirmasi password tidak cocok');
+        return;
+    }
+
+    // Show loading state
+    const originalText = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
+
+    // Debug: Log what we're sending
+    console.log('=== RECRUITER CREATION DEBUG ===');
+    console.log('Form data entries:');
+    for (let [key, value] of formData.entries()) {
+        if (key !== 'password' && key !== 'password_confirmation') {
+            console.log(`  ${key}: ${value}`);
+        } else {
+            console.log(`  ${key}: [hidden]`);
+        }
+    }
+
+    // Check CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfToken) {
+        console.error('CSRF token meta tag not found!');
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Kesalahan!',
+                text: 'Token keamanan tidak ditemukan. Silakan refresh halaman.',
+                icon: 'error',
+                confirmButtonColor: '#7c3aed'
+            });
+        } else {
+            alert('Token keamanan tidak ditemukan. Silakan refresh halaman.');
+        }
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+        return;
+    }
+
+    console.log('CSRF token found:', csrfToken.getAttribute('content').substring(0, 10) + '...');
+
+    fetch('/talent-admin/recruiter', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken.getAttribute('content')
+        },
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+
+        if (!response.ok) {
+            return response.text().then(text => {
+                console.log('Error response body:', text);
+                throw new Error(`HTTP ${response.status}: ${text}`);
+            });
+        }
+
+        // Try to parse JSON response
+        return response.json().catch(jsonError => {
+            console.error('JSON parsing error:', jsonError);
+            return response.text().then(text => {
+                console.log('Raw response text:', text);
+                throw new Error('Invalid JSON response: ' + text.substring(0, 100));
+            });
         });
-    } else {
-        alert(`Segera Hadir!\n\nFitur ${feature} akan tersedia dalam pembaruan berikutnya.`);
+    })
+    .then(data => {
+        console.log('Parsed response data:', data);
+
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addRecruiterModal'));
+            modal.hide();
+
+            // Show success message
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Berhasil!',
+                    text: data.message,
+                    icon: 'success',
+                    confirmButtonColor: '#7c3aed'
+                }).then(() => {
+                    // Reload page to show new recruiter
+                    window.location.reload();
+                });
+            } else {
+                alert('Berhasil: ' + data.message);
+                window.location.reload();
+            }
+        } else {
+            // Show validation errors
+            if (data.errors) {
+                showFormErrors(data.errors);
+            }
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Kesalahan!',
+                    text: data.message || 'Terjadi kesalahan saat menyimpan data.',
+                    icon: 'error',
+                    confirmButtonColor: '#7c3aed'
+                });
+            } else {
+                alert('Kesalahan: ' + (data.message || 'Terjadi kesalahan saat menyimpan data.'));
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Fetch error:', error);
+        console.error('Error details:', error.message);
+
+        let errorMessage = 'Terjadi kesalahan koneksi. Silakan coba lagi.';
+
+        // Provide more specific error messages based on the error
+        if (error.message.includes('JSON')) {
+            errorMessage = 'Server mengembalikan respons yang tidak valid. Silakan periksa log server.';
+        } else if (error.message.includes('419')) {
+            errorMessage = 'Token keamanan tidak valid. Silakan refresh halaman dan coba lagi.';
+        } else if (error.message.includes('500')) {
+            errorMessage = 'Terjadi kesalahan pada server. Silakan periksa log aplikasi.';
+        } else if (error.message.includes('422')) {
+            errorMessage = 'Data yang dimasukkan tidak valid. Silakan periksa form dan coba lagi.';
+        }
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Kesalahan!',
+                text: errorMessage,
+                icon: 'error',
+                confirmButtonColor: '#7c3aed'
+            });
+        } else {
+            alert('Kesalahan: ' + errorMessage);
+        }
+    })
+    .finally(() => {
+        // Restore button state
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalText;
+    });
+}
+
+function clearFormErrors() {
+    // Remove all error classes and messages
+    const form = document.getElementById('addRecruiterForm');
+    const inputs = form.querySelectorAll('.form-control, .form-select');
+    const feedbacks = form.querySelectorAll('.invalid-feedback');
+
+    inputs.forEach(input => {
+        input.classList.remove('is-invalid');
+    });
+
+    feedbacks.forEach(feedback => {
+        feedback.textContent = '';
+    });
+}
+
+function showFormErrors(errors) {
+    for (const [field, messages] of Object.entries(errors)) {
+        const input = document.querySelector(`[name="${field}"]`);
+        const feedback = input?.parentElement.querySelector('.invalid-feedback');
+
+        if (input && feedback) {
+            input.classList.add('is-invalid');
+            feedback.textContent = Array.isArray(messages) ? messages[0] : messages;
+        }
     }
 }
+
+function showFieldError(fieldName, message) {
+    const input = document.querySelector(`[name="${fieldName}"]`);
+    const feedback = input?.parentElement.querySelector('.invalid-feedback');
+
+    if (input && feedback) {
+        input.classList.add('is-invalid');
+        feedback.textContent = message;
+    }
+}
+
+// Password visibility toggle functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle for main password field
+    const togglePassword = document.getElementById('toggleRecruiterPassword');
+    const passwordField = document.getElementById('recruiter_password');
+    const eyeIconPassword = document.getElementById('eyeIconPassword');
+
+    if (togglePassword && passwordField && eyeIconPassword) {
+        togglePassword.addEventListener('click', function() {
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIconPassword.classList.remove('fa-eye');
+                eyeIconPassword.classList.add('fa-eye-slash');
+            } else {
+                passwordField.type = 'password';
+                eyeIconPassword.classList.remove('fa-eye-slash');
+                eyeIconPassword.classList.add('fa-eye');
+            }
+        });
+    }
+
+    // Toggle for password confirmation field
+    const togglePasswordConfirmation = document.getElementById('toggleRecruiterPasswordConfirmation');
+    const passwordConfirmationField = document.getElementById('recruiter_password_confirmation');
+    const eyeIconPasswordConfirmation = document.getElementById('eyeIconPasswordConfirmation');
+
+    if (togglePasswordConfirmation && passwordConfirmationField && eyeIconPasswordConfirmation) {
+        togglePasswordConfirmation.addEventListener('click', function() {
+            if (passwordConfirmationField.type === 'password') {
+                passwordConfirmationField.type = 'text';
+                eyeIconPasswordConfirmation.classList.remove('fa-eye');
+                eyeIconPasswordConfirmation.classList.add('fa-eye-slash');
+            } else {
+                passwordConfirmationField.type = 'password';
+                eyeIconPasswordConfirmation.classList.remove('fa-eye-slash');
+                eyeIconPasswordConfirmation.classList.add('fa-eye');
+            }
+        });
+    }
+});
 </script>
 
 <style>
@@ -411,6 +842,94 @@ function showComingSoon(feature) {
 /* Button animations */
 .transition-all {
     transition: all 0.2s ease;
+}
+
+/* Custom indigo button */
+.btn-indigo {
+    background-color: #6366f1;
+    border-color: #6366f1;
+    color: white;
+}
+
+.btn-indigo:hover {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
+}
+
+.btn-indigo:focus {
+    background-color: #4f46e5;
+    border-color: #4f46e5;
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.5);
+}
+
+.btn-indigo:disabled {
+    background-color: #9ca3af;
+    border-color: #9ca3af;
+    color: white;
+}
+
+/* Modal customizations */
+.modal-content {
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1.5rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #e5e7eb;
+    padding: 1.5rem;
+}
+
+/* Form customizations */
+.form-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.25);
+}
+
+.invalid-feedback {
+    display: block;
+}
+
+/* Password toggle button styling */
+.password-toggle-btn {
+    border: none !important;
+    background: none !important;
+    color: #6b7280 !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    transition: color 0.15s ease-in-out;
+}
+
+.password-toggle-btn:hover {
+    color: #374151 !important;
+}
+
+.password-toggle-btn:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.password-toggle-btn i {
+    font-size: 1rem;
 }
 </style>
 

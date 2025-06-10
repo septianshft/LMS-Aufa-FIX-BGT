@@ -413,11 +413,28 @@ function viewRequestDetails(requestId) {
 
     modal.classList.remove('hidden');
 
+    // Show loading state
+    modalContent.innerHTML = `
+        <div class="text-center py-8">
+            <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+            <p class="text-gray-600">Loading request details...</p>
+        </div>
+    `;
+
+    console.log('Fetching details for request ID:', requestId);
+
     fetch(`/talent/my-requests`)
-    .then(response => response.json())
+    .then(response => {
+        console.log('Response status:', response.status);
+        return response.json();
+    })
     .then(data => {
-        if (data.success) {
+        console.log('API Response:', data);
+
+        if (data.success && data.requests) {
             const request = data.requests.find(r => r.id == requestId);
+            console.log('Found request:', request);
+
             if (request) {
                 modalContent.innerHTML = `
                     <div class="space-y-6">
@@ -425,18 +442,19 @@ function viewRequestDetails(requestId) {
                             <div class="bg-blue-50 p-4 rounded-xl">
                                 <h4 class="font-semibold text-blue-900 mb-3">Project Information</h4>
                                 <div class="space-y-2">
-                                    <div><span class="font-medium">Title:</span> ${request.project_title}</div>
-                                    <div><span class="font-medium">Description:</span> ${request.project_description}</div>
-                                    <div><span class="font-medium">Budget:</span> ${request.budget}</div>
-                                    <div><span class="font-medium">Duration:</span> ${request.duration}</div>
-                                    <div><span class="font-medium">Urgency:</span> ${request.urgency}</div>
+                                    <div><span class="font-medium">Title:</span> ${request.project_title || 'Not specified'}</div>
+                                    <div><span class="font-medium">Description:</span> <div class="text-sm text-gray-700 mt-1">${request.project_description || 'No description provided'}</div></div>
+                                    <div><span class="font-medium">Budget:</span> ${request.budget_range || 'Budget TBD'}</div>
+                                    <div><span class="font-medium">Duration:</span> ${request.project_duration || 'Duration TBD'}</div>
+                                    <div><span class="font-medium">Urgency:</span> <span class="capitalize">${request.urgency_level || 'Medium'}</span></div>
                                 </div>
                             </div>
                             <div class="bg-green-50 p-4 rounded-xl">
                                 <h4 class="font-semibold text-green-900 mb-3">Recruiter Information</h4>
                                 <div class="space-y-2">
-                                    <div><span class="font-medium">Name:</span> ${request.recruiter_name}</div>
-                                    <div><span class="font-medium">Company:</span> ${request.company || 'Not specified'}</div>
+                                    <div><span class="font-medium">Name:</span> ${request.recruiter_name || 'Unknown'}</div>
+                                    <div><span class="font-medium">Company:</span> ${request.recruiter_company || 'Not specified'}</div>
+                                    <div><span class="font-medium">Status:</span> <span class="capitalize">${request.formatted_status || request.status}</span></div>
                                     <div><span class="font-medium">Submitted:</span> ${request.created_at}</div>
                                 </div>
                             </div>
@@ -446,14 +464,14 @@ function viewRequestDetails(requestId) {
                             <h4 class="font-semibold text-gray-900 mb-3">Status & Progress</h4>
                             <div class="space-y-2">
                                 <div><span class="font-medium">Current Status:</span>
-                                    <span class="px-2 py-1 text-xs rounded-full ${request.both_parties_accepted ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                        ${request.acceptance_status}
+                                    <span class="px-2 py-1 text-xs rounded-full ${request.both_parties_accepted ? 'bg-green-100 text-green-800' : (request.talent_accepted ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">
+                                        ${request.acceptance_status || 'Pending review'}
                                     </span>
                                 </div>
                                 <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: ${request.workflow_progress}%"></div>
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: ${request.workflow_progress || 0}%"></div>
                                 </div>
-                                <div class="text-sm text-gray-600">Progress: ${request.workflow_progress}%</div>
+                                <div class="text-sm text-gray-600">Progress: ${request.workflow_progress || 0}%</div>
                             </div>
                         </div>
 
@@ -470,19 +488,45 @@ function viewRequestDetails(requestId) {
                                     <i class="fas fa-times mr-2"></i>Decline Request
                                 </button>
                             ` : ''}
+                            ${!request.can_accept && !request.can_reject ? `
+                                <div class="flex-1 text-center py-3 bg-gray-100 text-gray-600 rounded-xl">
+                                    ${request.both_parties_accepted ? 'Request accepted by both parties' : 'No actions available'}
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 `;
             } else {
-                modalContent.innerHTML = '<div class="text-center py-8"><p class="text-gray-600">Request not found.</p></div>';
+                modalContent.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-600 mb-4"></i>
+                        <p class="text-gray-600">Request with ID ${requestId} not found.</p>
+                        <p class="text-gray-500 text-sm mt-2">The request may have been deleted or you don't have access to it.</p>
+                    </div>
+                `;
             }
         } else {
-            modalContent.innerHTML = '<div class="text-center py-8"><p class="text-gray-600">Error loading request details.</p></div>';
+            modalContent.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-circle text-4xl text-red-600 mb-4"></i>
+                    <p class="text-gray-600">Error loading request details.</p>
+                    <p class="text-gray-500 text-sm mt-2">${data.message || 'Unknown error occurred'}</p>
+                </div>
+            `;
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        modalContent.innerHTML = '<div class="text-center py-8"><p class="text-gray-600">Error loading request details.</p></div>';
+        console.error('Error fetching request details:', error);
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-wifi text-4xl text-red-600 mb-4"></i>
+                <p class="text-gray-600">Network error occurred.</p>
+                <p class="text-gray-500 text-sm mt-2">Please check your internet connection and try again.</p>
+                <button onclick="viewRequestDetails(${requestId})" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-refresh mr-2"></i>Retry
+                </button>
+            </div>
+        `;
     });
 }
 

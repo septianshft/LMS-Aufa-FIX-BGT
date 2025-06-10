@@ -98,6 +98,11 @@ class User extends Authenticatable
         return $this->hasOne(Recruiter::class);
     }
 
+    public function certificates()
+    {
+        return $this->hasMany(Certificate::class);
+    }
+
     // TALENT SCOUTING INTEGRATION METHODS
 
     /**
