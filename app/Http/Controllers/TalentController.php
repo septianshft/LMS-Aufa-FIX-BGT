@@ -4,9 +4,23 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Models\TalentRequest;
+use App\Models\User;
+use App\Services\AdvancedSkillAnalyticsService;
+use App\Services\TalentRequestNotificationService;
+use Carbon\Carbon;
 
 class TalentController extends Controller
 {
+    protected $skillAnalytics;
+    protected $notificationService;
+
+    public function __construct(AdvancedSkillAnalyticsService $skillAnalytics, TalentRequestNotificationService $notificationService)
+    {
+        $this->skillAnalytics = $skillAnalytics;
+        $this->notificationService = $notificationService;
+    }
+
     public function dashboard()
     {
         $user = Auth::user();
@@ -14,6 +28,337 @@ class TalentController extends Controller
         $roles = 'Talent';
         $assignedKelas = [];
 
-        return view('admin.talent.dashboard', compact('user', 'title', 'roles', 'assignedKelas'));
+        // Get real talent statistics
+        $talentStats = $this->getTalentDashboardStats($user);
+
+        // Get skill analytics
+        $skillAnalytics = $this->skillAnalytics->getSkillAnalytics();
+
+        // Get user's actual skills and progress
+        $userSkills = $this->getUserSkillProgress($user);
+
+        // Get recent talent requests (applications)
+        $recentRequests = $this->getRecentTalentRequests($user);
+
+        // Get job opportunities (from recruiters seeking talents)
+        $jobOpportunities = $this->getJobOpportunities();
+
+        // Get recent activity
+        $recentActivity = $this->getRecentActivity($user);
+
+        // Get profile completeness
+        $profileCompleteness = $this->calculateProfileCompleteness($user);
+
+        return view('admin.talent.dashboard', compact(
+            'user', 'title', 'roles', 'assignedKelas',
+            'talentStats', 'skillAnalytics', 'userSkills',
+            'recentRequests', 'jobOpportunities', 'recentActivity',
+            'profileCompleteness'
+        ));
+    }
+
+    private function getTalentDashboardStats($user)
+    {
+        // Count actual applications/requests
+        $totalApplications = TalentRequest::whereHas('talent', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->count();
+
+        $pendingApplications = TalentRequest::whereHas('talent', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->where('status', 'pending')->count();
+
+        $approvedApplications = TalentRequest::whereHas('talent', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->where('status', 'approved')->count();
+
+        // Count messages (for now, simulated - could be connected to real messaging system)
+        $newMessages = 5; // This could be connected to a real messaging system
+
+        return [
+            'total_applications' => $totalApplications,
+            'pending_applications' => $pendingApplications,
+            'approved_applications' => $approvedApplications,
+            'new_messages' => $newMessages,
+        ];
+    }
+
+    private function getUserSkillProgress($user)
+    {
+        // Get user's actual skills from talent_skills or course completions
+        $skills = [];
+
+        if ($user->talent_skills) {
+            $talentSkills = is_string($user->talent_skills)
+                ? json_decode($user->talent_skills, true)
+                : $user->talent_skills;
+
+            if (is_array($talentSkills)) {
+                foreach ($talentSkills as $skill) {
+                    if (is_array($skill) && isset($skill['name'], $skill['level'])) {
+                        $skills[] = [
+                            'name' => $skill['name'],
+                            'level' => (int)$skill['level'],
+                            'percentage' => min(100, ((int)$skill['level']) * 20) // Convert level to percentage
+                        ];
+                    }
+                }
+            }
+        }
+
+        // If no skills, add some default based on course completions
+        if (empty($skills)) {
+            $completedCourses = $user->courseProgress()->where('progress', 100)->count();
+            if ($completedCourses > 0) {
+                $skills = [
+                    ['name' => 'General Knowledge', 'level' => min(5, $completedCourses), 'percentage' => min(100, $completedCourses * 20)],
+                ];
+            }
+        }
+
+        return $skills;
+    }
+
+    private function getRecentTalentRequests($user)
+    {
+        return TalentRequest::with(['recruiter.user'])
+            ->whereHas('talent', function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            })
+            ->latest()
+            ->take(5)
+            ->get();
+    }
+
+    private function getJobOpportunities()
+    {
+        $user = Auth::user();
+
+        // Get talent requests specifically targeting the logged-in user's talent profile
+        return TalentRequest::with(['recruiter.user'])
+            ->whereHas('talent.user', function($query) use ($user) {
+                $query->where('id', $user->id);
+            })
+            ->where('status', 'pending')
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(function($request) {
+                return [
+                    'request_id' => $request->id,
+                    'id' => $request->id,
+                    'title' => $request->project_title ?? 'Project Opportunity',
+                    'company' => $request->recruiter->user->name ?? 'Company',
+                    'budget' => $request->budget_range ?? 'Budget TBD',
+                    'duration' => $request->project_duration ?? 'Duration TBD',
+                    'posted_date' => $request->created_at,
+                    'urgency' => $request->urgency_level ?? 'medium',
+                    'description' => $request->project_description ?? '',
+                    'requirements' => $request->requirements ?? '',
+                    'project_description' => $request->project_description ?? '',
+                    'recruiter_name' => $request->recruiter->user->name ?? 'Unknown',
+                    'talent_accepted' => $request->talent_accepted ?? false,
+                    'admin_accepted' => $request->admin_accepted ?? false,
+                    'both_parties_accepted' => $request->both_parties_accepted ?? false,
+                    'acceptance_status' => $request->getAcceptanceStatus(),
+                    'workflow_progress' => $request->getWorkflowProgress(),
+                    'can_accept' => !$request->talent_accepted && $request->status === 'pending',
+                    'can_reject' => $request->status === 'pending'
+                ];
+            });
+    }
+
+    private function getRecentActivity($user)
+    {
+        $activities = [];
+
+        // Add recent course completions
+        $recentCourses = $user->courseProgress()
+            ->where('progress', 100)
+            ->where('updated_at', '>=', Carbon::now()->subDays(30))
+            ->latest('updated_at')
+            ->take(3)
+            ->get();
+
+        foreach ($recentCourses as $course) {
+            $activities[] = [
+                'type' => 'course_completed',
+                'title' => 'Course completed: ' . ($course->course->title ?? 'Unknown Course'),
+                'time' => $course->updated_at->diffForHumans(),
+                'icon' => 'fas fa-graduation-cap',
+                'color' => 'green'
+            ];
+        }
+
+        // Add recent talent requests
+        $recentRequests = TalentRequest::whereHas('talent', function($query) use ($user) {
+            $query->where('user_id', $user->id);
+        })->latest()->take(2)->get();
+
+        foreach ($recentRequests as $request) {
+            $activities[] = [
+                'type' => 'request_received',
+                'title' => 'Request received: ' . $request->project_title,
+                'time' => $request->created_at->diffForHumans(),
+                'icon' => 'fas fa-handshake',
+                'color' => 'blue'
+            ];
+        }
+
+        // Sort by time and return latest 5
+        return collect($activities)->sortByDesc('time')->take(5)->values();
+    }
+
+    private function calculateProfileCompleteness($user)
+    {
+        $completeness = 0;
+        $maxScore = 100;
+
+        // Basic profile info (40 points)
+        if ($user->name) $completeness += 10;
+        if ($user->email) $completeness += 10;
+        if ($user->pekerjaan) $completeness += 10;
+        if ($user->avatar) $completeness += 10;
+
+        // Skills (30 points)
+        if ($user->talent_skills && !empty(json_decode($user->talent_skills, true))) {
+            $completeness += 30;
+        }
+
+        // Course progress (20 points)
+        $completedCourses = $user->courseProgress()->where('progress', 100)->count();
+        if ($completedCourses > 0) {
+            $completeness += min(20, $completedCourses * 5); // 5 points per course, max 20
+        }
+
+        // Scouting availability (10 points)
+        if ($user->available_for_scouting) $completeness += 10;
+
+        return min(100, $completeness);
+    }
+
+    /**
+     * Accept a talent request (talent's acceptance)
+     */
+    public function acceptRequest(Request $request, TalentRequest $talentRequest)
+    {
+        $user = Auth::user();
+
+        // Verify the request belongs to the current talent
+        if ($talentRequest->talent->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access to this request.'
+            ], 403);
+        }
+
+        // Validate input
+        $request->validate([
+            'acceptance_notes' => 'nullable|string|max:1000'
+        ]);
+
+        // Check if already accepted
+        if ($talentRequest->talent_accepted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You have already accepted this request.'
+            ], 400);
+        }
+
+        // Mark as accepted by talent
+        $oldStatus = $talentRequest->status;
+        $talentRequest->markTalentAccepted($request->acceptance_notes);
+
+        // Send notifications about status change
+        $this->notificationService->notifyStatusChange($talentRequest, $oldStatus, $talentRequest->status);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request accepted successfully! Waiting for admin approval.',
+            'acceptance_status' => $talentRequest->getAcceptanceStatus(),
+            'workflow_progress' => $talentRequest->getWorkflowProgress(),
+            'both_parties_accepted' => $talentRequest->both_parties_accepted
+        ]);
+    }
+
+    /**
+     * Reject a talent request (talent's rejection)
+     */
+    public function rejectRequest(Request $request, TalentRequest $talentRequest)
+    {
+        $user = Auth::user();
+
+        // Verify the request belongs to the current talent
+        if ($talentRequest->talent->user_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access to this request.'
+            ], 403);
+        }
+
+        // Validate input
+        $request->validate([
+            'rejection_notes' => 'nullable|string|max:1000'
+        ]);
+
+        // Update status to rejected
+        $oldStatus = $talentRequest->status;
+        $talentRequest->update([
+            'status' => 'rejected',
+            'talent_acceptance_notes' => $request->rejection_notes,
+            'talent_accepted' => false,
+            'talent_accepted_at' => now()
+        ]);
+
+        // Send notifications about status change
+        $this->notificationService->notifyStatusChange($talentRequest, $oldStatus, 'rejected');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request rejected successfully.',
+            'status' => 'rejected'
+        ]);
+    }
+
+    /**
+     * Get talent's pending requests
+     */
+    public function getMyRequests()
+    {
+        $user = Auth::user();
+
+        $requests = TalentRequest::with(['recruiter.user'])
+            ->whereHas('talent.user', function($query) use ($user) {
+                $query->where('id', $user->id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'project_title' => $request->project_title,
+                    'project_description' => $request->project_description,
+                    'recruiter_name' => $request->recruiter->user->name,
+                    'recruiter_company' => $request->recruiter->user->pekerjaan,
+                    'budget_range' => $request->budget_range,
+                    'project_duration' => $request->project_duration,
+                    'urgency_level' => $request->urgency_level,
+                    'status' => $request->status,
+                    'formatted_status' => $request->getFormattedStatus(),
+                    'talent_accepted' => $request->talent_accepted,
+                    'admin_accepted' => $request->admin_accepted,
+                    'both_parties_accepted' => $request->both_parties_accepted,
+                    'acceptance_status' => $request->getAcceptanceStatus(),
+                    'workflow_progress' => $request->getWorkflowProgress(),
+                    'created_at' => $request->created_at->format('M d, Y H:i'),
+                    'can_accept' => !$request->talent_accepted && $request->status === 'pending',
+                    'can_reject' => $request->status === 'pending'
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'requests' => $requests
+        ]);
     }
 }
