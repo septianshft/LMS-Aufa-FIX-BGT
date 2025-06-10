@@ -46,6 +46,15 @@ class CourseMaterialController extends Controller
 
         abort_unless($allowed, 403);
 
-        return Storage::disk('public')->download($material->file_path, $material->name);
+        $downloadName = $material->name;
+        // Ensure the downloaded file includes the correct extension
+        if ($material->file_type) {
+            $extension = '.' . ltrim($material->file_type, '.');
+            if (!str_ends_with(strtolower($downloadName), strtolower($extension))) {
+                $downloadName .= $extension;
+            }
+        }
+
+        return Storage::disk('public')->download($material->file_path, $downloadName);
     }
 }
