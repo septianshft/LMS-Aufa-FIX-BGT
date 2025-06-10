@@ -81,6 +81,9 @@ Route::middleware('auth')->group(function () {
         ->name('task.submit.store')
         ->middleware('role:trainee');
 
+    Route::get('/materials/{material}/download', [CourseMaterialController::class, 'download'])
+        ->name('materials.download');
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // ====================
@@ -131,6 +134,7 @@ Route::middleware('auth')->group(function () {
 
           Route::get('courses/{course}/task-submissions', [TaskSubmissionManagementController::class, 'index'])->name('task_submissions.index');
           Route::patch('task-submissions/{submission}', [TaskSubmissionManagementController::class, 'update'])->name('task_submissions.update');
+          Route::get('task-submissions/{submission}/download', [TaskSubmissionManagementController::class, 'download'])->name('task_submissions.download');
 
         });
     });
