@@ -27,7 +27,7 @@
                                 <td class="px-3 py-2">{{ $submission->answer }}</td>
                                 <td class="px-3 py-2">
                                     @if($submission->file_path)
-                                        <a href="{{ Storage::url($submission->file_path) }}" class="text-blue-500" target="_blank">Download</a>
+                                        <a href="{{ route('admin.task_submissions.download', $submission) }}" class="text-blue-500">Download</a>
                                     @endif
                                 </td>
                                 <td class="px-3 py-2">

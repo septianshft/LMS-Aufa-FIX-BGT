@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCourseMaterialRequest;
-use App\Models\CourseMaterial;
-use Illuminate\Support\Facades\DB;
+use App\Models\{CourseMaterial, Trainer};
+use Illuminate\Support\Facades\{DB, Auth, Storage};
 
 class CourseMaterialController extends Controller
 {
@@ -24,5 +24,28 @@ class CourseMaterialController extends Controller
         });
 
         return back()->with('success', 'Material uploaded successfully.');
+    }
+
+    public function download(CourseMaterial $material)
+    {
+        $user = Auth::user();
+        $course = $material->module->course;
+
+        $allowed = false;
+
+        if ($user->hasRole('admin')) {
+            $allowed = true;
+        } elseif ($user->hasRole('trainer')) {
+            $trainer = Trainer::where('user_id', $user->id)->first();
+            if ($trainer && $course->trainer_id === $trainer->id) {
+                $allowed = true;
+            }
+        } elseif ($user->hasRole('trainee')) {
+            $allowed = $course->trainees()->where('user_id', $user->id)->exists();
+        }
+
+        abort_unless($allowed, 403);
+
+        return Storage::disk('public')->download($material->file_path, $material->name);
     }
 }
