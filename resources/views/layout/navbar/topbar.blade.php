@@ -50,11 +50,11 @@
             </div>
 
             {{-- Educational User Profile Dropdown --}}
-            <div class="relative">
+            <div class="relative" id="userProfileDropdown">
                 <button class="flex items-center space-x-3 p-2 hover:bg-blue-50 rounded-xl transition-all duration-200 group"
                         type="button"
                         id="userDropdown"
-                        data-bs-toggle="dropdown"
+                        onclick="toggleUserDropdown()"
                         aria-expanded="false"
                         title="My Account">
 
@@ -106,11 +106,11 @@
                     </div>
 
                     {{-- Dropdown Indicator --}}
-                    <i class="fas fa-chevron-down text-xs text-gray-400 group-hover:text-blue-600 transition-colors hidden md:inline"></i>
+                    <i class="fas fa-chevron-down text-xs text-gray-400 group-hover:text-blue-600 transition-colors hidden md:inline" id="dropdownChevron"></i>
                 </button>
 
                 {{-- Educational Dropdown Menu --}}
-                <div class="dropdown-menu dropdown-menu-end mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 p-0 overflow-hidden">
+                <div class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 p-0 overflow-hidden z-50 hidden" id="userDropdownMenu">
                     {{-- Educational User Header --}}
                     <div class="bg-gradient-to-r from-blue-500 to-blue-600 p-4 text-white">
                         <div class="flex items-center space-x-3">
@@ -230,3 +230,41 @@
         </div>
     </div>
 </header>
+
+<script>
+function toggleUserDropdown() {
+    const dropdownMenu = document.getElementById('userDropdownMenu');
+    const chevron = document.getElementById('dropdownChevron');
+
+    if (dropdownMenu.classList.contains('hidden')) {
+        dropdownMenu.classList.remove('hidden');
+        if (chevron) chevron.classList.add('rotate-180');
+    } else {
+        dropdownMenu.classList.add('hidden');
+        if (chevron) chevron.classList.remove('rotate-180');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    const dropdown = document.getElementById('userProfileDropdown');
+    const dropdownMenu = document.getElementById('userDropdownMenu');
+
+    if (!dropdown.contains(event.target)) {
+        dropdownMenu.classList.add('hidden');
+        const chevron = document.getElementById('dropdownChevron');
+        if (chevron) chevron.classList.remove('rotate-180');
+    }
+});
+
+// Prevent dropdown from closing when clicking inside it
+document.getElementById('userDropdownMenu').addEventListener('click', function(event) {
+    event.stopPropagation();
+});
+</script>
+
+<style>
+.rotate-180 {
+    transform: rotate(180deg);
+}
+</style>

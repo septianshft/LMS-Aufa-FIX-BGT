@@ -11,6 +11,9 @@ use App\Services\SmartConversionTrackingService;
 use App\Services\TalentRequestNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 
@@ -308,7 +311,7 @@ class TalentAdminController extends Controller
 
         // Get user statistics
         $stats = [
-            'completed_courses' => $talent->user->courseProgress()->where('is_completed', true)->count(),
+            'completed_courses' => $talent->user->courseProgress()->where('progress', '>=', 100)->count(),
             'certificates' => $talent->user->certificates()->count(),
             'skill_level' => !empty($talentSkills) ? round(collect($talentSkills)->avg(function($skill) {
                 return is_array($skill) && isset($skill['level']) ? (int)$skill['level'] : 0;
@@ -423,5 +426,484 @@ class TalentAdminController extends Controller
             'stats' => $stats,
             'recent_requests' => $recentRequests
         ]);
+    }
+
+    /**
+     * Manage Talent Admin Accounts
+     */
+    public function manageTalentAdmins()
+    {
+        $user = Auth::user();
+        $title = 'Kelola Talent Admin';
+        $roles = 'Talent Admin';
+        $assignedKelas = [];
+
+        $talentAdmins = User::whereHas('roles', function($query) {
+            $query->where('name', 'talent_admin');
+        })->orderBy('created_at', 'desc')->paginate(10);
+
+        return view('talent_admin.manage_talent_admins', compact('talentAdmins', 'user', 'title', 'roles', 'assignedKelas'));
+    }
+
+    /**
+     * Show form to create new talent admin
+     */
+    public function createTalentAdmin()
+    {
+        $user = Auth::user();
+        $title = 'Tambah Talent Admin';
+        $roles = 'Talent Admin';
+        $assignedKelas = [];
+
+        return view('talent_admin.create_talent_admin', compact('user', 'title', 'roles', 'assignedKelas'));
+    }
+
+    /**
+     * Store new talent admin
+     */
+    public function storeTalentAdmin(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        try {
+            $userData = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => bcrypt($request->password),
+                'avatar' => null, // Default to null
+                'email_verified_at' => now(), // Auto-verify admin accounts
+            ];
+
+            // Handle avatar upload
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                $userData['avatar'] = $avatarPath;
+            }
+
+            $user = User::create($userData);
+
+            // Assign talent_admin role
+            $user->assignRole('talent_admin');
+
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('success', 'Talent Admin berhasil dibuat! Akun: ' . $user->name . ' (' . $user->email . ')');
+
+        } catch (\Exception $e) {
+            Log::error('Failed to create talent admin: ' . $e->getMessage());
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal membuat Talent Admin: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show talent admin details
+     */
+    public function showTalentAdmin(User $user)
+    {
+        // Ensure the user is a talent admin
+        if (!$user->hasRole('talent_admin')) {
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('error', 'User bukan Talent Admin');
+        }
+
+        $authUser = Auth::user();
+        $title = 'Detail Talent Admin';
+        $roles = 'Talent Admin';
+        $assignedKelas = [];
+
+        // Get admin statistics
+        $stats = [
+            'requests_handled' => TalentRequest::where('updated_by', $user->id)->count(),
+            'talents_managed' => Talent::count(), // Could be more specific if tracking who managed whom
+            'recruiters_managed' => Recruiter::count(),
+            'join_date' => $user->created_at->format('M d, Y'),
+            'last_login' => $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never',
+        ];
+
+        return view('talent_admin.show_talent_admin', compact('user', 'stats', 'authUser', 'title', 'roles', 'assignedKelas'));
+    }
+
+    /**
+     * Show form to edit talent admin
+     */
+    public function editTalentAdmin(User $user)
+    {
+        // Ensure the user is a talent admin
+        if (!$user->hasRole('talent_admin')) {
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('error', 'User bukan Talent Admin');
+        }
+
+        $authUser = Auth::user();
+        $title = 'Edit Talent Admin';
+        $roles = 'Talent Admin';
+        $assignedKelas = [];
+
+        return view('talent_admin.edit_talent_admin', compact('user', 'authUser', 'title', 'roles', 'assignedKelas'));
+    }
+
+    /**
+     * Update talent admin
+     */
+    public function updateTalentAdmin(Request $request, User $user)
+    {
+        // Ensure the user is a talent admin
+        if (!$user->hasRole('talent_admin')) {
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('error', 'User bukan Talent Admin');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'password' => 'nullable|string|min:8|confirmed',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        try {
+            $user->name = $request->name;
+            $user->email = $request->email;
+
+            // Update password if provided
+            if ($request->filled('password')) {
+                $user->password = bcrypt($request->password);
+            }
+
+            // Handle avatar upload
+            if ($request->hasFile('avatar')) {
+                // Delete old avatar if exists
+                if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                    Storage::disk('public')->delete($user->avatar);
+                }
+
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                $user->avatar = $avatarPath;
+            }
+
+            $user->save();
+
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('success', 'Talent Admin berhasil diperbarui!');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal memperbarui Talent Admin: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Delete talent admin
+     */
+    public function destroyTalentAdmin(User $user)
+    {
+        // Ensure the user is a talent admin
+        if (!$user->hasRole('talent_admin')) {
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('error', 'User bukan Talent Admin');
+        }
+
+        // Prevent deleting yourself
+        if ($user->id === Auth::id()) {
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('error', 'Anda tidak dapat menghapus akun Anda sendiri');
+        }
+
+        try {
+            // Delete avatar if exists
+            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+
+            // Remove role and delete user
+            $user->removeRole('talent_admin');
+            $user->delete();
+
+            return redirect()->route('talent_admin.manage_talent_admins')
+                ->with('success', 'Talent Admin berhasil dihapus!');
+
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Gagal menghapus Talent Admin: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get talent admin details via AJAX
+     */
+    public function getTalentAdminDetails(User $user)
+    {
+        // Ensure the user is a talent admin
+        if (!$user->hasRole('talent_admin')) {
+            return response()->json(['error' => 'User bukan Talent Admin'], 404);
+        }
+
+        $stats = [
+            'requests_handled' => TalentRequest::where('updated_by', $user->id)->count(),
+            'talents_managed' => Talent::count(),
+            'recruiters_managed' => Recruiter::count(),
+            'join_date' => $user->created_at->format('M d, Y'),
+            'last_login' => $user->last_login_at ? $user->last_login_at->format('M d, Y H:i') : 'Never',
+        ];
+
+        return response()->json([
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'avatar' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+            'created_at' => $user->created_at->format('M d, Y H:i'),
+            'updated_at' => $user->updated_at->format('M d, Y H:i'),
+            'stats' => $stats,
+            // Note: We don't return password for security reasons
+        ]);
+    }
+
+    /**
+     * Store a newly created recruiter.
+     */
+    public function storeRecruiter(Request $request)
+    {
+        Log::info('storeRecruiter method called', [
+            'request_data' => $request->all(),
+            'content_type' => $request->header('Content-Type'),
+            'method' => $request->method(),
+            'json' => $request->json()->all()
+        ]);
+
+        // Handle both JSON and form data
+        $inputData = $request->all();
+        if (empty($inputData) && $request->isJson()) {
+            $inputData = $request->json()->all();
+        }
+
+        // Log the actual input data we're working with
+        Log::info('Input data to validate:', $inputData);
+
+        $validatedData = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'pekerjaan' => 'required|string|max:255', // This aligns with public registration
+            'avatar' => 'nullable|image|mimes:png,jpg,jpeg|max:2048', // Optional for admin creation
+            'company_name' => 'nullable|string|max:255',
+            'industry' => 'nullable|string|max:255',
+            'company_size' => 'nullable|string|max:100',
+            'company_description' => 'nullable|string|max:1000',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+        ], [
+            'name.required' => 'Nama tidak boleh kosong.',
+            'email.required' => 'Email tidak boleh kosong.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah terdaftar, gunakan email lain.',
+            'password.required' => 'Password tidak boleh kosong.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'pekerjaan.required' => 'Pekerjaan tidak boleh kosong.',
+            'avatar.image' => 'Avatar harus berupa file gambar.',
+            'avatar.mimes' => 'Avatar harus berformat PNG, JPG, atau JPEG.',
+            'avatar.max' => 'Avatar maksimal 2MB.',
+        ]);
+
+        Log::info('Validation passed', $validatedData);
+
+        try {
+            Log::info('Starting user creation...');
+
+            // Handle avatar upload (SAME pattern as RegisteredUserController)
+            $avatarPath = 'public\images\default-avatar.png'; // Default fallback
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                Log::info('Avatar uploaded successfully', ['path' => $avatarPath]);
+            }
+
+            // Create user account (SAME pattern as RegisteredUserController)
+            $user = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'pekerjaan' => $request->pekerjaan, // Required field like registration
+                'avatar' => $avatarPath, // Handle avatar same as registration
+                'password' => Hash::make($request->password), // Use Hash::make like registration
+                'email_verified_at' => now(), // Auto-verify admin-created accounts
+            ]);
+
+            Log::info('User created successfully', ['user_id' => $user->id]);
+
+            // Assign recruiter role (SAME pattern as RegisteredUserController)
+            $user->assignRole('recruiter');
+            Log::info('Role assigned successfully');
+
+            // Create recruiter profile (SAME pattern as RegisteredUserController)
+            $recruiter = Recruiter::create([
+                'user_id' => $user->id,
+                'company_name' => $request->company_name ?: $request->pekerjaan, // Use job as fallback
+                'industry' => $request->industry ?: 'Other',
+                'company_size' => $request->company_size,
+                'company_description' => $request->company_description,
+                'phone' => $request->phone,
+                'address' => $request->address,
+                'is_active' => true,
+            ]);
+
+            Log::info('Recruiter profile created successfully', ['recruiter_id' => $recruiter->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Perekrut berhasil ditambahkan!',
+                'recruiter' => [
+                    'id' => $recruiter->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'company_name' => $recruiter->company_name,
+                    'industry' => $recruiter->industry,
+                ]
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation error:', ['errors' => $e->errors()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Data yang dimasukkan tidak valid.',
+                'errors' => $e->errors()
+            ], 422);
+
+        } catch (\Exception $e) {
+            Log::error('Error creating recruiter: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menambahkan perekrut.',
+                'errors' => ['general' => ['Terjadi kesalahan sistem. Silakan coba lagi.']]
+            ], 500);
+        }
+    }
+
+    /**
+     * Edit a recruiter.
+     */
+    public function editRecruiter(Recruiter $recruiter)
+    {
+        $recruiter->load('user');
+
+        return response()->json([
+            'success' => true,
+            'recruiter' => [
+                'id' => $recruiter->id,
+                'user_id' => $recruiter->user->id,
+                'name' => $recruiter->user->name,
+                'email' => $recruiter->user->email,
+                'company_name' => $recruiter->company_name,
+                'industry' => $recruiter->industry,
+                'company_size' => $recruiter->company_size,
+                'website' => $recruiter->website,
+                'company_description' => $recruiter->company_description,
+                'phone' => $recruiter->phone,
+                'address' => $recruiter->address,
+                'is_active' => $recruiter->is_active,
+            ]
+        ]);
+    }
+
+    /**
+     * Update a recruiter.
+     */
+    public function updateRecruiter(Request $request, Recruiter $recruiter)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $recruiter->user->id,
+            'company_name' => 'required|string|max:255',
+            'industry' => 'required|string|max:255',
+            'company_size' => 'nullable|string|max:100',
+            'company_description' => 'nullable|string|max:1000',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        try {
+            // Update user info
+            $userData = [
+                'name' => $request->name,
+                'email' => $request->email,
+            ];
+
+            if ($request->filled('password')) {
+                $userData['password'] = bcrypt($request->password);
+            }
+
+            $recruiter->user->update($userData);
+
+            // Update recruiter profile
+            $recruiter->update([
+                'company_name' => $request->company_name,
+                'industry' => $request->industry,
+                'company_size' => $request->company_size,
+                'company_description' => $request->company_description,
+                'phone' => $request->phone,
+                'address' => $request->address,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data perekrut berhasil diperbarui!',
+                'recruiter' => [
+                    'id' => $recruiter->id,
+                    'name' => $recruiter->user->name,
+                    'email' => $recruiter->user->email,
+                    'company_name' => $recruiter->company_name,
+                    'industry' => $recruiter->industry,
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error updating recruiter: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat memperbarui data perekrut.',
+                'errors' => ['general' => ['Terjadi kesalahan sistem. Silakan coba lagi.']]
+            ], 500);
+        }
+    }
+
+    /**
+     * Delete a recruiter.
+     */
+    public function destroyRecruiter(Recruiter $recruiter)
+    {
+        try {
+            $recruiterName = $recruiter->user->name;
+
+            // Delete the recruiter (this will also soft-delete due to SoftDeletes trait)
+            $recruiter->delete();
+
+            // Also delete the user account
+            $recruiter->user->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Perekrut '{$recruiterName}' berhasil dihapus!"
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error deleting recruiter: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menghapus perekrut.',
+                'errors' => ['general' => ['Terjadi kesalahan sistem. Silakan coba lagi.']]
+            ], 500);
+        }
     }
 }

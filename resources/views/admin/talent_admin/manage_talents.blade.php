@@ -236,30 +236,56 @@
 <script>
 // Talent details functionality
 function viewTalentDetails(talentId) {
-    document.getElementById('talentDetailsModal').classList.remove('hidden');
+    console.log('viewTalentDetails called with ID:', talentId);
+
+    const modal = document.getElementById('talentDetailsModal');
+    if (!modal) {
+        console.error('Modal element not found!');
+        alert('Modal element not found. Please refresh the page.');
+        return;
+    }
+
+    console.log('Opening modal...');
+    modal.classList.remove('hidden');
 
     // Reset content
-    document.getElementById('talentDetailsContent').innerHTML = `
+    const contentElement = document.getElementById('talentDetailsContent');
+    if (!contentElement) {
+        console.error('Modal content element not found!');
+        return;
+    }
+
+    contentElement.innerHTML = `
         <div class="text-center py-8">
             <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
             <p class="text-gray-600">Loading talent details...</p>
         </div>
     `;
 
-    // Fetch talent details (you would implement this endpoint)
+    console.log('Making fetch request to:', `/talent-admin/talents/${talentId}/details`);
+
+    // Fetch talent details
     fetch(`/talent-admin/talents/${talentId}/details`)
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response received:', response.status, response.ok);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
         .then(data => {
+            console.log('Data received:', data);
             displayTalentDetails(data);
         })
         .catch(error => {
+            console.error('Error loading talent details:', error);
             document.getElementById('talentDetailsContent').innerHTML = `
                 <div class="text-center py-8">
                     <i class="fas fa-exclamation-triangle text-3xl text-red-600 mb-4"></i>
                     <p class="text-red-600">Error loading talent details</p>
-                    <p class="text-gray-600 text-sm mt-2">Please try again later</p>
+                    <p class="text-gray-600 text-sm mt-2">Error: ${error.message}</p>
                 </div>
-            ;
+            `;
         });
 }
 

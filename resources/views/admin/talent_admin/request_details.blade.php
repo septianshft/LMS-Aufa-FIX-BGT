@@ -338,8 +338,8 @@ function updateStatus(requestId, status) {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
     });
 
-    fetch(`/admin/talent-admin/requests/${requestId}/status`, {
-        method: 'POST',
+    fetch(`/talent-admin/request/${requestId}/status`, {
+        method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')

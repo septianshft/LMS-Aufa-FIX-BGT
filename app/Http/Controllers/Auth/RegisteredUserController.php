@@ -71,6 +71,12 @@ class RegisteredUserController extends Controller
             case 'recruiter':
                 Recruiter::create([
                     'user_id' => $user->id,
+                    'company_name' => $request->company_name ?: $request->pekerjaan, // Use job as fallback
+                    'industry' => $request->industry ?: 'Other',
+                    'company_size' => $request->company_size,
+                    'company_description' => $request->company_description,
+                    'phone' => $request->phone,
+                    'address' => $request->address,
                     'is_active' => true,
                 ]);
                 break;

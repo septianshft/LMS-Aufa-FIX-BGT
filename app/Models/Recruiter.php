@@ -14,6 +14,13 @@ class Recruiter extends Model
 
     protected $fillable = [
         'user_id',
+        'company_name',
+        'industry',
+        'company_size',
+        'website',
+        'company_description',
+        'phone',
+        'address',
         'is_active'
     ];
 

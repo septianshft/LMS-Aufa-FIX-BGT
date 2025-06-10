@@ -173,6 +173,22 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/api/skill-analytics', [TalentAdminController::class, 'getSkillAnalytics'])->name('talent_admin.api.skill_analytics');
         Route::get('talent-admin/api/market-demand', [TalentAdminController::class, 'getMarketDemand'])->name('talent_admin.api.market_demand');
 
+        // Talent Admin Management Routes
+        Route::get('talent-admin/manage-admins', [TalentAdminController::class, 'manageTalentAdmins'])->name('talent_admin.manage_talent_admins');
+        Route::get('talent-admin/admin/create', [TalentAdminController::class, 'createTalentAdmin'])->name('talent_admin.create_talent_admin');
+        Route::post('talent-admin/admin', [TalentAdminController::class, 'storeTalentAdmin'])->name('talent_admin.store_talent_admin');
+        Route::get('talent-admin/admin/{user}', [TalentAdminController::class, 'showTalentAdmin'])->name('talent_admin.show_talent_admin');
+        Route::get('talent-admin/admin/{user}/edit', [TalentAdminController::class, 'editTalentAdmin'])->name('talent_admin.edit_talent_admin');
+        Route::put('talent-admin/admin/{user}', [TalentAdminController::class, 'updateTalentAdmin'])->name('talent_admin.update_talent_admin');
+        Route::delete('talent-admin/admin/{user}', [TalentAdminController::class, 'destroyTalentAdmin'])->name('talent_admin.destroy_talent_admin');
+        Route::get('talent-admin/admin/{user}/details', [TalentAdminController::class, 'getTalentAdminDetails'])->name('talent_admin.talent_admin_details');
+
+        // Recruiter Management Routes
+        Route::post('talent-admin/recruiter', [TalentAdminController::class, 'storeRecruiter'])->name('talent_admin.store_recruiter');
+        Route::get('talent-admin/recruiter/{recruiter}/edit', [TalentAdminController::class, 'editRecruiter'])->name('talent_admin.edit_recruiter');
+        Route::put('talent-admin/recruiter/{recruiter}', [TalentAdminController::class, 'updateRecruiter'])->name('talent_admin.update_recruiter');
+        Route::delete('talent-admin/recruiter/{recruiter}', [TalentAdminController::class, 'destroyRecruiter'])->name('talent_admin.destroy_recruiter');
+
         // Details endpoints for modal views
         Route::get('talent-admin/talents/{talent}/details', [TalentAdminController::class, 'getTalentDetails'])->name('talent_admin.talent_details');
         Route::get('talent-admin/recruiters/{recruiter}/details', [TalentAdminController::class, 'getRecruiterDetails'])->name('talent_admin.recruiter_details');
