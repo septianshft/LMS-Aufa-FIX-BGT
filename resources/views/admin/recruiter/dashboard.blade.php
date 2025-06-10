@@ -2,403 +2,361 @@
 
 @section('title', 'Recruiter Dashboard')
 @section('container')
-<div class="min-h-screen bg-gray-50 p-6">
-    <!-- Page Heading -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Recruiter Dashboard</h1>
-            <p class="text-gray-600">Manage your talent acquisition and discovery</p>
-        </div>
-        <div class="mt-4 sm:mt-0">
-            <span class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                <i class="fas fa-user-circle mr-2"></i>
-                Welcome back, {{ $user->name }}!
-            </span>
-        </div>
-    </div>
 
-    <!-- Welcome Card -->
-    <div class="mb-8">
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl shadow-xl p-8 text-white relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-40 h-40 bg-white opacity-10 rounded-full transform translate-x-16 -translate-y-16"></div>
-            <div class="absolute bottom-0 left-0 w-32 h-32 bg-white opacity-10 rounded-full transform -translate-x-8 translate-y-8"></div>
-            <div class="relative z-10 flex items-center justify-between">
-                <div class="flex-1">
-                    <div class="text-blue-200 text-sm font-semibold uppercase tracking-wider mb-2">
-                        Welcome Back!
-                    </div>
-                    <h2 class="text-2xl font-bold mb-3">
-                        Hello, {{ $user->name }}
-                    </h2>
-                    <p class="text-blue-100 max-w-2xl">
-                        Discover talented individuals and connect with potential candidates for your opportunities.
-                        Start building your dream team today.
-                    </p>
-                </div>
-                <div class="hidden md:block">
-                    <div class="w-24 h-24 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center">
-                        <i class="fas fa-search text-3xl text-white"></i>
-                    </div>
-                </div>
+
+<!-- Premium Statistics Dashboard -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 mt-8 relative z-20 max-w-7xl mx-auto">
+    <!-- Available Talents Card - Enhanced -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4">
+                <i class="fas fa-users text-xl text-white"></i>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-blue-600 uppercase">Available Talents</p>
+                <p class="text-gray-500 text-sm">Ready for collaboration</p>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <div class="text-4xl font-bold text-gray-900 mb-1">
+                {{ $talents->total() }}
+            </div>
+            <p class="text-gray-600">Active professionals</p>
+        </div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div class="flex items-center text-sm text-green-600">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span class="font-medium">Ready to hire</span>
+            </div>
+            <div class="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
+                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                Live
             </div>
         </div>
     </div>
 
-    <!-- Statistics Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-        <!-- Available Talents Card -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <div class="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
-                        Available Talents
-                    </div>
-                    <div class="text-3xl font-bold text-gray-900 mb-1">{{ $talents->total() }}</div>
-                    <div class="text-sm text-gray-500">Active professionals</div>
-                </div>
-                <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-user-tie text-2xl text-blue-600"></i>
-                </div>
+    <!-- Account Status Card - Enhanced -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-xl flex items-center justify-center mr-4">
+                <i class="fas fa-{{ $user->recruiter && $user->recruiter->is_active ? 'shield-check' : 'shield-exclamation' }} text-xl text-white"></i>
             </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <div class="flex items-center text-sm text-green-600">
-                    <i class="fas fa-arrow-up mr-1"></i>
-                    <span class="font-medium">Ready to hire</span>
-                </div>
+            <div>
+                <p class="text-sm font-semibold text-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-600 uppercase">Account Status</p>
+                <p class="text-gray-500 text-sm">Your recruitment access</p>
             </div>
         </div>
 
-        <!-- Active Status Card -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <div class="text-xs font-bold text-green-600 uppercase tracking-wider mb-2">
-                        Account Status
-                    </div>
-                    <div class="text-3xl font-bold text-gray-900 mb-1">
-                        {{ $user->recruiter && $user->recruiter->is_active ? 'Active' : 'Inactive' }}
-                    </div>
-                    <div class="text-sm text-gray-500">Recruitment status</div>
-                </div>
-                <div class="w-16 h-16 {{ $user->recruiter && $user->recruiter->is_active ? 'bg-green-100' : 'bg-red-100' }} rounded-xl flex items-center justify-center">
-                    <i class="fas fa-check-circle text-2xl {{ $user->recruiter && $user->recruiter->is_active ? 'text-green-600' : 'text-red-600' }}"></i>
-                </div>
+        <div class="mb-4">
+            <div class="text-4xl font-bold text-gray-900 mb-1">
+                {{ $user->recruiter && $user->recruiter->is_active ? 'Active' : 'Inactive' }}
             </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <div class="flex items-center text-sm {{ $user->recruiter && $user->recruiter->is_active ? 'text-green-600' : 'text-red-600' }}">
-                    <i class="fas fa-circle mr-2 text-xs"></i>
-                    <span class="font-medium">{{ $user->recruiter && $user->recruiter->is_active ? 'Fully operational' : 'Account inactive' }}</span>
-                </div>
-            </div>
+            <p class="text-gray-600">{{ $user->recruiter && $user->recruiter->is_active ? 'All systems operational' : 'Limited access mode' }}</p>
         </div>
 
-        <!-- My Requests Card -->
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
-            <div class="flex items-center justify-between">
-                <div class="flex-1">
-                    <div class="text-xs font-bold text-orange-600 uppercase tracking-wider mb-2">
-                        My Requests
-                    </div>
-                    <div class="text-3xl font-bold text-gray-900 mb-1">{{ $myRequests->count() }}</div>
-                    <div class="text-sm text-gray-500">Total submissions</div>
-                </div>
-                <div class="w-16 h-16 bg-orange-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-handshake text-2xl text-orange-600"></i>
-                </div>
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div class="flex items-center text-sm text-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-600">
+                <i class="fas fa-{{ $user->recruiter && $user->recruiter->is_active ? 'check-circle' : 'exclamation-triangle' }} mr-2"></i>
+                <span class="font-medium">{{ $user->recruiter && $user->recruiter->is_active ? 'Ready to use' : 'Contact admin' }}</span>
             </div>
-            <div class="mt-4 pt-4 border-t border-gray-100">
-                <a href="{{ route('recruiter.my_requests') }}" class="flex items-center text-sm text-orange-600 hover:text-orange-700 transition-colors duration-200">
-                    <span class="font-medium">View all requests</span>
-                    <i class="fas fa-arrow-right ml-1"></i>
-                </a>
+            <div class="inline-flex items-center px-3 py-1 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-50 text-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-700 text-xs font-medium rounded-full">
+                <div class="w-2 h-2 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-full mr-2"></div>
+                {{ $user->recruiter && $user->recruiter->is_active ? 'Live' : 'Offline' }}
             </div>
         </div>
     </div>
 
-    <!-- My Recent Requests Section -->
-    @if($myRequests->count() > 0)
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 mb-8 overflow-hidden">
-        <div class="px-8 py-6 bg-gradient-to-r from-purple-600 to-indigo-700 text-white">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-center mb-4 sm:mb-0">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
-                        <i class="fas fa-clipboard-list text-xl text-white"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold">My Recent Talent Requests</h2>
-                        <p class="text-purple-100 text-sm">Track your submission status</p>
-                    </div>
-                </div>
-                <a href="{{ route('recruiter.my_requests') }}"
-                   class="inline-flex items-center px-6 py-3 bg-white text-purple-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium shadow-lg">
-                    <i class="fas fa-list mr-2"></i>
-                    View All Requests
-                </a>
+    <!-- My Requests Card - Enhanced -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        <div class="flex items-center mb-4">
+            <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4">
+                <i class="fas fa-paper-plane text-xl text-white"></i>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-purple-600 uppercase">My Requests</p>
+                <p class="text-gray-500 text-sm">Collaboration requests</p>
             </div>
         </div>
 
-        <div class="p-8">
-            <div class="overflow-x-auto">
-                <div class="min-w-full">
-                    <!-- Desktop Table View -->
-                    <div class="hidden lg:block">
-                        <table class="w-full">
-                            <thead>
-                                <tr class="border-b-2 border-gray-200">
-                                    <th class="text-left py-4 px-4 font-semibold text-gray-700 uppercase tracking-wider text-sm">Talent</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-gray-700 uppercase tracking-wider text-sm">Project Details</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-gray-700 uppercase tracking-wider text-sm">Status</th>
-                                    <th class="text-left py-4 px-4 font-semibold text-gray-700 uppercase tracking-wider text-sm">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100">
-                                @foreach($myRequests as $request)
-                                <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                    <td class="py-6 px-4">
-                                        <div class="flex items-center">
-                                            @if($request->talent->user->avatar)
-                                                <img class="w-12 h-12 rounded-xl object-cover mr-4 shadow-md"
-                                                     src="{{ asset('storage/' . $request->talent->user->avatar) }}"
-                                                     alt="{{ $request->talent->user->name }}">
-                                            @else
-                                                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4 shadow-md">
-                                                    <i class="fas fa-user text-white"></i>
-                                                </div>
-                                            @endif
-                                            <div>
-                                                <div class="font-semibold text-gray-900">{{ $request->talent->user->name }}</div>
-                                                <div class="text-sm text-gray-500">{{ $request->talent->user->email }}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-6 px-4">
-                                        <div class="max-w-xs">
-                                            <div class="font-semibold text-gray-900 mb-1">{{ $request->project_title }}</div>
-                                            <p class="text-gray-600 text-sm leading-relaxed">{{ Str::limit($request->project_description, 60) }}</p>
-                                        </div>
-                                    </td>
-                                    <td class="py-6 px-4">
-                                        <span class="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium
-                                            @if($request->getStatusBadgeColor() == 'success') bg-green-100 text-green-800 border border-green-200
-                                            @elseif($request->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800 border border-yellow-200
-                                            @elseif($request->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800 border border-blue-200
-                                            @elseif($request->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800 border border-red-200
-                                            @else bg-gray-100 text-gray-800 border border-gray-200 @endif">
-                                            <div class="w-2 h-2 rounded-full mr-2
-                                                @if($request->getStatusBadgeColor() == 'success') bg-green-400
-                                                @elseif($request->getStatusBadgeColor() == 'warning') bg-yellow-400
-                                                @elseif($request->getStatusBadgeColor() == 'info') bg-blue-400
-                                                @elseif($request->getStatusBadgeColor() == 'danger') bg-red-400
-                                                @else bg-gray-400 @endif"></div>
-                                            {{ $request->getFormattedStatus() }}
-                                        </span>
-                                    </td>
-                                    <td class="py-6 px-4">
-                                        <div class="text-gray-900 font-medium">{{ $request->created_at->format('M d, Y') }}</div>
-                                        <div class="text-gray-500 text-sm">{{ $request->created_at->diffForHumans() }}</div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+        <div class="mb-4">
+            <div class="text-4xl font-bold text-gray-900 mb-1">
+                {{ isset($myRequests) && (method_exists($myRequests, 'count') ? $myRequests->count() : (is_countable($myRequests) ? count($myRequests) : 0)) }}
+            </div>
+            <p class="text-gray-600">Active submissions</p>
+        </div>
 
-                    <!-- Mobile Card View -->
-                    <div class="lg:hidden space-y-4">
-                        @foreach($myRequests as $request)
-                        <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex items-center">
-                                    @if($request->talent->user->avatar)
-                                        <img class="w-12 h-12 rounded-xl object-cover mr-3 shadow-md"
-                                             src="{{ asset('storage/' . $request->talent->user->avatar) }}"
-                                             alt="{{ $request->talent->user->name }}">
-                                    @else
-                                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center mr-3 shadow-md">
-                                            <i class="fas fa-user text-white"></i>
-                                        </div>
-                                    @endif
-                                    <div>
-                                        <div class="font-semibold text-gray-900">{{ $request->talent->user->name }}</div>
-                                        <div class="text-sm text-gray-500">{{ $request->created_at->format('M d, Y') }}</div>
+        <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div class="flex items-center text-sm text-purple-600">
+                <i class="fas fa-chart-line mr-2"></i>
+                <span class="font-medium">Track progress</span>
+            </div>
+            <div class="inline-flex items-center px-3 py-1 bg-purple-50 text-purple-700 text-xs font-medium rounded-full">
+                <div class="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
+                Active
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+    <!-- Recent Requests Section -->
+    @if(isset($myRequests) && (method_exists($myRequests, 'count') ? $myRequests->count() > 0 : (is_countable($myRequests) ? count($myRequests) > 0 : false)))
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-7xl mx-auto mb-12">
+        <!-- Header with gradient background -->
+        <div class="bg-blue-600 text-white p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Recent Requests</h2>
+                    <p class="text-blue-100">Your collaboration pipeline</p>
+                </div>
+                <div class="flex gap-3">
+                    <a href="{{ route('recruiter.my_requests') }}"
+                       class="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                        <i class="fas fa-eye mr-2"></i>View All
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="p-6">
+            @if(isset($myRequests) && is_iterable($myRequests) && count($myRequests) > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($myRequests as $request)
+                        <div class="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow">
+                            <!-- Profile -->
+                            <div class="text-center mb-4">
+                                @if($request->talent->user->avatar)
+                                    <img class="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
+                                         src="{{ asset('storage/' . $request->talent->user->avatar) }}"
+                                         alt="{{ $request->talent->user->name }}">
+                                @else
+                                    <div class="w-16 h-16 bg-blue-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                        <i class="fas fa-user text-white text-xl"></i>
                                     </div>
-                                </div>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                                    @if($request->getStatusBadgeColor() == 'success') bg-green-100 text-green-800
-                                    @elseif($request->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
-                                    @elseif($request->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
-                                    @elseif($request->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    {{ $request->getFormattedStatus() }}
-                                </span>
+                                @endif
+
+                                <h3 class="font-bold text-lg text-gray-900">{{ $request->talent->user->name }}</h3>
+                                @if($request->talent->user->pekerjaan)
+                                    <p class="text-gray-600 text-sm">{{ $request->talent->user->pekerjaan }}</p>
+                                @endif
                             </div>
-                            <div>
-                                <div class="font-semibold text-gray-900 mb-2">{{ $request->project_title }}</div>
-                                <p class="text-gray-600 text-sm">{{ Str::limit($request->project_description, 100) }}</p>
+
+                            <!-- Project Title -->
+                            <div class="text-center mb-4">
+                                <div class="bg-gray-50 py-2 px-3 rounded-lg">
+                                    <div class="text-xs text-gray-600">Project</div>
+                                    <div class="font-medium text-sm">{{ $request->project_title }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Status and Date -->
+                            <div class="grid grid-cols-1 gap-3 mb-4 text-center">
+                                <div class="bg-gray-50 py-2 rounded">
+                                    <div class="text-xs text-gray-600">Status</div>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                                        @if($request->getStatusBadgeColor() == 'success') bg-green-100 text-green-800
+                                        @elseif($request->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
+                                        @elseif($request->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
+                                        @elseif($request->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800
+                                        @else bg-gray-100 text-gray-800 @endif">
+                                        {{ $request->getFormattedStatus() }}
+                                    </span>
+                                </div>
+                                <div class="bg-gray-50 py-2 rounded">
+                                    <div class="text-xs text-gray-600">Requested</div>
+                                    <div class="font-bold text-sm">{{ $request->created_at->diffForHumans() }}</div>
+                                </div>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="space-y-2">
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="viewRequestDetails('{{ $request->id }}')"
+                                            class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                        <i class="fas fa-eye mr-1"></i>Details
+                                    </button>
+                                    <a href="mailto:{{ $request->talent->user->email }}"
+                                       class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-center text-sm">
+                                        <i class="fas fa-envelope mr-1"></i>Email
+                                    </a>
+                                </div>
                             </div>
                         </div>
-                        @endforeach
-                    </div>
+                    @endforeach
                 </div>
-            </div>
+            @else
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-inbox text-2xl text-gray-400"></i>
+                    </div>
+                    <h5 class="text-lg font-medium text-gray-700 mb-2">No requests yet</h5>
+                    <p class="text-gray-500">Start discovering talents to see your requests here.</p>
+                </div>
+            @endif
         </div>
     </div>
     @endif
 
-    <!-- Talent Discovery Section -->
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-        <div class="px-8 py-6 bg-gradient-to-r from-emerald-600 to-teal-700 text-white">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-center mb-4 sm:mb-0">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4">
-                        <i class="fas fa-users text-xl text-white"></i>
-                    </div>
-                    <div>
-                        <h2 class="text-2xl font-bold">Discover Talents</h2>
-                        <p class="text-emerald-100 text-sm">Find the perfect match for your projects</p>
-                    </div>
+    <!-- Premium Talent Discovery Section -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-7xl mx-auto">
+        <!-- Simple Header -->
+        <div class="bg-emerald-600 text-white p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Talent Scouting</h2>
+                    <p class="text-emerald-100">Discover and connect with talented professionals</p>
                 </div>
-                <button onclick="refreshTalents()"
-                        class="inline-flex items-center px-6 py-3 bg-white text-emerald-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-medium shadow-lg">
-                    <i class="fas fa-sync-alt mr-2"></i>
-                    Refresh List
-                </button>
+                <div class="flex gap-3">
+                    <button onclick="toggleScoutingFilters()"
+                            class="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
+                        <i class="fas fa-filter mr-2"></i>Filters
+                    </button>
+                    <button onclick="toggleCompareMode()"
+                            class="px-4 py-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors" id="compareModeBtn">
+                        <i class="fas fa-balance-scale mr-2"></i>Compare
+                    </button>
+                    <button onclick="refreshTalents()"
+                            class="px-4 py-2 bg-white text-emerald-600 rounded-lg hover:bg-gray-50 transition-colors font-medium">
+                        <i class="fas fa-sync-alt mr-2"></i>Refresh
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="p-8">
-            @if($talents->count() > 0)
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+        <!-- Simple Filters Panel -->
+        <div id="scoutingFilters" class="hidden bg-gray-50 border-b p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <select class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    <option value="">All Performance Levels</option>
+                    <option value="5">⭐⭐⭐⭐⭐ Elite (5★)</option>
+                    <option value="4">⭐⭐⭐⭐ High (4★)</option>
+                    <option value="3">⭐⭐⭐ Good (3★)</option>
+                </select>
+                <select class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500">
+                    <option value="">All Skill Levels</option>
+                    <option value="expert">Expert Level</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="intermediate">Intermediate</option>
+                </select>
+                <div class="flex gap-2">
+                    <button onclick="resetFilters()" class="px-4 py-2 text-gray-600 hover:text-gray-800">Reset</button>
+                    <button onclick="applyFilters()" class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                        Apply
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Talent Cards -->
+        <div class="p-6">
+            @if(isset($talents) && is_iterable($talents) && (method_exists($talents, 'count') ? $talents->count() > 0 : count($talents) > 0))
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($talents as $talent)
-                        <div class="group bg-white rounded-2xl border-2 border-gray-100 hover:border-blue-200 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden">
-                            <!-- Profile Header -->
-                            <div class="p-6 text-center bg-gradient-to-br from-gray-50 to-white">
+                        @php
+                            $metrics = $talent->scouting_metrics ?? [];
+                            $overallScore = 0;
+                            $scoreCount = 0;
+                            foreach(['learning_velocity', 'consistency', 'certifications', 'market_demand'] as $key) {
+                                if(isset($metrics[$key]['score'])) {
+                                    $overallScore += $metrics[$key]['score'];
+                                    $scoreCount++;
+                                }
+                            }
+                            $overallScore = $scoreCount > 0 ? round($overallScore / $scoreCount) : 0;
+                        @endphp
+
+                        <div class="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow talent-card" data-talent-id="{{ $talent->id }}">
+                            <!-- Compare Checkbox (Hidden by default) -->
+                            <div class="compare-checkbox hidden absolute top-4 right-4 z-10">
+                                <input type="checkbox"
+                                       class="talent-compare-check w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
+                                       data-talent-id="{{ $talent->id }}"
+                                       data-talent-name="{{ $talent->user->name }}"
+                                       data-talent-email="{{ $talent->user->email }}"
+                                       data-talent-position="{{ $talent->user->pekerjaan ?? 'Not specified' }}"
+                                       data-talent-score="{{ $overallScore }}"
+                                       data-talent-courses="{{ $metrics['progress_tracking']['completed_courses'] ?? 0 }}"
+                                       data-talent-certificates="{{ $metrics['certifications']['total_certificates'] ?? 0 }}"
+                                       data-talent-quiz-avg="{{ $metrics['quiz_performance']['average_score'] ?? 0 }}"
+                                       onchange="updateCompareSelection()">
+                            </div>
+
+                            <!-- Profile -->
+                            <div class="text-center mb-4">
                                 @if($talent->user->avatar)
-                                    <img class="w-20 h-20 rounded-2xl object-cover mx-auto mb-4 shadow-xl border-4 border-white"
+                                    <img class="w-16 h-16 rounded-full mx-auto mb-3 object-cover"
                                          src="{{ asset('storage/' . $talent->user->avatar) }}"
                                          alt="{{ $talent->user->name }}">
                                 @else
-                                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-                                        <i class="fas fa-user-tie text-2xl text-white"></i>
+                                    <div class="w-16 h-16 bg-emerald-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                        <i class="fas fa-user text-white text-xl"></i>
                                     </div>
                                 @endif
 
-                                <h3 class="font-bold text-gray-900 text-lg mb-2">{{ $talent->user->name }}</h3>
-
+                                <h3 class="font-bold text-lg text-gray-900">{{ $talent->user->name }}</h3>
                                 @if($talent->user->pekerjaan)
-                                    <p class="text-gray-600 text-sm mb-4 px-3 py-1 bg-gray-100 rounded-full inline-block">{{ $talent->user->pekerjaan }}</p>
-                                @endif
-
-                                @php
-                                    $existingRequest = $talent->talentRequests->first();
-                                @endphp
-
-                                @if($existingRequest)
-                                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold
-                                        @if($existingRequest->getStatusBadgeColor() == 'success') bg-green-100 text-green-800 border-2 border-green-200
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800 border-2 border-yellow-200
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800 border-2 border-blue-200
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800 border-2 border-red-200
-                                        @else bg-gray-100 text-gray-800 border-2 border-gray-200 @endif">
-                                        <div class="w-2 h-2 rounded-full mr-2
-                                            @if($existingRequest->getStatusBadgeColor() == 'success') bg-green-400
-                                            @elseif($existingRequest->getStatusBadgeColor() == 'warning') bg-yellow-400
-                                            @elseif($existingRequest->getStatusBadgeColor() == 'info') bg-blue-400
-                                            @elseif($existingRequest->getStatusBadgeColor() == 'danger') bg-red-400
-                                            @else bg-gray-400 @endif"></div>
-                                        {{ $existingRequest->getFormattedStatus() }}
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold bg-green-100 text-green-800 border-2 border-green-200">
-                                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                                        Available
-                                    </span>
+                                    <p class="text-gray-600 text-sm">{{ $talent->user->pekerjaan }}</p>
                                 @endif
                             </div>
 
-                            <!-- Contact Info -->
-                            <div class="px-6 pb-6">
-                                <div class="space-y-3 mb-6">
-                                    <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
-                                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                                            <i class="fas fa-envelope text-blue-600 text-xs"></i>
-                                        </div>
-                                        <span class="truncate font-medium">{{ $talent->user->email }}</span>
-                                    </div>
-
-                                    @if($talent->user->no_telp)
-                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
-                                            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
-                                                <i class="fas fa-phone text-green-600 text-xs"></i>
-                                            </div>
-                                            <span class="font-medium">{{ $talent->user->no_telp }}</span>
-                                        </div>
-                                    @endif
-
-                                    @if($talent->user->alamat)
-                                        <div class="flex items-center text-sm text-gray-600 bg-gray-50 p-3 rounded-xl">
-                                            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                                                <i class="fas fa-map-marker-alt text-purple-600 text-xs"></i>
-                                            </div>
-                                            <span class="truncate font-medium">{{ Str::limit($talent->user->alamat, 25) }}</span>
-                                        </div>
-                                    @endif
+                            <!-- Score -->
+                            <div class="text-center mb-4">
+                                <div class="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full">
+                                    <span class="font-bold">Score: {{ $overallScore }}/100</span>
                                 </div>
+                            </div>
 
-                                <!-- Member Since -->
-                                <div class="text-center mb-6 py-3 bg-gray-50 rounded-xl">
-                                    <span class="text-gray-500 text-sm font-medium">
-                                        <i class="fas fa-calendar-alt mr-2"></i>
-                                        Member since {{ $talent->created_at->format('M Y') }}
+                            <!-- Quick Stats -->
+                            <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                                <div class="bg-gray-50 py-2 rounded">
+                                    <div class="text-xs text-gray-600">Courses</div>
+                                    <div class="font-bold">{{ $metrics['progress_tracking']['completed_courses'] ?? 0 }}</div>
+                                </div>
+                                <div class="bg-gray-50 py-2 rounded">
+                                    <div class="text-xs text-gray-600">Certificates</div>
+                                    <div class="font-bold">{{ $metrics['certifications']['total_certificates'] ?? 0 }}</div>
+                                </div>
+                                <div class="bg-gray-50 py-2 rounded">
+                                    <div class="text-xs text-gray-600">Quiz Avg</div>
+                                    <div class="font-bold">{{ $metrics['quiz_performance']['average_score'] ?? 0 }}%</div>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            @php $existingRequest = $talent->talentRequests->first(); @endphp
+                            @if($existingRequest)
+                                <div class="mb-4 text-center">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        @if($existingRequest->getStatusBadgeColor() == 'success') bg-green-100 text-green-800
+                                        @elseif($existingRequest->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
+                                        @elseif($existingRequest->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
+                                        @elseif($existingRequest->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800
+                                        @else bg-gray-100 text-gray-800 @endif">
+                                        {{ $existingRequest->getFormattedStatus() }}
                                     </span>
                                 </div>
+                            @endif
 
-                                <!-- Action Buttons -->
-                                <div class="space-y-3">
-                                    <button type="button"
-                                            onclick="viewTalentDetails('{{ $talent->user->name }}', '{{ $talent->user->email }}', '{{ $talent->user->pekerjaan ?? 'Not specified' }}', '{{ $talent->user->alamat ?? 'Not specified' }}', '{{ $talent->user->no_telp ?? 'Not specified' }}')"
-                                            class="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
-                                        <i class="fas fa-eye mr-2"></i>View Profile
+                            <!-- Actions -->
+                            <div class="space-y-2">
+                                @if(!$existingRequest || $existingRequest->status == 'rejected')
+                                    <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                            class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
+                                        <i class="fas fa-handshake mr-2"></i>Request Talent
                                     </button>
-
-                                    <div class="grid grid-cols-2 gap-3">
-                                        @php
-                                            $existingRequest = $talent->talentRequests->first();
-                                        @endphp
-
-                                        @if($existingRequest)
-                                            @if($existingRequest->status == 'pending')
-                                                <button type="button" class="px-3 py-2 bg-yellow-100 text-yellow-800 rounded-xl font-semibold cursor-not-allowed" disabled>
-                                                    <i class="fas fa-clock mr-1"></i>Pending
-                                                </button>
-                                            @elseif($existingRequest->status == 'approved')
-                                                <button type="button" class="px-3 py-2 bg-blue-100 text-blue-800 rounded-xl font-semibold cursor-not-allowed" disabled>
-                                                    <i class="fas fa-check mr-1"></i>Approved
-                                                </button>
-                                            @elseif($existingRequest->status == 'onboarded')
-                                                <button type="button" class="px-3 py-2 bg-green-100 text-green-800 rounded-xl font-semibold cursor-not-allowed" disabled>
-                                                    <i class="fas fa-handshake mr-1"></i>Onboarded
-                                                </button>
-                                            @else
-                                                <button type="button"
-                                                        onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
-                                                        class="px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 font-semibold">
-                                                    <i class="fas fa-handshake mr-1"></i>Request
-                                                </button>
-                                            @endif
-                                        @else
-                                            <button type="button"
-                                                    onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
-                                                    class="px-3 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all duration-200 font-semibold">
-                                                <i class="fas fa-handshake mr-1"></i>Request
-                                            </button>
-                                        @endif
-
-                                        <a href="mailto:{{ $talent->user->email }}"
-                                           class="px-3 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-all duration-200 font-semibold text-center">
-                                            <i class="fas fa-envelope mr-1"></i>Email
-                                        </a>
-                                    </div>
+                                @endif
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                            class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                        <i class="fas fa-chart-line mr-1"></i>Report
+                                    </button>
+                                    <a href="mailto:{{ $talent->user->email }}"
+                                       class="px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-center text-sm">
+                                        <i class="fas fa-envelope mr-1"></i>Email
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -406,18 +364,18 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="flex justify-center mt-12 pt-8 border-t border-gray-200">
-                    <div class="pagination-wrapper">
+                @if(isset($talents) && method_exists($talents, 'links'))
+                    <div class="mt-8 flex justify-center">
                         {{ $talents->links() }}
                     </div>
-                </div>
+                @endif
             @else
-                <div class="text-center py-16">
-                    <div class="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-user-tie text-4xl text-gray-400"></i>
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <i class="fas fa-user-tie text-2xl text-gray-400"></i>
                     </div>
-                    <h5 class="text-xl font-semibold text-gray-700 mb-3">No Talents Available</h5>
-                    <p class="text-gray-500 max-w-md mx-auto">There are currently no active talents in the system. Check back later or contact your administrator.</p>
+                    <h5 class="text-lg font-medium text-gray-700 mb-2">No Talents Available</h5>
+                    <p class="text-gray-500">Check back later or contact your administrator.</p>
                 </div>
             @endif
         </div>
@@ -640,6 +598,244 @@ function contactTalent() {
     }
 }
 
+// New Scouting Functions
+function toggleScoutingFilters() {
+    const filtersPanel = document.getElementById('scoutingFilters');
+    const isHidden = filtersPanel.classList.contains('hidden');
+
+    if (isHidden) {
+        filtersPanel.classList.remove('hidden');
+        filtersPanel.classList.add('animate-slideDown');
+    } else {
+        filtersPanel.classList.add('hidden');
+        filtersPanel.classList.remove('animate-slideDown');
+    }
+}
+
+function toggleViewMode() {
+    const talentCards = document.querySelectorAll('.talent-card');
+    const grid = talentCards[0]?.parentElement;
+
+    if (grid.classList.contains('grid-cols-3')) {
+        // Switch to list view
+        grid.classList.remove('grid-cols-1', 'md:grid-cols-2', 'xl:grid-cols-3');
+        grid.classList.add('grid-cols-1');
+
+        talentCards.forEach(card => {
+            card.classList.add('flex', 'flex-row');
+            card.classList.remove('flex-col');
+        });
+    } else {
+        // Switch back to grid view
+        grid.classList.remove('grid-cols-1');
+        grid.classList.add('grid-cols-1', 'md:grid-cols-2', 'xl:grid-cols-3');
+
+        talentCards.forEach(card => {
+            card.classList.remove('flex', 'flex-row');
+            card.classList.add('flex-col');
+        });
+    }
+}
+
+function viewScoutingReport(talentId, talentName) {
+    // Create a detailed scouting report modal
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-chart-line mr-3 text-blue-600"></i>
+                        Scouting Report: ${talentName}
+                    </h2>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Loading detailed scouting report...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Here you would make an AJAX call to get detailed metrics
+    // For now, we'll show a placeholder
+    setTimeout(() => {
+        const content = modal.querySelector('.p-6:last-child');
+        content.innerHTML = `
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-blue-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-blue-900 mb-3">Learning Performance</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between"><span>Velocity:</span><span class="font-semibold">⭐⭐⭐⭐</span></div>
+                            <div class="flex justify-between"><span>Consistency:</span><span class="font-semibold">⭐⭐⭐⭐⭐</span></div>
+                            <div class="flex justify-between"><span>Adaptability:</span><span class="font-semibold">⭐⭐⭐</span></div>
+                        </div>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-green-900 mb-3">Achievement Metrics</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between"><span>Certifications:</span><span class="font-semibold">5 earned</span></div>
+                            <div class="flex justify-between"><span>Quiz Performance:</span><span class="font-semibold">87% avg</span></div>
+                            <div class="flex justify-between"><span>Completion Rate:</span><span class="font-semibold">92%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-xl">
+                    <h3 class="font-semibold text-gray-900 mb-3">Recommendation</h3>
+                    <p class="text-gray-700">This talent shows excellent learning consistency and strong performance across multiple skill areas. Recommended for projects requiring adaptable and dedicated team members.</p>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button onclick="openRequestModal('${talentId}', '${talentName}')" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold">
+                        <i class="fas fa-handshake mr-2"></i>Request This Talent
+                    </button>
+                    <button onclick="this.closest('.fixed').remove()" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold">
+                        Close Report
+                    </button>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+function viewRequestDetails(requestId) {
+    // Create a modal to show request details
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-clipboard-list mr-3 text-blue-600"></i>
+                        Request Details
+                    </h2>
+                    <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Loading request details...</p>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Fetch request details from server
+    fetch(`/recruiter/request-details/${requestId}`, {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const request = data.request;
+            const content = modal.querySelector('.p-6:last-child');
+            content.innerHTML = `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 p-4 rounded-xl">
+                            <h3 class="font-semibold text-blue-900 mb-3">Talent Information</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between"><span>Name:</span><span class="font-semibold">${request.talent_name}</span></div>
+                                <div class="flex justify-between"><span>Email:</span><span class="font-semibold">${request.talent_email}</span></div>
+                                <div class="flex justify-between"><span>Position:</span><span class="font-semibold">${request.talent_position || 'Not specified'}</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-xl">
+                            <h3 class="font-semibold text-green-900 mb-3">Request Status</h3>
+                            <div class="space-y-2">
+                                <div class="flex justify-between"><span>Status:</span><span class="font-semibold">${request.status}</span></div>
+                                <div class="flex justify-between"><span>Requested:</span><span class="font-semibold">${request.created_at}</span></div>
+                                <div class="flex justify-between"><span>Updated:</span><span class="font-semibold">${request.updated_at}</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 p-4 rounded-xl">
+                        <h3 class="font-semibold text-gray-900 mb-3">Project Details</h3>
+                        <div class="space-y-2">
+                            <div><span class="font-medium">Title:</span> ${request.project_title}</div>
+                            <div><span class="font-medium">Description:</span> ${request.project_description || 'No description provided'}</div>
+                            <div><span class="font-medium">Budget:</span> ${request.budget || 'Not specified'}</div>
+                            <div><span class="font-medium">Duration:</span> ${request.project_duration || 'Not specified'}</div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <a href="mailto:${request.talent_email}" class="flex-1 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold text-center">
+                            <i class="fas fa-envelope mr-2"></i>Contact Talent
+                        </a>
+                        <button onclick="this.closest('.fixed').remove()" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            const content = modal.querySelector('.p-6:last-child');
+            content.innerHTML = `
+                <div class="text-center py-8">
+                    <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                    <p class="text-gray-600">Error loading request details: ${data.message || 'Unknown error'}</p>
+                    <button onclick="this.closest('.fixed').remove()" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        Close
+                    </button>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        const content = modal.querySelector('.p-6:last-child');
+        content.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                <p class="text-gray-600">Failed to load request details. Please try again.</p>
+                <button onclick="this.closest('.fixed').remove()" class="mt-4 px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    Close
+                </button>
+            </div>
+        `;
+    });
+}
+
+function resetFilters() {
+    const selects = document.querySelectorAll('#scoutingFilters select');
+    selects.forEach(select => select.value = '');
+}
+
+function applyFilters() {
+    // Here you would implement the filtering logic
+    // For now, we'll show a loading message
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Applying...';
+    button.disabled = true;
+
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        // In a real implementation, you would reload the page with filter parameters
+        // window.location.href = window.location.pathname + '?' + new URLSearchParams(filterData).toString();
+    }, 1000);
+}
+
 function refreshTalents() {
     // Add smooth loading animation
     const refreshButton = document.querySelector('[onclick="refreshTalents()"]');
@@ -661,7 +857,266 @@ $(document).ready(function() {
 
     // Add smooth scroll behavior
     $('html').css('scroll-behavior', 'smooth');
+
+    // Add hover effects for talent cards
+    $('.talent-card').hover(
+        function() {
+            $(this).addClass('transform scale-105');
+        },
+        function() {
+            $(this).removeClass('transform scale-105');
+        }
+    );
 });
+
+// ===== TALENT COMPARISON FUNCTIONALITY =====
+let isCompareMode = false;
+let selectedTalents = [];
+
+function toggleCompareMode() {
+    isCompareMode = !isCompareMode;
+    const checkboxes = document.querySelectorAll('.compare-checkbox');
+    const compareBtn = document.getElementById('compareModeBtn');
+    const comparisonPanel = document.getElementById('comparisonPanel');
+
+    if (isCompareMode) {
+        // Enable compare mode
+        checkboxes.forEach(cb => cb.classList.remove('hidden'));
+        compareBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Exit Compare';
+        compareBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+        compareBtn.classList.remove('bg-white/20', 'hover:bg-white/30');
+
+        // Show comparison panel
+        comparisonPanel.style.display = 'block';
+        setTimeout(() => {
+            comparisonPanel.classList.remove('translate-y-full');
+        }, 10);
+
+        // Add margin to body to account for panel
+        document.body.style.marginBottom = '120px';
+    } else {
+        // Disable compare mode
+        checkboxes.forEach(cb => {
+            cb.classList.add('hidden');
+            cb.querySelector('input').checked = false;
+        });
+        compareBtn.innerHTML = '<i class="fas fa-balance-scale mr-2"></i>Compare';
+        compareBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+        compareBtn.classList.add('bg-white/20', 'hover:bg-white/30');
+
+        // Hide comparison panel
+        comparisonPanel.classList.add('translate-y-full');
+        setTimeout(() => {
+            comparisonPanel.style.display = 'none';
+        }, 300);
+
+        // Reset margin
+        document.body.style.marginBottom = '0';
+
+        // Clear selection
+        selectedTalents = [];
+        updateCompareSelection();
+    }
+}
+
+function updateCompareSelection() {
+    const checkedBoxes = document.querySelectorAll('.talent-compare-check:checked');
+    selectedTalents = Array.from(checkedBoxes).map(cb => ({
+        id: cb.dataset.talentId,
+        name: cb.dataset.talentName,
+        email: cb.dataset.talentEmail,
+        position: cb.dataset.talentPosition,
+        score: cb.dataset.talentScore,
+        courses: cb.dataset.talentCourses,
+        certificates: cb.dataset.talentCertificates,
+        quizAvg: cb.dataset.talentQuizAvg
+    }));
+
+    // Update counter
+    const selectedCount = document.getElementById('selectedCount');
+    selectedCount.textContent = `${selectedTalents.length} selected`;
+
+    // Update compare button state
+    const compareBtn = document.getElementById('compareBtn');
+    compareBtn.disabled = selectedTalents.length < 2;
+
+    // Update preview
+    updateSelectedTalentsPreview();
+}
+
+function updateSelectedTalentsPreview() {
+    const preview = document.getElementById('selectedTalentsPreview');
+    preview.innerHTML = '';
+
+    selectedTalents.forEach(talent => {
+        const talentCard = document.createElement('div');
+        talentCard.className = 'flex-shrink-0 bg-gray-50 rounded-lg p-3 min-w-48';
+        talentCard.innerHTML = `
+            <div class="flex items-center">
+                <div class="w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center mr-3">
+                    <i class="fas fa-user text-white"></i>
+                </div>
+                <div>
+                    <div class="font-medium text-sm">${talent.name}</div>
+                    <div class="text-xs text-gray-600">${talent.position}</div>
+                </div>
+            </div>
+        `;
+        preview.appendChild(talentCard);
+    });
+}
+
+function clearComparison() {
+    // Uncheck all checkboxes
+    document.querySelectorAll('.talent-compare-check').forEach(cb => {
+        cb.checked = false;
+    });
+
+    // Clear array and update UI
+    selectedTalents = [];
+    updateCompareSelection();
+}
+
+function viewComparison() {
+    if (selectedTalents.length < 2) {
+        alert('Please select at least 2 talents to compare.');
+        return;
+    }
+
+    const modal = document.getElementById('talentComparisonModal');
+    const content = document.getElementById('comparisonContent');
+
+    // Generate comparison table
+    content.innerHTML = generateComparisonTable();
+
+    // Show modal
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeComparisonModal() {
+    const modal = document.getElementById('talentComparisonModal');
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+}
+
+function generateComparisonTable() {
+    if (selectedTalents.length === 0) return '<p>No talents selected for comparison.</p>';
+
+    return `
+        <div class="overflow-x-auto">
+            <table class="w-full border-collapse">
+                <thead>
+                    <tr class="bg-gray-50">
+                        <th class="border border-gray-200 p-4 text-left font-semibold">Criteria</th>
+                        ${selectedTalents.map(talent => `
+                            <th class="border border-gray-200 p-4 text-center font-semibold min-w-48">
+                                <div class="flex flex-col items-center">
+                                    <div class="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center mb-2">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <div class="font-bold">${talent.name}</div>
+                                    <div class="text-sm text-gray-600">${talent.position}</div>
+                                </div>
+                            </th>
+                        `).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="border border-gray-200 p-4 font-medium bg-gray-50">Overall Score</td>
+                        ${selectedTalents.map(talent => `
+                            <td class="border border-gray-200 p-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full font-bold">
+                                    ${talent.score}/100
+                                </span>
+                            </td>
+                        `).join('')}
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-200 p-4 font-medium bg-gray-50">Completed Courses</td>
+                        ${selectedTalents.map(talent => `
+                            <td class="border border-gray-200 p-4 text-center font-semibold">${talent.courses}</td>
+                        `).join('')}
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-200 p-4 font-medium bg-gray-50">Certificates Earned</td>
+                        ${selectedTalents.map(talent => `
+                            <td class="border border-gray-200 p-4 text-center font-semibold">${talent.certificates}</td>
+                        `).join('')}
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-200 p-4 font-medium bg-gray-50">Quiz Average</td>
+                        ${selectedTalents.map(talent => `
+                            <td class="border border-gray-200 p-4 text-center font-semibold">${talent.quizAvg}%</td>
+                        `).join('')}
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-200 p-4 font-medium bg-gray-50">Contact</td>
+                        ${selectedTalents.map(talent => `
+                            <td class="border border-gray-200 p-4 text-center">
+                                <a href="mailto:${talent.email}" class="inline-flex items-center px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                    <i class="fas fa-envelope mr-1"></i>Email
+                                </a>
+                            </td>
+                        `).join('')}
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-200 p-4 font-medium bg-gray-50">Actions</td>
+                        ${selectedTalents.map(talent => `
+                            <td class="border border-gray-200 p-4 text-center">
+                                <div class="flex flex-col gap-2">
+                                    <button onclick="openRequestModal('${talent.id}', '${talent.name}')"
+                                            class="px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm">
+                                        <i class="fas fa-handshake mr-1"></i>Request
+                                    </button>
+                                    <button onclick="viewScoutingReport('${talent.id}', '${talent.name}')"
+                                            class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                        <i class="fas fa-chart-line mr-1"></i>Report
+                                    </button>
+                                </div>
+                            </td>
+                        `).join('')}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-6 text-center">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-blue-900 mb-2">Best Overall Score</h4>
+                    <p class="text-blue-700">${getBestTalent('score')}</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-green-900 mb-2">Most Experienced</h4>
+                    <p class="text-green-700">${getBestTalent('courses')}</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg">
+                    <h4 class="font-semibold text-purple-900 mb-2">Best Quiz Performance</h4>
+                    <p class="text-purple-700">${getBestTalent('quizAvg')}</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getBestTalent(criteria) {
+    if (selectedTalents.length === 0) return 'No data';
+
+    let best = selectedTalents[0];
+    let value = parseFloat(best[criteria]);
+
+    selectedTalents.forEach(talent => {
+        const talentValue = parseFloat(talent[criteria]);
+        if (talentValue > value) {
+            best = talent;
+            value = talentValue;
+        }
+    });
+
+    return best.name;
+}
 
 // Handle talent request form submission
 document.getElementById('talentRequestForm').addEventListener('submit', function(e) {
@@ -729,9 +1184,9 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
 </script>
 
 <style>
-/* Custom Tailwind enhancements */
+/* Enhanced Premium Tailwind Styling */
 .pagination-wrapper .pagination {
-    @apply flex items-center justify-center space-x-2;
+    @apply flex items-center justify-center space-x-3;
 }
 
 .pagination-wrapper .page-item {
@@ -739,71 +1194,455 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
 }
 
 .pagination-wrapper .page-link {
-    @apply px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-900 transition-all duration-200;
+    @apply px-5 py-3 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-200 rounded-xl hover:bg-gray-50 hover:text-gray-900 hover:border-gray-300 transition-all duration-300 shadow-sm hover:shadow-md;
 }
 
 .pagination-wrapper .page-item.active .page-link {
-    @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700;
+    @apply bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-700 shadow-lg;
 }
 
 .pagination-wrapper .page-item.disabled .page-link {
-    @apply text-gray-400 cursor-not-allowed hover:bg-white hover:text-gray-400;
+    @apply text-gray-400 cursor-not-allowed hover:bg-white hover:text-gray-400 hover:border-gray-200;
 }
 
-/* Modal backdrop */
-.modal-backdrop {
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(2px);
+/* Premium Card Animations */
+.talent-card {
+    transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
 }
 
-/* Smooth transitions for cards */
+.talent-card:hover {
+    transform: translateY(-16px) scale(1.02);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(16, 185, 129, 0.1);
+}
+
+/* Sophisticated Gradient Animations */
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@keyframes floatingPulse {
+    0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+.animate-gradient {
+    background-size: 200% 200%;
+    animation: gradientShift 6s ease infinite;
+}
+
+.animate-floating {
+    animation: floatingPulse 4s ease-in-out infinite;
+}
+
+/* Premium Hover Effects */
 .group:hover .group-hover\:scale-105 {
     transform: scale(1.05);
 }
 
-/* Custom scrollbar for modal content */
-.modal-body {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e0 #f7fafc;
+.group:hover .group-hover\:scale-110 {
+    transform: scale(1.1);
 }
 
-.modal-body::-webkit-scrollbar {
-    width: 6px;
+.group:hover .group-hover\:translate-x-1 {
+    transform: translateX(0.25rem);
 }
 
-.modal-body::-webkit-scrollbar-track {
-    background: #f7fafc;
-    border-radius: 3px;
+.group:hover .group-hover\:rotate-12 {
+    transform: rotate(12deg);
 }
 
-.modal-body::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 3px;
+.group:hover .group-hover\:rotate-180 {
+    transform: rotate(180deg);
 }
 
-.modal-body::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
+/* Advanced Shadow Effects */
+.shadow-3xl {
+    box-shadow: 0 35px 60px -12px rgba(0, 0, 0, 0.3);
 }
 
-/* Animation for loading states */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+.shadow-4xl {
+    box-shadow: 0 50px 100px -20px rgba(0, 0, 0, 0.4);
 }
 
-.fade-in {
-    animation: fadeIn 0.3s ease-out;
+/* Enhanced Loading States */
+.loading-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Responsive improvements */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: .3;
+    }
+}
+
+/* Premium Scrollbar Styling */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: linear-gradient(to bottom, #f1f5f9, #e2e8f0);
+    border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #64748b, #475569);
+    border-radius: 10px;
+    border: 2px solid #f1f5f9;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #475569, #334155);
+}
+
+/* Enhanced Modal Styling */
+.modal-backdrop {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.8));
+    backdrop-filter: blur(8px);
+}
+
+.modal-content {
+    border-radius: 1.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+/* Advanced Star Rating */
+.star-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.star-rating .star {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.star-rating .star:hover {
+    color: #fbbf24;
+    transform: scale(1.2);
+}
+
+/* Premium Button Hover Effects */
+.btn-premium {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-premium::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: all 0.5s ease;
+}
+
+.btn-premium:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Enhanced Metric Cards */
+.metric-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s;
+}
+
+.metric-card:hover::before {
+    left: 100%;
+}
+
+/* Sophisticated Gradient Backgrounds */
+.bg-premium-blue {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
+}
+
+.bg-premium-green {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #6ee7b7 100%);
+}
+
+.bg-premium-purple {
+    background: linear-gradient(135deg, #e9d5ff 0%, #ddd6fe 50%, #c4b5fd 100%);
+}
+
+.bg-premium-orange {
+    background: linear-gradient(135deg, #fed7aa 0%, #fdba74 50%, #fb923c 100%);
+}
+
+/* Advanced Animation Utilities */
+@keyframes slideInUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.animate-slideInUp {
+    animation: slideInUp 0.6s ease-out;
+}
+
+.animate-slideInLeft {
+    animation: slideInLeft 0.6s ease-out;
+}
+
+.animate-scaleIn {
+    animation: scaleIn 0.5s ease-out;
+}
+
+/* Premium Glass Morphism */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced Focus States */
+.focus-ring {
+    @apply focus:outline-none focus:ring-4 focus:ring-emerald-500 focus:ring-opacity-50 focus:border-emerald-500;
+}
+
+/* Responsive Design Enhancements */
 @media (max-width: 768px) {
     .modal-dialog {
         margin: 1rem;
+        max-width: calc(100vw - 2rem);
     }
 
-    .grid-cols-1.md\:grid-cols-2.xl\:grid-cols-3 > * {
-        margin-bottom: 1.5rem;
+    .talent-card {
+        margin-bottom: 2rem;
+    }
+
+    .grid-responsive {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+@media (min-width: 1536px) {
+    .container-2xl {
+        max-width: 1536px;
+    }
+}
+
+/* Dark Mode Support (if needed) */
+@media (prefers-color-scheme: dark) {
+    .auto-dark {
+        --tw-bg-opacity: 1;
+        background-color: rgb(17 24 39 / var(--tw-bg-opacity));
+        color: rgb(243 244 246 / var(--tw-text-opacity));
+    }
+}
+
+/* Print Optimizations */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .talent-card {
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+        page-break-inside: avoid;
+    }
+}
+
+/* Performance Optimizations */
+.talent-card,
+.metric-card,
+.btn-premium {
+    will-change: transform;
+}
+
+/* Accessibility Enhancements */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .talent-card {
+        border-width: 2px;
+        border-color: #000;
+    }
+
+    .btn-premium {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .talent-card,
+    .metric-card,
+    .btn-premium,
+    .animate-pulse,
+    .animate-ping,
+    .animate-gradient,
+    .animate-floating {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Talent Comparison Styles */
+.talent-card {
+    position: relative;
+}
+
+.compare-checkbox {
+    transition: all 0.3s ease;
+}
+
+.talent-compare-check:checked + label,
+.talent-card:has(.talent-compare-check:checked) {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-color: #10b981;
+}
+
+#comparisonPanel {
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.comparison-highlight {
+    background-color: #fef3c7;
+    font-weight: bold;
+}
+
+/* Modal responsive adjustments */
+@media (max-width: 768px) {
+    #talentComparisonModal .p-6 {
+        padding: 1rem;
+    }
+
+    #comparisonContent table {
+        font-size: 0.875rem;
+    }
+
+    #comparisonContent th,
+    #comparisonContent td {
+        padding: 0.5rem;
     }
 }
 </style>
+
+<!-- Comparison Panel (Fixed at Bottom) -->
+<div id="comparisonPanel" class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg transform translate-y-full transition-transform duration-300 ease-in-out z-40" style="display: none;">
+    <div class="max-w-7xl mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <h3 class="text-lg font-semibold text-gray-900 mr-4">Compare Talents</h3>
+                <span id="selectedCount" class="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium">0 selected</span>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="viewComparison()"
+                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        id="compareBtn" disabled>
+                    <i class="fas fa-chart-bar mr-2"></i>Compare Details
+                </button>
+                <button onclick="clearComparison()"
+                        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-times mr-2"></i>Clear
+                </button>
+                <button onclick="toggleCompareMode()"
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    <i class="fas fa-times mr-2"></i>Exit Compare
+                </button>
+            </div>
+        </div>
+
+        <!-- Selected Talents Preview -->
+        <div id="selectedTalentsPreview" class="mt-4 flex gap-4 overflow-x-auto pb-2">
+            <!-- Selected talents will be populated here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Talent Comparison Modal -->
+<div id="talentComparisonModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" style="display: none;">
+    <div class="bg-white rounded-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden">
+        <!-- Modal Header -->
+        <div class="bg-emerald-600 text-white p-6">
+            <div class="flex items-center justify-between">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-balance-scale mr-3"></i>
+                    Talent Comparison
+                </h2>
+                <button onclick="closeComparisonModal()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+            <div id="comparisonContent">
+                <!-- Comparison content will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
