@@ -46,7 +46,7 @@
                     @endif
                 </div>
                 <div class="w-[56px] h-[56px] overflow-hidden rounded-full flex shrink-0 cursor-pointer" id="dropdownAvatar">
-                    <img src="{{Storage::url(Auth::user()->avatar)}}" class="w-full h-full object-cover" alt="photo">
+                    <img src="{{ Auth::user()->avatar_url }}" class="w-full h-full object-cover" alt="photo">
                 </div>
                 <div class="absolute right-0 mt-2 bg-white border rounded shadow hidden" id="dropdownMenu">
                     <a href="{{ route('profile.edit') }}" class="block px-4 py-2 hover:bg-gray-100">Profile Settings</a>
@@ -133,7 +133,7 @@
                     <div class="course-card px-3 pb-[70px] mt-[2px]">
                         <div class="flex flex-col rounded-t-[12px] rounded-b-[24px] gap-[32px] bg-white w-full pb-[10px] overflow-hidden transition-all duration-300 hover:ring-2 hover:ring-[#FF6129]">
                             <a href="{{ route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
-                                <img src="{{ Storage::url($course->thumbnail) }}" class="w-full h-full object-cover" alt="thumbnail">
+                                <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
                             </a>
                             <div class="flex flex-col px-4 gap-[10px]">
                                 <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:line-clamp-none min-h-[56px]">{{ $course->name }}</a>
@@ -163,7 +163,7 @@
                                 <div class="flex items-center gap-2">
                                     <div class="w-8 h-8 flex shrink-0 rounded-full overflow-hidden">
                                         <img
-                                            src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}"
+                                            src="{{ $trainerUser->avatar_url ?? asset('images/default-avatar.png') }}"
                                             class="w-full h-full object-cover"
                                             alt="avatar">
                                     </div>

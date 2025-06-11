@@ -3,7 +3,7 @@
     <div class="course-card w-1/3 px-3 pb-[70px] mt-[2px]">
         <div class="flex flex-col rounded-t-[12px] rounded-b-[24px] gap-[32px] bg-white w-full pb-[10px] overflow-hidden transition-all duration-300 hover:ring-2 hover:ring-[#FF6129]">
             <a href="{{ route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
-                <img src="{{ Storage::url($course->thumbnail) }}" class="w-full h-full object-cover" alt="thumbnail">
+                <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
             </a>
             <div class="flex flex-col px-4 gap-[10px]">
                 <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:line-clamp-none min-h-[56px]">{{ $course->name }}</a>
@@ -32,7 +32,7 @@
 
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 flex shrink-0 rounded-full overflow-hidden">
-                        <img src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}" class="w-full h-full object-cover" alt="avatar">
+                        <img src="{{ $trainerUser->avatar_url ?? asset('images/default-avatar.png') }}" class="w-full h-full object-cover" alt="avatar">
                     </div>
                     <div class="flex flex-col">
                         <p class="font-semibold">{{ $trainerUser->name ?? 'Unknown Trainer' }}</p>

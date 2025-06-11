@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -73,8 +74,8 @@ class User extends Authenticatable
      */
     public function getAvatarUrlAttribute(): string
     {
-        if ($this->avatar && file_exists(public_path($this->avatar))) {
-            return asset($this->avatar);
+        if ($this->avatar && \Illuminate\Support\Facades\Storage::disk('public')->exists($this->avatar)) {
+            return \Illuminate\Support\Facades\Storage::url($this->avatar);
         }
 
         // Fallback to default avatar

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Certificate;
 use App\Models\CourseModule;
+use Illuminate\Support\Facades\Storage;
 
 class Course extends Model
 {
@@ -54,6 +55,18 @@ class Course extends Model
     public function modules()
     {
         return $this->hasMany(CourseModule::class)->orderBy('order');
+    }
+
+    /**
+     * Get the thumbnail URL with fallback to default
+     */
+    public function getThumbnailUrlAttribute(): string
+    {
+        if ($this->thumbnail && Storage::disk('public')->exists($this->thumbnail)) {
+            return Storage::url($this->thumbnail);
+        }
+
+        return asset('assets/default-course.jpg');
     }
 
     // App\Models\Course.php

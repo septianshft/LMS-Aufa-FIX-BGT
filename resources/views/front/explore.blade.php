@@ -34,7 +34,7 @@
             @auth
             <div class="relative" id="dropdownWrapper">
                 <div class="w-[56px] h-[56px] overflow-hidden rounded-full cursor-pointer" id="dropdownAvatar">
-                    <img src="{{ Storage::url(Auth::user()->avatar) }}" class="w-full h-full object-cover" alt="photo">
+                    <img src="{{ Auth::user()->avatar_url }}" class="w-full h-full object-cover" alt="photo">
                 </div>
                 <div class="absolute right-0 mt-2 bg-white border rounded shadow hidden" id="dropdownMenu">
                     <a href="{{ route('profile.edit') }}" class="block px-4 py-2 hover:bg-gray-100">Profile Settings</a>
@@ -85,7 +85,7 @@
                     @foreach($courses as $course)
                     <div class="flex flex-col rounded-xl bg-white overflow-hidden transition-all hover:ring-2 hover:ring-[#FF6129]">
                         <a href="{{ route('front.details', $course->slug) }}" class="w-full h-48 overflow-hidden">
-                            <img src="{{ $course->thumbnail ? Storage::url($course->thumbnail) : asset('assets/default-course.jpg') }}" class="w-full h-full object-cover" alt="thumbnail">
+                            <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
                         </a>
                         <div class="p-4 flex flex-col gap-2">
                             <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
