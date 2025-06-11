@@ -16,9 +16,9 @@
 @include('front.partials.nav')
         </nav>
     </div>
-    <section id="video-content" class="max-w-[1100px] w-full mx-auto mt-[130px] flex flex-col md:flex-row gap-8">
+    <section id="video-content" class="max-w-[1100px] w-full mx-auto mt-[130px] flex flex-col gap-8">
     <!-- Video Player -->
-    <div class="plyr__video-embed w-full md:w-2/3 overflow-hidden relative rounded-[20px]" id="player">
+    <div class="plyr__video-embed w-full overflow-hidden relative rounded-[20px]" id="player">
         <iframe
             src="https://www.youtube.com/embed/{{ $course->path_trailer}}?origin=https://plyr.io&amp;iv_load_policy=3&amp;modestbranding=1&amp;playsinline=1&amp;showinfo=0&amp;rel=0&amp;enablejsapi=1"
             allowfullscreen
@@ -28,43 +28,45 @@
         ></iframe>
     </div>
 
-    <!-- Sidebar Video List -->
-    <div class="video-player-sidebar flex flex-col w-full md:w-1/3 bg-[#F5F8FA] rounded-[20px] p-6 gap-5 max-h-[500px] overflow-y-auto">
-        <p class="font-bold text-lg text-black">{{ $course->course_videos->count() }} Lessons</p>
+    <!-- Modules List -->
+    <div id="module-list" class="flex flex-col w-full bg-[#F5F8FA] rounded-[20px] p-6 gap-5">
+        <p class="font-bold text-lg text-black">{{ $course->modules->count() }} Modules</p>
         <div class="flex flex-col gap-4">
-            <!-- Course Trailer -->
-            <div class="group p-[12px_16px] flex items-center gap-[10px] bg-[#E9EFF3] rounded-full hover:bg-[#3525B3] transition-all duration-300">
-                <div class="text-black group-hover:text-white transition-all duration-300">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M11.97 2C6.45 2 1.97 6.48 1.97 12s4.48 10 10 10 10-4.48 10-10S17.5 2 11.97 2Zm3 12.23-2.9 1.67c-.36.21-.76.31-1.15.31s-.79-.1-1.15-.31c-.72-.42-1.15-1.16-1.15-2V10.55c0-.83.43-1.57 1.15-1.99.72-.42 1.6-.42 2.32 0l2.9 1.67c.72.42 1.15 1.16 1.15 1.99s-.43 1.57-1.15 1.99Z" fill="currentColor"/>
-                    </svg>
-                </div>
-                <a href="{{ route('front.details', $course ) }}">
-                    <p class="font-semibold group-hover:text-white transition-all duration-300">Course Trailer</p>
-                </a>
-            </div>
+            @forelse($course->modules as $module)
+                <div class="flex flex-col p-5 rounded-2xl bg-[#FFF8F4] has-[.hide]:bg-transparent border-t-4 border-[#FF6129] has-[.hide]:border-0 w-full">
+                    <button class="accordion-button flex justify-between gap-1 items-center" data-accordion="module-{{ $module->id }}">
+                        <span class="font-semibold text-lg text-left">{{ $module->name }}</span>
+                        <div class="arrow w-9 h-9 flex shrink-0">
+                            <img src="{{ asset('assets/icon/add.svg') }}" alt="icon">
+                        </div>
+                    </button>
+                    <div id="module-{{ $module->id }}" class="accordion-content hide">
+                        <div class="pt-2">
+                            <h5 class="font-semibold">Videos</h5>
+                            <ul class="list-disc list-inside">
+                                @foreach($module->videos as $v)
+                                    <li>{{ $v->name }}</li>
+                                @endforeach
+                            </ul>
 
-            <!-- Daftar Video -->
-            @forelse($course->course_videos as $video)
-            @php
-                $isActive = request()->get('courseVideoId') == $video->id;
-            @endphp
-            <a
-                href="{{ route('front.learning', [$course, 'courseVideoId' => $video->id]) }}"
-                class="group p-[12px_16px] flex items-center gap-[10px] rounded-full transition-all duration-300
-                    {{ $isActive ? 'bg-[#3525B3]' : 'bg-[#E9EFF3] hover:bg-[#3525B3]' }}"
-            >
-                <div class="text-black group-hover:text-white {{ $isActive ? 'text-[#3525B3]' : '' }} transition-all duration-300">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M11.97 2C6.45 2 1.97 6.48 1.97 12s4.48 10 10 10 10-4.48 10-10S17.5 2 11.97 2Zm3 12.23-2.9 1.67c-.36.21-.76.31-1.15.31s-.79-.1-1.15-.31c-.72-.42-1.15-1.16-1.15-2V10.55c0-.83.43-1.57 1.15-1.99.72-.42 1.6-.42 2.32 0l2.9 1.67c.72.42 1.15 1.16 1.15 1.99s-.43 1.57-1.15 1.99Z" fill="currentColor"/>
-                    </svg>
+                            <h5 class="font-semibold mt-2">Materials</h5>
+                            <ul class="list-disc list-inside">
+                                @foreach($module->materials as $m)
+                                    <li>{{ $m->name }}</li>
+                                @endforeach
+                            </ul>
+
+                            <h5 class="font-semibold mt-2">Tasks</h5>
+                            <ul class="list-disc list-inside">
+                                @foreach($module->tasks as $t)
+                                    <li>{{ $t->name }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <p class="font-semibold transition-all duration-300 {{ $isActive ? 'text-[#3525B3]' : 'group-hover:text-white text-black' }}">
-                    {{ $video->name }}
-                </p>
-            </a>
             @empty
-                <p class="text-gray-500">Belum ada video tersedia.</p>
+                <p class="text-gray-500">Belum ada modul.</p>
             @endforelse
         </div>
     </div>
