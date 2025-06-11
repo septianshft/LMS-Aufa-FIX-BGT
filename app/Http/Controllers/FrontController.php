@@ -84,6 +84,7 @@ class FrontController extends Controller
             "category", "trainer.user", "trainees",
             "course_videos", "course_keypoints",
             "modules.videos", "modules.materials", "modules.tasks",
+            "finalQuiz",
         ]);
 
         $user = Auth::user();
@@ -134,7 +135,15 @@ class FrontController extends Controller
             ->where('course_id', $course->id)
             ->first();
 
-        return view('front.learning', compact('course', 'video', 'certificate', 'progress'));
+        $quizAttempt = null;
+        if ($course->finalQuiz) {
+            $quizAttempt = $course->finalQuiz->attempts()
+                ->where('user_id', $user->id)
+                ->latest()
+                ->first();
+        }
+
+        return view('front.learning', compact('course', 'video', 'certificate', 'progress', 'quizAttempt'));
     }
 
     /**
