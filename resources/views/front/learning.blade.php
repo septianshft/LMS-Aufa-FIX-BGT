@@ -184,11 +184,17 @@
                         <div id="Quiz" class="tabcontent hidden">
                             <div class="flex flex-col gap-5">
                                 <h3 class="font-bold text-2xl">Test Your Knowledge</h3>
-                                <p class="font-medium leading-[30px]">
-                                    Quiz content will be displayed here. This section will contain questions related to the current lesson or course.
-                                </p>
-                                <!-- Placeholder for quiz elements -->
-                                <a href="{{ route('front.quiz', $course) }}" class="text-white font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980] w-fit">Start Quiz</a>
+                                @if(isset($quizAttempt))
+                                    <p class="font-medium leading-[30px]">
+                                        Score: {{ $quizAttempt->score }}% – {{ $quizAttempt->is_passed ? 'Passed' : 'Failed' }}
+                                    </p>
+                                    @unless($quizAttempt->is_passed)
+                                        <a href="{{ route('front.quiz', $course) }}" class="text-white font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980] w-fit">Retake Quiz</a>
+                                    @endunless
+                                @else
+                                    <p class="font-medium leading-[30px]">Quiz content will be displayed here. This section will contain questions related to the current lesson or course.</p>
+                                    <a href="{{ route('front.quiz', $course) }}" class="text-white font-semibold rounded-[30px] p-[16px_32px] bg-[#FF6129] transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980] w-fit">Start Quiz</a>
+                                @endif
                             </div>
                         </div>
                     </div>
