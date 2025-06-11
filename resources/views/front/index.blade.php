@@ -29,8 +29,11 @@
             <a href="{{ route('courses.my') }}" class="font-semibold">My Course</a>
         </li>
         <li>
-            <a href="{{ route('cart.index') }}" class="flex items-center">
+            <a href="{{ route('cart.index') }}" class="relative flex items-center">
                 <img src="{{ asset('asset/vendor/fontawesome-free/svgs/solid/shopping-cart.svg') }}" class="w-5 h-5" alt="cart">
+                @if($cartCount > 0)
+                <span class="absolute -top-2 -right-2 w-4 h-4 text-xs text-white bg-red-500 rounded-full flex items-center justify-center">{{ $cartCount }}</span>
+                @endif
             </a>
         </li>
     </ul>
@@ -48,7 +51,6 @@
                 <div class="absolute right-0 mt-2 bg-white border rounded shadow hidden" id="dropdownMenu">
                     <a href="{{ route('profile.edit') }}" class="block px-4 py-2 hover:bg-gray-100">Profile Settings</a>
                     <a href="{{ route('courses.my') }}" class="block px-4 py-2 hover:bg-gray-100">My Course</a>
-                    <a href="{{ route('cart.index') }}" class="block px-4 py-2 hover:bg-gray-100">My Cart</a>
                     <a href="{{ route('dashboard') }}" class="block px-4 py-2 hover:bg-gray-100">Dashboard</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
