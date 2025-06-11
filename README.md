@@ -66,6 +66,8 @@ npm install
 
 # Link storage for uploaded files (course materials, task submissions, etc.)
 php artisan storage:link
+# This command exposes user avatars and course thumbnails stored on the
+# public disk so they can be served by the web server
 
 # Environment setup
 cp .env.example .env

@@ -174,7 +174,7 @@
                     <div class="flex items-center gap-2">
                         <div class="w-8 h-8 rounded-full overflow-hidden">
                             <img
-                                src="{{ $trainerUser->avatar ? Storage::url($trainerUser->avatar) : asset('images/default-avatar.png') }}"
+                                src="{{ $trainerUser->avatar_url ?? asset('images/default-avatar.png') }}"
                                 class="w-full h-full object-cover"
                                 alt="avatar">
                         </div>

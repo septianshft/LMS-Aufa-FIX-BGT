@@ -28,7 +28,7 @@
             @endif
         </div>
         <div class="w-[56px] h-[56px] overflow-hidden rounded-full flex shrink-0 cursor-pointer" id="dropdownAvatar">
-            <img src="{{ Storage::url(Auth::user()->avatar) }}" class="w-full h-full object-cover" alt="photo">
+            <img src="{{ Auth::user()->avatar_url }}" class="w-full h-full object-cover" alt="photo">
         </div>
         <div class="absolute right-0 mt-2 bg-white border rounded shadow hidden" id="dropdownMenu">
             <a href="{{ route('profile.edit') }}" class="block px-4 py-2 hover:bg-gray-100">Profile Settings</a>
