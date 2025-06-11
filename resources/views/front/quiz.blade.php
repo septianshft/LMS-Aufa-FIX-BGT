@@ -45,29 +45,46 @@
                 @endif
 
                 @if(isset($quiz) && $quiz->questions->count() > 0 && !session('result'))
-                    <form action="{{ route('learning.quiz.submit', ['quiz' => $quiz->id]) }}" method="POST">
+                    @php
+                        $duration = $quiz->duration ?? 600; // default 10 minutes
+                    @endphp
+                    <div id="timer" class="text-right font-semibold text-lg mb-4" data-duration="{{ $duration }}"></div>
+                    <form id="quiz-form" action="{{ route('learning.quiz.submit', ['quiz' => $quiz->id]) }}" method="POST">
                         @csrf
-                        {{-- Konten form (pertanyaan dan opsi) --}}
-                        @foreach($quiz->questions as $index => $question)
-                            <div class="mb-8 p-6 bg-white/30 rounded-lg shadow">
-                                <p class="block text-xl font-semibold mb-3 text-gray-800">{{ $index + 1 }}. {{ $question->question }}</p>
-                                @if($question->options && $question->options->count() > 0)
-                                    <div class="space-y-3">
-                                        @foreach($question->options as $option)
-                                            <label class="block"> {{-- Mengubah label menjadi block untuk styling --}}
-                                                <input type="radio" name="answers[{{ $question->id }}]" value="{{ $option->id }}" class="sr-only peer" required> {{-- sr-only untuk menyembunyikan radio button asli, 'peer' untuk state --}}
-                                                <div class="p-4 rounded-md border border-gray-400 peer-checked:bg-[#FF6129] peer-checked:border-[#FF6129] peer-checked:text-white text-gray-700 bg-white/70 hover:bg-white/90 hover:border-gray-500 cursor-pointer transition-all duration-200 ease-in-out">
-                                                    {{-- Pastikan $option->text ada dan berisi teks opsi --}}
-                                                    <span class="font-medium">{{ $option->option_text ?? 'Opsi tidak valid' }}</span>
-                                                </div>
-                                            </label>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    <p class="text-sm text-gray-500">Tidak ada opsi jawaban untuk pertanyaan ini.</p>
-                                @endif
+                        <div class="flex">
+                            <div class="w-1/4 pr-4 space-y-2" id="sidebar">
+                                @foreach($quiz->questions as $index => $question)
+                                    <button type="button" class="sidebar-btn w-full py-2 rounded bg-gray-200" data-index="{{ $index }}">{{ $index + 1 }}</button>
+                                @endforeach
                             </div>
-                        @endforeach
+                            <div class="w-3/4" id="questions-container">
+                                @foreach($quiz->questions as $index => $question)
+                                    <div class="question-item {{ $index == 0 ? '' : 'hidden' }} mb-8 p-6 bg-white/30 rounded-lg shadow" data-index="{{ $index }}">
+                                        <p class="block text-xl font-semibold mb-3 text-gray-800">{{ $index + 1 }}. {{ $question->question }}</p>
+                                        @if($question->options && $question->options->count() > 0)
+                                            <div class="space-y-3">
+                                                @foreach($question->options as $option)
+                                                    <label class="block">
+                                                        <input type="radio" name="option_{{ $question->id }}" value="{{ $option->id }}" data-question="{{ $question->id }}" class="sr-only option-input peer" required>
+                                                        <div class="p-4 rounded-md border border-gray-400 peer-checked:bg-[#FF6129] peer-checked:border-[#FF6129] peer-checked:text-white text-gray-700 bg-white/70 hover:bg-white/90 hover:border-gray-500 cursor-pointer transition-all duration-200 ease-in-out">
+                                                            <span class="font-medium">{{ $option->option_text ?? 'Opsi tidak valid' }}</span>
+                                                        </div>
+                                                    </label>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <p class="text-sm text-gray-500">Tidak ada opsi jawaban untuk pertanyaan ini.</p>
+                                        @endif
+                                        <input type="hidden" name="answers[{{ $question->id }}]" id="answer-{{ $question->id }}">
+                                    </div>
+                                @endforeach
+
+                                <div class="flex justify-between mt-4">
+                                    <button type="button" id="prev-btn" class="px-4 py-2 rounded bg-gray-200">Previous</button>
+                                    <button type="button" id="next-btn" class="px-4 py-2 rounded bg-gray-200">Next</button>
+                                </div>
+                            </div>
+                        </div>
 
                         <button type="submit" class="w-full mt-8 p-[20px_32px] bg-[#FF6129] text-white rounded-full text-center font-semibold transition-all duration-300 hover:shadow-[0_10px_20px_0_#FF612980]">
                             Kirim Jawaban
@@ -91,7 +108,73 @@
         crossorigin="anonymous">
     </script>
     <script src="{{ asset('js/main.js') }}"></script>
-    {{-- Add any specific JS for your quiz page if needed --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const questions = document.querySelectorAll('.question-item');
+            const sidebarButtons = document.querySelectorAll('.sidebar-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            let currentIndex = 0;
+
+            function showQuestion(index) {
+                questions.forEach((q, i) => {
+                    q.classList.toggle('hidden', i !== index);
+                });
+                sidebarButtons.forEach((btn, i) => {
+                    if (i === index) {
+                        btn.classList.add('bg-[#FF6129]', 'text-white');
+                    } else {
+                        btn.classList.remove('bg-[#FF6129]', 'text-white');
+                    }
+                });
+                currentIndex = index;
+                prevBtn.disabled = index === 0;
+                nextBtn.disabled = index === questions.length - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentIndex > 0) showQuestion(currentIndex - 1);
+            });
+            nextBtn.addEventListener('click', () => {
+                if (currentIndex < questions.length - 1) showQuestion(currentIndex + 1);
+            });
+
+            sidebarButtons.forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    const idx = parseInt(btn.dataset.index, 10);
+                    showQuestion(idx);
+                });
+            });
+
+            // Preserve answers
+            document.querySelectorAll('.option-input').forEach((input) => {
+                input.addEventListener('change', () => {
+                    const qid = input.dataset.question;
+                    const hidden = document.getElementById('answer-' + qid);
+                    hidden.value = input.value;
+                });
+            });
+
+            showQuestion(0);
+
+            // Timer
+            const timerEl = document.getElementById('timer');
+            let remaining = parseInt(timerEl.dataset.duration, 10);
+
+            function updateTimer() {
+                const minutes = Math.floor(remaining / 60);
+                const seconds = remaining % 60;
+                timerEl.textContent = minutes + ':' + String(seconds).padStart(2, '0');
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    document.getElementById('quiz-form').submit();
+                }
+                remaining--;
+            }
+            updateTimer();
+            const interval = setInterval(updateTimer, 1000);
+        });
+    </script>
 
 </body>
 </html>
