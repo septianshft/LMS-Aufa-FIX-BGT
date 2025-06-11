@@ -14,11 +14,17 @@
         @forelse($items as $item)
             <li class="flex justify-between items-center border-b pb-2">
                 <span>{{ $item->course->name }}</span>
-                <form action="{{ route('cart.destroy', $item) }}" method="POST">
-                    @csrf
-                    @method('DELETE')
-                    <button class="text-red-600">Remove</button>
-                </form>
+                <div class="flex gap-2 items-center">
+                    <form action="{{ route('courses.join', $item->course->slug) }}" method="POST">
+                        @csrf
+                        <button class="px-2 py-1 rounded bg-blue-600 text-white text-sm">Join Now</button>
+                    </form>
+                    <form action="{{ route('cart.destroy', $item) }}" method="POST">
+                        @csrf
+                        @method('DELETE')
+                        <button class="text-red-600 text-sm">Remove</button>
+                    </form>
+                </div>
             </li>
         @empty
             <li>No items in cart.</li>
