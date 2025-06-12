@@ -131,7 +131,7 @@ class User extends Authenticatable
      */
     public function addSkillFromCourse($course)
     {
-        $existingSkills = $this->talent_skills ?? [];
+        $existingSkills = $this->getTalentSkillsArray();
 
         // Enhanced skill categorization
         $category = $this->categorizeSkill($course);
@@ -259,7 +259,7 @@ class User extends Authenticatable
             return; // Already opted in
         }
 
-        $skillCount = count($this->talent_skills ?? []);
+        $skillCount = count($this->getTalentSkillsArray());
         $courseCount = $this->completedCourses()->count();
 
         // Enhanced conversion criteria
@@ -282,7 +282,7 @@ class User extends Authenticatable
      */
     private function hasHighDemandSkills()
     {
-        $skills = $this->talent_skills ?? [];
+        $skills = $this->getTalentSkillsArray();
         foreach ($skills as $skill) {
             if (isset($skill['market_demand']) && in_array($skill['market_demand'], ['High', 'Very High'])) {
                 return true;
@@ -392,10 +392,15 @@ class User extends Authenticatable
      */
     public function getSkillsByCategory()
     {
-        $skills = $this->talent_skills ?? [];
+        $skills = $this->getTalentSkillsArray();
         $categorized = [];
 
         foreach ($skills as $skill) {
+            // Ensure skill is an array
+            if (!is_array($skill)) {
+                continue;
+            }
+
             $category = $skill['category'] ?? 'General Technology';
             if (!isset($categorized[$category])) {
                 $categorized[$category] = [];
@@ -412,7 +417,7 @@ class User extends Authenticatable
     public function getTalentReadinessScore()
     {
         $score = 0;
-        $skillCount = count($this->talent_skills ?? []);
+        $skillCount = count($this->getTalentSkillsArray());
         $completedCourses = $this->completedCourses()->count();
 
         // Skills contribute 40% of score
@@ -423,15 +428,16 @@ class User extends Authenticatable
 
         // High-demand skills contribute 20% of score
         $highDemandCount = 0;
-        foreach ($this->talent_skills ?? [] as $skill) {
-            if (($skill['market_demand'] ?? '') === 'Very High') {
+        foreach ($this->getTalentSkillsArray() as $skill) {
+            if (is_array($skill) && ($skill['market_demand'] ?? '') === 'Very High') {
                 $highDemandCount++;
             }
         }
         $score += min(($highDemandCount * 10), 20);
 
         // Recent activity contributes 10% of score
-        $recentSkills = array_filter($this->talent_skills ?? [], function($skill) {
+        $recentSkills = array_filter($this->getTalentSkillsArray(), function($skill) {
+            if (!is_array($skill)) return false;
             $acquiredDate = \Carbon\Carbon::parse($skill['acquired_at'] ?? now());
             return $acquiredDate->gte(\Carbon\Carbon::now()->subMonths(3));
         });
@@ -445,10 +451,11 @@ class User extends Authenticatable
      */
     public function getLearningVelocity()
     {
-        $skills = $this->talent_skills ?? [];
+        $skills = $this->getTalentSkillsArray();
         if (count($skills) < 2) return 0;
 
         $dates = array_map(function($skill) {
+            if (!is_array($skill)) return \Carbon\Carbon::now();
             return \Carbon\Carbon::parse($skill['acquired_at'] ?? now());
         }, $skills);
 
@@ -464,7 +471,7 @@ class User extends Authenticatable
      */
     public function getSkillAnalytics()
     {
-        $skills = $this->talent_skills ?? [];
+        $skills = $this->getTalentSkillsArray();
         $categories = collect($skills)->groupBy('category');
 
         return [
@@ -482,7 +489,7 @@ class User extends Authenticatable
      */
     public function getSkillCategory(): string
     {
-        $skills = $this->talent_skills ?? [];
+        $skills = $this->getTalentSkillsArray();
         if (empty($skills)) {
             return 'General';
         }
@@ -490,6 +497,9 @@ class User extends Authenticatable
         // Count categories
         $categories = [];
         foreach ($skills as $skill) {
+            if (!is_array($skill)) {
+                continue;
+            }
             $category = $skill['category'] ?? 'General Technology';
             $categories[$category] = ($categories[$category] ?? 0) + 1;
         }
@@ -519,7 +529,7 @@ class User extends Authenticatable
         $score += ($quizAverage / 100) * 30;
 
         // Skills factor (20% weight)
-        $skillCount = count($this->talent_skills ?? []);
+        $skillCount = count($this->getTalentSkillsArray());
         $score += min($skillCount * 4, 20); // Cap at 20 points
 
         // Recent activity factor (10% weight)
@@ -572,10 +582,11 @@ class User extends Authenticatable
      */
     public function getSkillCategories(): array
     {
-        $skills = $this->talent_skills ?? [];
+        $skills = $this->getTalentSkillsArray();
         $categories = [];
 
         foreach ($skills as $skill) {
+            if (!is_array($skill)) continue;
             $category = $skill['category'] ?? 'General Technology';
             if (!in_array($category, $categories)) {
                 $categories[] = $category;
@@ -585,7 +596,21 @@ class User extends Authenticatable
         return $categories;
     }
 
+    /**
+     * Get talent skills as array, handling both string and array formats
+     */
+    public function getTalentSkillsArray(): array
+    {
+        $talents_skills = $this->talent_skills;
 
+        // Handle case where talent_skills might be a string (legacy data)
+        if (is_string($talents_skills)) {
+            $talents_skills = json_decode($talents_skills, true) ?? [];
+        }
+
+        // Ensure we have an array
+        return is_array($talents_skills) ? $talents_skills : [];
+    }
 
     /**
      * Get conversion suggestion status
@@ -632,7 +657,7 @@ class User extends Authenticatable
             'readiness_score' => $this->calculateReadinessScore(),
             'readiness_level' => $this->getReadinessLevel(),
             'completed_courses' => $this->courseProgress()->where('progress', 100)->count(),
-            'skill_count' => count($this->talent_skills ?? []),
+            'skill_count' => count($this->getTalentSkillsArray()),
             'skill_categories' => $this->getSkillCategories(),
             'quiz_average' => $this->getQuizAverage(),
             'learning_velocity' => $this->getLearningVelocity(),

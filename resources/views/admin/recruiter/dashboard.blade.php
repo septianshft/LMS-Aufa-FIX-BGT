@@ -378,7 +378,7 @@
                                     @endif
                                 @endif
                                 <div class="grid grid-cols-2 gap-2">
-                                    <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                    <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}', {{ json_encode($metrics) }})"
                                             class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                                         <i class="fas fa-chart-line mr-1"></i>Report
                                     </button>
@@ -792,7 +792,7 @@ function toggleViewMode() {
     }
 }
 
-function viewScoutingReport(talentId, talentName) {
+function viewScoutingReport(talentId, talentName, metrics) {
     // Create a detailed scouting report modal
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
@@ -819,34 +819,65 @@ function viewScoutingReport(talentId, talentName) {
     `;
     document.body.appendChild(modal);
 
-    // Here you would make an AJAX call to get detailed metrics
-    // For now, we'll show a placeholder
+    // Display real metrics data
     setTimeout(() => {
         const content = modal.querySelector('.p-6:last-child');
+
+        // Extract metric values with safe defaults
+        const completedCourses = metrics?.progress_tracking?.completed_courses || 0;
+        const totalCertificates = metrics?.certifications?.total_certificates || 0;
+        const quizAverage = metrics?.quiz_performance?.average_score || 0;
+        const completionRate = metrics?.progress_tracking?.completion_rate || 0;
+        const learningVelocity = metrics?.learning_velocity?.score || 0;
+        const consistency = metrics?.consistency?.score || 0;
+        const adaptability = metrics?.adaptability?.score || 0;
+
+        // Helper function to get performance level and color
+        const getPerformanceLevel = (score) => {
+            if (score >= 80) return { level: 'Excellent', color: 'text-green-600' };
+            if (score >= 60) return { level: 'Good', color: 'text-blue-600' };
+            if (score >= 40) return { level: 'Average', color: 'text-orange-600' };
+            return { level: 'Needs Improvement', color: 'text-red-600' };
+        };
+
+        const velocityLevel = getPerformanceLevel(learningVelocity);
+        const consistencyLevel = getPerformanceLevel(consistency);
+        const adaptabilityLevel = getPerformanceLevel(adaptability);
+
         content.innerHTML = `
             <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-blue-50 p-4 rounded-xl">
                         <h3 class="font-semibold text-blue-900 mb-3">Learning Performance</h3>
                         <div class="space-y-2">
-                            <div class="flex justify-between"><span>Learning Velocity:</span><span class="font-semibold text-blue-600">High (87%)</span></div>
-                            <div class="flex justify-between"><span>Performance Consistency:</span><span class="font-semibold text-green-600">Excellent (94%)</span></div>
-                            <div class="flex justify-between"><span>Skill Adaptability:</span><span class="font-semibold text-orange-600">Good (78%)</span></div>
+                            <div class="flex justify-between"><span>Learning Velocity:</span><span class="font-semibold ${velocityLevel.color}">${velocityLevel.level} (${Math.round(learningVelocity)}%)</span></div>
+                            <div class="flex justify-between"><span>Performance Consistency:</span><span class="font-semibold ${consistencyLevel.color}">${consistencyLevel.level} (${Math.round(consistency)}%)</span></div>
+                            <div class="flex justify-between"><span>Skill Adaptability:</span><span class="font-semibold ${adaptabilityLevel.color}">${adaptabilityLevel.level} (${Math.round(adaptability)}%)</span></div>
                         </div>
                     </div>
                     <div class="bg-green-50 p-4 rounded-xl">
                         <h3 class="font-semibold text-green-900 mb-3">Achievement Metrics</h3>
                         <div class="space-y-2">
-                            <div class="flex justify-between"><span>Certifications:</span><span class="font-semibold">5 earned</span></div>
-                            <div class="flex justify-between"><span>Quiz Performance:</span><span class="font-semibold">87% avg</span></div>
-                            <div class="flex justify-between"><span>Completion Rate:</span><span class="font-semibold">92%</span></div>
+                            <div class="flex justify-between"><span>Courses Completed:</span><span class="font-semibold">${completedCourses} completed</span></div>
+                            <div class="flex justify-between"><span>Certifications:</span><span class="font-semibold">${totalCertificates} earned</span></div>
+                            <div class="flex justify-between"><span>Quiz Performance:</span><span class="font-semibold">${Math.round(quizAverage)}% avg</span></div>
+                            <div class="flex justify-between"><span>Completion Rate:</span><span class="font-semibold">${Math.round(completionRate)}%</span></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-gray-50 p-4 rounded-xl">
                     <h3 class="font-semibold text-gray-900 mb-3">Recommendation</h3>
-                    <p class="text-gray-700">This talent shows excellent learning consistency and strong performance across multiple skill areas. Recommended for projects requiring adaptable and dedicated team members.</p>
+                    <p class="text-gray-700">
+                        ${completedCourses > 0 || totalCertificates > 0 ?
+                            `This talent has completed ${completedCourses} courses and earned ${totalCertificates} certificates with an average quiz performance of ${Math.round(quizAverage)}%. ${
+                                consistency >= 70 ? 'Shows excellent learning consistency and' : 'Has potential for growth with'
+                            } ${
+                                learningVelocity >= 70 ? 'strong learning velocity.' : 'room for improvement in learning pace.'
+                            }` :
+                            'This talent is new to the platform. Consider their background and potential for growth.'
+                        }
+                    </p>
                 </div>
 
                 <div class="flex gap-4 pt-4">
@@ -859,7 +890,7 @@ function viewScoutingReport(talentId, talentName) {
                 </div>
             </div>
         `;
-    }, 1000);
+    }, 300);
 }
 
 function viewRequestDetails(requestId) {
@@ -1225,7 +1256,15 @@ function generateComparisonTable() {
                                             class="px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm">
                                         <i class="fas fa-handshake mr-1"></i>Request
                                     </button>
-                                    <button onclick="viewScoutingReport('${talent.id}', '${talent.name}')"
+                                    <button onclick="viewScoutingReport('${talent.id}', '${talent.name}', {
+                                        progress_tracking: { completed_courses: ${talent.courses} },
+                                        certifications: { total_certificates: ${talent.certificates} },
+                                        quiz_performance: { average_score: ${talent.quizAvg} },
+                                        completion_rate: { rate: 0 },
+                                        learning_velocity: { score: 0 },
+                                        consistency: { score: 0 },
+                                        adaptability: { score: 0 }
+                                    })"
                                             class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                                         <i class="fas fa-chart-line mr-1"></i>Report
                                     </button>

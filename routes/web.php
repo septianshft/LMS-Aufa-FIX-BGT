@@ -173,6 +173,10 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/api/skill-analytics', [TalentAdminController::class, 'getSkillAnalytics'])->name('talent_admin.api.skill_analytics');
         Route::get('talent-admin/api/market-demand', [TalentAdminController::class, 'getMarketDemand'])->name('talent_admin.api.market_demand');
 
+        // Cache Management Routes
+        Route::post('talent-admin/clear-dashboard-cache', [TalentAdminController::class, 'clearDashboardCache'])->name('talent_admin.clear_dashboard_cache');
+        Route::get('talent-admin/dashboard-data', [TalentAdminController::class, 'getDashboardData'])->name('talent_admin.dashboard_data');
+
         // Talent Admin Management Routes
         Route::get('talent-admin/manage-admins', [TalentAdminController::class, 'manageTalentAdmins'])->name('talent_admin.manage_talent_admins');
         Route::get('talent-admin/admin/create', [TalentAdminController::class, 'createTalentAdmin'])->name('talent_admin.create_talent_admin');

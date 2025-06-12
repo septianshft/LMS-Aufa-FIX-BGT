@@ -106,7 +106,7 @@
                     <div class="p-6 border-b border-gray-100">
                         <div class="flex items-center justify-between">
                             <h2 class="text-xl font-bold text-gray-800">🚀 Latest Opportunities</h2>
-                            <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All</a>
+                            <a href="{{ route('talent.my_requests') }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All</a>
                         </div>
                     </div>
                     <div class="p-6 space-y-4">
@@ -290,7 +290,7 @@
                         <h2 class="text-lg font-bold text-gray-800">⚡ Quick Actions</h2>
                     </div>
                     <div class="p-6 space-y-3">
-                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group">
+                        <a href="{{ route('profile.edit') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group">
                             <div class="bg-blue-100 p-2 rounded-lg group-hover:bg-blue-200 transition-colors">
                                 <i class="fas fa-user-edit text-blue-600"></i>
                             </div>
@@ -299,7 +299,7 @@
                                 <div class="text-xs text-gray-500">Update your information</div>
                             </div>
                         </a>
-                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-green-50 transition-colors group">
+                        <a href="#" onclick="document.getElementById('resumeUpload').click()" class="flex items-center p-3 rounded-lg hover:bg-green-50 transition-colors group">
                             <div class="bg-green-100 p-2 rounded-lg group-hover:bg-green-200 transition-colors">
                                 <i class="fas fa-upload text-green-600"></i>
                             </div>
@@ -308,7 +308,7 @@
                                 <div class="text-xs text-gray-500">Keep it updated</div>
                             </div>
                         </a>
-                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
+                        <a href="#" onclick="showAlert('Skill Assessment feature coming soon!', 'info')" class="flex items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
                             <div class="bg-purple-100 p-2 rounded-lg group-hover:bg-purple-200 transition-colors">
                                 <i class="fas fa-cogs text-purple-600"></i>
                             </div>
@@ -317,6 +317,8 @@
                                 <div class="text-xs text-gray-500">Test your abilities</div>
                             </div>
                         </a>
+                        <!-- Hidden file input for resume upload -->
+                        <input type="file" id="resumeUpload" accept=".pdf,.doc,.docx" style="display: none;" onchange="handleResumeUpload(this)">
                     </div>
                 </div>
 
@@ -382,7 +384,7 @@
 </div>
 
 {{-- Request Details Modal --}}
-<div id="requestDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="talentRequestDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <!-- Background overlay -->
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeRequestModal()"></div>
@@ -411,10 +413,171 @@
 </div>
 
 <script>
-// Accept Request Function
+// Global variables for modal and timeout management
+let pendingReloadTimeout = null;
+let isModalOpen = false;
+let modalInitialized = false;
+let shouldReloadAfterModalClose = false;
+let processingAction = false; // Flag to prevent modal close during action processing
+// Store observer globally to manage it if re-initializing
+window.talentModalObserver = null;
+
+// Initialize everything when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Initializing modal system (v3)');
+    // Reset potentially stale states from a previous partial load
+    isModalOpen = false;
+    modalInitialized = false;
+    shouldReloadAfterModalClose = false;
+    processingAction = false;
+    if (pendingReloadTimeout) {
+        clearTimeout(pendingReloadTimeout);
+        pendingReloadTimeout = null;
+    }
+    if (window.talentModalObserver) {
+        window.talentModalObserver.disconnect();
+        window.talentModalObserver = null;
+    }
+
+    initializeModal();
+
+    // Setup escape key handler
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isModalOpen && !processingAction) {
+            closeRequestModal();
+        }
+    });
+});
+
+// Initialize modal and set up event listeners
+function initializeModal() {
+    if (modalInitialized && document.getElementById('talentRequestDetailsModal')) {
+        console.log('Modal already initialized and element exists.');
+        return;
+    }
+
+    const modal = document.getElementById('talentRequestDetailsModal');
+    const modalContent = document.getElementById('modalContent'); // Assuming this is inside the modal
+
+    console.log('Attempting modal initialization. Found modal:', !!modal, 'Found modalContent:', !!modalContent);
+
+    if (!modal || !modalContent) {
+        console.error('Modal elements (talentRequestDetailsModal or modalContent) not found during initialization.');
+        modalInitialized = false; // Explicitly set to false
+        return;
+    }
+
+    // Detach any old observer before attaching a new one
+    if (window.talentModalObserver) {
+        window.talentModalObserver.disconnect();
+        console.log('Disconnected existing modal observer.');
+    }
+
+    modalInitialized = true;
+    console.log('Modal initialized successfully.');
+
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal && !processingAction) {
+            closeRequestModal();
+        }
+    });
+
+    const modalPanel = modal.querySelector('.bg-white.rounded-2xl');
+    if (modalPanel) {
+        modalPanel.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    } else {
+        console.warn('Modal panel for click stopPropagation not found. Check selector: .bg-white.rounded-2xl');
+    }
+
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                const currentModalRef = document.getElementById('talentRequestDetailsModal'); // Get fresh ref
+                if (!currentModalRef) {
+                    console.warn("MutationObserver: Modal element no longer in DOM. Can't determine state.");
+                    if (isModalOpen) { // If we thought it was open, but element is gone
+                        isModalOpen = false;
+                        handleModalStateChange(false); // Treat as closed
+                    }
+                    return;
+                }
+                const wasOpen = isModalOpen;
+                const nowOpen = !currentModalRef.classList.contains('hidden');
+
+                if (wasOpen !== nowOpen) {
+                    isModalOpen = nowOpen;
+                    console.log(`Modal state changed via observer: ${isModalOpen ? 'OPENED' : 'CLOSED'}. Class list: ${currentModalRef.classList}`);
+                    handleModalStateChange(isModalOpen);
+                }
+            }
+        });
+    });
+
+    observer.observe(modal, { attributes: true });
+    window.talentModalObserver = observer;
+    console.log('New modal observer attached.');
+}
+
+// Handle modal state changes
+function handleModalStateChange(modalIsOpen) {
+    if (modalIsOpen) {
+        console.log('Modal is now OPEN. Clearing pending reloads, setting body class.');
+        if (pendingReloadTimeout) {
+            console.log('Clearing pendingReloadTimeout because modal opened.');
+            clearTimeout(pendingReloadTimeout);
+            pendingReloadTimeout = null;
+        }
+        document.body.style.overflow = 'hidden';
+        document.body.classList.add('modal-is-active');
+    } else {
+        console.log('Modal is now CLOSED. Restoring body scroll, removing body class, checking for delayed reload.');
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-is-active');
+
+        if (processingAction) {
+            console.log('Resetting processingAction because modal closed/confirmed closed.');
+            processingAction = false;
+        }
+
+        if (shouldReloadAfterModalClose) {
+            console.log('Modal closed and shouldReloadAfterModalClose is true. Scheduling page reload.');
+            shouldReloadAfterModalClose = false;
+            setTimeout(() => {
+                console.log('Executing delayed page reload now.');
+                location.reload();
+            }, 500);
+        }
+    }
+}
+
+// Modified accept request function
 function acceptRequest(requestId) {
+    if (processingAction) {
+        console.log('Already processing an action, ignoring...');
+        return;
+    }
+
     if (!confirm('Are you sure you want to accept this collaboration request?')) {
         return;
+    }
+
+    processingAction = true;
+    console.log('Starting accept request process for ID:', requestId);
+
+    // Show loading state in modal
+    const modalContent = document.getElementById('modalContent');
+    const originalContent = modalContent ? modalContent.innerHTML : '';
+
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-4xl text-green-600 mb-4"></i>
+                <p class="text-gray-600">Processing your acceptance...</p>
+                <p class="text-gray-500 text-sm mt-2">Please wait while we update the request status.</p>
+            </div>
+        `;
     }
 
     const notes = prompt('Optional: Add a note about your acceptance:') || '';
@@ -431,23 +594,65 @@ function acceptRequest(requestId) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Accept request response:', data);
+        processingAction = false;
+
         if (data.success) {
             showAlert('Request accepted successfully! ' + data.message, 'success');
-            setTimeout(() => location.reload(), 2000);
+
+            // Instead of complex reload logic, just close modal and reload page
+            setTimeout(() => {
+                closeRequestModal();
+                setTimeout(() => {
+                    console.log('Reloading page after successful acceptance...');
+                    location.reload();
+                }, 500);
+            }, 1000);
         } else {
             showAlert('Error: ' + (data.message || 'Failed to accept request'), 'error');
+            // Restore original modal content on error
+            if (modalContent && originalContent) {
+                modalContent.innerHTML = originalContent;
+            }
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error accepting request:', error);
+        processingAction = false;
         showAlert('Network error occurred. Please try again.', 'error');
+        // Restore original modal content on error
+        if (modalContent && originalContent) {
+            modalContent.innerHTML = originalContent;
+        }
     });
 }
 
-// Reject Request Function
+// Modified reject request function
 function rejectRequest(requestId) {
+    if (processingAction) {
+        console.log('Already processing an action, ignoring...');
+        return;
+    }
+
     if (!confirm('Are you sure you want to decline this collaboration request?')) {
         return;
+    }
+
+    processingAction = true;
+    console.log('Starting reject request process for ID:', requestId);
+
+    // Show loading state in modal
+    const modalContent = document.getElementById('modalContent');
+    const originalContent = modalContent ? modalContent.innerHTML : '';
+
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-4xl text-red-600 mb-4"></i>
+                <p class="text-gray-600">Processing your decline...</p>
+                <p class="text-gray-500 text-sm mt-2">Please wait while we update the request status.</p>
+            </div>
+        `;
     }
 
     const notes = prompt('Please provide a reason for declining (optional):') || '';
@@ -464,25 +669,100 @@ function rejectRequest(requestId) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Reject request response:', data);
+        processingAction = false;
+
         if (data.success) {
             showAlert('Request declined successfully.', 'success');
-            setTimeout(() => location.reload(), 2000);
+
+            // Instead of complex reload logic, just close modal and reload page
+            setTimeout(() => {
+                closeRequestModal();
+                setTimeout(() => {
+                    console.log('Reloading page after successful rejection...');
+                    location.reload();
+                }, 500);
+            }, 1000);
         } else {
             showAlert('Error: ' + (data.message || 'Failed to decline request'), 'error');
+            // Restore original modal content on error
+            if (modalContent && originalContent) {
+                modalContent.innerHTML = originalContent;
+            }
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error rejecting request:', error);
+        processingAction = false;
         showAlert('Network error occurred. Please try again.', 'error');
+        // Restore original modal content on error
+        if (modalContent && originalContent) {
+            modalContent.innerHTML = originalContent;
+        }
     });
+}
+
+// Robust modal opening function
+function openModal() {
+    console.log('Attempting to open modal. modalInitialized:', modalInitialized, 'DOM readyState:', document.readyState);
+
+    let modal = document.getElementById('talentRequestDetailsModal');
+
+    if (!modal) {
+        console.error('Modal element (talentRequestDetailsModal) not found in the DOM initially.');
+        if (modalInitialized) {
+            console.warn('Modal was marked initialized, but element is now missing. DOM might have changed. Forcing re-init.');
+            modalInitialized = false;
+        }
+    }
+
+    if (!modalInitialized) {
+        console.log('Modal not initialized or element was missing. Attempting to initialize/re-initialize.');
+        initializeModal();
+
+        if (!modalInitialized) {
+            console.error('Modal initialization failed after attempt. Cannot open modal.');
+            showAlert('Error: Modal system not ready. Please refresh the page and try again.', 'error');
+            return false;
+        }
+        // If initialization was successful now, re-fetch the modal element
+        modal = document.getElementById('talentRequestDetailsModal'); // Re-assign
+        if (!modal) {
+            console.error('Modal initialized, but element still not found. This is unexpected.');
+            showAlert('Error: Modal component issue. Please refresh.', 'error');
+            return false;
+        }
+        console.log('Modal successfully re-initialized and element found.');
+    }
+
+    // Ensure we have the latest reference, especially if re-initialization occurred.
+    const currentModalInstance = modal; // Use the 'modal' variable which is now confirmed or re-fetched
+
+    if (pendingReloadTimeout) {
+        clearTimeout(pendingReloadTimeout);
+        pendingReloadTimeout = null;
+        console.log('Cleared pendingReloadTimeout in openModal.');
+    }
+    shouldReloadAfterModalClose = false;
+    processingAction = false; // Reset this in case it was stuck
+
+    currentModalInstance.classList.remove('hidden');
+    // The MutationObserver should set isModalOpen = true and call handleModalStateChange.
+    // If the modal was already open (no class change), explicitly ensure state.
+    if (!isModalOpen && !currentModalInstance.classList.contains('hidden')) {
+        console.log('Modal was opened directly (no class change detected by observer yet), manually setting state.');
+        isModalOpen = true;
+        handleModalStateChange(true);
+    }
+    console.log('Modal open command issued successfully.');
+    return true;
 }
 
 // View Job Details Function (for history)
 function viewJobDetails(jobId) {
-    const modal = document.getElementById('requestDetailsModal');
-    const modalContent = document.getElementById('modalContent');
+    if (!openModal()) return;
 
-    modal.classList.remove('hidden');
+    const modalContent = document.getElementById('modalContent');
 
     // Show loading state
     modalContent.innerHTML = `
@@ -593,10 +873,9 @@ function viewJobDetails(jobId) {
 
 // View Request Details Function
 function viewRequestDetails(requestId) {
-    const modal = document.getElementById('requestDetailsModal');
-    const modalContent = document.getElementById('modalContent');
+    if (!openModal()) return;
 
-    modal.classList.remove('hidden');
+    const modalContent = document.getElementById('modalContent');
 
     // Show loading state
     modalContent.innerHTML = `
@@ -662,13 +941,13 @@ function viewRequestDetails(requestId) {
 
                         <div class="flex space-x-4">
                             ${request.can_accept ? `
-                                <button onclick="acceptRequest(${request.id}); closeRequestModal();"
+                                <button onclick="acceptRequest(${request.id})"
                                         class="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold">
                                     <i class="fas fa-check mr-2"></i>Accept Request
                                 </button>
                             ` : ''}
                             ${request.can_reject ? `
-                                <button onclick="rejectRequest(${request.id}); closeRequestModal();"
+                                <button onclick="rejectRequest(${request.id})"
                                         class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold">
                                     <i class="fas fa-times mr-2"></i>Decline Request
                                 </button>
@@ -717,18 +996,47 @@ function viewRequestDetails(requestId) {
 
 // Close Request Modal
 function closeRequestModal() {
-    document.getElementById('requestDetailsModal').classList.add('hidden');
+    const modal = document.getElementById('talentRequestDetailsModal');
+    if (modal) {
+        // Don't close if we're processing an action
+        if (processingAction) {
+            console.log('Cannot close modal while processing action');
+            return;
+        }
+
+        if (modal.classList.contains('hidden')) {
+            console.log('Modal already hidden, closeRequestModal doing nothing further.');
+            if (isModalOpen) { // If JS state is out of sync with DOM
+                console.warn('Modal DOM is hidden, but isModalOpen was true. Syncing state.');
+                isModalOpen = false;
+                handleModalStateChange(false);
+            }
+            return;
+        }
+
+        modal.classList.add('hidden');
+        console.log('Modal close command issued via closeRequestModal(). Observer will handle state update.');
+    } else {
+        console.warn('Modal element not found during closeRequestModal call.');
+        if (isModalOpen) { // If we thought it was open, but element is gone
+            console.warn('Modal element not found, but isModalOpen was true. Syncing state.');
+            isModalOpen = false;
+            handleModalStateChange(false); // Treat as closed
+        }
+    }
 }
 
 // Show Alert Function
 function showAlert(message, type) {
     const alertDiv = document.createElement('div');
     alertDiv.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg transition-all duration-300 ${
-        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'
+        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
+        type === 'info' ? 'bg-blue-100 border border-blue-400 text-blue-700' :
+        'bg-red-100 border border-red-400 text-red-700'
     }`;
     alertDiv.innerHTML = `
         <div class="flex items-center">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} mr-2"></i>
             ${message}
         </div>
     `;
@@ -740,6 +1048,22 @@ function showAlert(message, type) {
         alertDiv.style.opacity = '0';
         setTimeout(() => alertDiv.remove(), 300);
     }, 5000);
+}
+
+// Handle resume upload
+function handleResumeUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (file.size > maxSize) {
+            showAlert('File size must be less than 5MB', 'error');
+            return;
+        }
+
+        // Here you would typically upload the file to your server
+        showAlert('Resume upload feature will be implemented soon!', 'info');
+    }
 }
 </script>
 @endsection

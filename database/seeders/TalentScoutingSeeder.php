@@ -12,36 +12,22 @@ use Faker\Factory as Faker;
 class TalentScoutingSeeder extends Seeder
 {
     /**
-     * Seed talent scouting system data including:
-     * - Additional talent profiles with diverse skills
-     * - Talent requests for testing approval workflows
-     * - Sample recruiter activities
+     * Seed talent scouting system data.
+     * NOTE: For trainee-to-talent conversion testing, this seeder is disabled.
+     * Only talent admin and recruiter accounts are created via SystemUserSeeder.
      */
     public function run(): void
     {
-        $faker = Faker::create();
+        $this->command->info('🎯 TalentScoutingSeeder: Skipped for clean testing environment');
+        $this->command->info('   ℹ️  Only talent admin and recruiter accounts will be available');
+        $this->command->info('   ℹ️  Use TraineeSeeder to test trainee-to-talent conversion flow');
 
-        $this->command->info('🎯 Setting up talent scouting system data...');
+        // All talent seeding methods are commented out for clean testing
+        // $this->createAdditionalTalents($faker);
+        // $this->createTalentRequests($faker);
+        // $this->createAdditionalRecruiters($faker);
 
-        // ===============================================
-        // ADDITIONAL TALENT PROFILES
-        // ===============================================
-
-        $this->createAdditionalTalents($faker);
-
-        // ===============================================
-        // TALENT REQUESTS (for testing workflows)
-        // ===============================================
-
-        $this->createTalentRequests($faker);
-
-        // ===============================================
-        // SAMPLE RECRUITER COMPANIES
-        // ===============================================
-
-        $this->createAdditionalRecruiters($faker);
-
-        $this->command->info('✅ Talent scouting system data seeded successfully!');
+        $this->command->info('✅ Talent scouting seeder completed (clean mode)');
     }
 
     private function createAdditionalTalents($faker)

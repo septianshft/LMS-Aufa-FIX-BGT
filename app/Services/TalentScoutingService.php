@@ -22,7 +22,7 @@ class TalentScoutingService
     {
         $user = $talent->user;
 
-        return [
+        $metrics = [
             'learning_velocity' => $this->calculateLearningVelocity($user),
             'consistency' => $this->calculateConsistency($user),
             'adaptability' => $this->calculateAdaptability($user),
@@ -35,8 +35,13 @@ class TalentScoutingService
             'challenge_seeking' => $this->calculateChallengeSeeking($user),
             'breadth_vs_depth' => $this->calculateBreadthVsDepth($user),
             'profile_completeness' => $this->calculateProfileCompleteness($user),
-            'overall_score' => 0 // Will be calculated based on other metrics
+            'overall_score' => 0 // Will be calculated below
         ];
+
+        // Calculate overall score based on weighted metrics
+        $metrics['overall_score'] = $this->calculateOverallScore($metrics);
+
+        return $metrics;
     }
 
     /**
@@ -396,7 +401,36 @@ class TalentScoutingService
         if ($score >= 60) return 3;
         if ($score >= 40) return 2;
         return 1;
-    }    /**
+    }
+
+    /**
+     * Invalidate cached talent metrics
+     */
+    public function invalidateTalentMetricsCache(Talent $talent): void
+    {
+        $cacheKey = "talent_metrics_{$talent->id}";
+        cache()->forget($cacheKey);
+    }
+
+    /**
+     * Refresh talent metrics cache
+     */
+    public function refreshTalentMetricsCache(Talent $talent): array
+    {
+        // First invalidate existing cache
+        $this->invalidateTalentMetricsCache($talent);
+
+        // Calculate fresh metrics
+        $metrics = $this->getTalentScoutingMetrics($talent);
+
+        // Cache the new metrics
+        $cacheKey = "talent_metrics_{$talent->id}";
+        cache()->put($cacheKey, $metrics, now()->addHours(24));
+
+        return $metrics;
+    }
+
+    /**
      * Get talents with scouting filters
      */
     public function getFilteredTalents(array $filters = [])
@@ -455,5 +489,29 @@ class TalentScoutingService
         }
 
         return round($totalScore, 1);
+    }
+
+    /**
+     * Get basic talent statistics for dashboard display
+     */
+    public function getBasicTalentStats(Talent $talent): array
+    {
+        $user = $talent->user;
+
+        // Get completed courses count
+        $completedCourses = CourseProgress::where('user_id', $user->id)
+            ->where('progress', 100)->count();
+
+        // Get certificates count
+        $certificates = Certificate::where('user_id', $user->id)->count();
+
+        // Get quiz average
+        $quizAverage = QuizAttempt::where('user_id', $user->id)->avg('score') ?? 0;
+
+        return [
+            'completed_courses' => $completedCourses,
+            'certificates' => $certificates,
+            'quiz_average' => round($quizAverage, 1)
+        ];
     }
 }
