@@ -51,10 +51,13 @@ class TalentAdminController extends Controller
             // Single optimized query for all statistics
             $stats = DB::select('
                 SELECT
-                    COUNT(CASE WHEN u.is_active_talent = 1 THEN 1 END) as active_talents,
-                    COUNT(CASE WHEN u.available_for_scouting = 1 THEN 1 END) as available_talents,
-                    COUNT(CASE WHEN ur.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as active_recruiters,
-                    COUNT(CASE WHEN ur.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as total_recruiters,
+                    -- Talent statistics (users with talent role and active status)
+                    COUNT(CASE WHEN ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1) AND u.is_active_talent = 1 THEN 1 END) as active_talents,
+                    COUNT(CASE WHEN ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1) AND u.available_for_scouting = 1 THEN 1 END) as available_talents,
+
+                    -- Recruiter statistics
+                    COUNT(CASE WHEN ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as active_recruiters,
+                    COUNT(CASE WHEN ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as total_recruiters,
 
                     -- Request statistics
                     (SELECT COUNT(*) FROM talent_requests WHERE deleted_at IS NULL) as total_requests,
@@ -62,12 +65,13 @@ class TalentAdminController extends Controller
                     (SELECT COUNT(*) FROM talent_requests WHERE status = "approved" AND deleted_at IS NULL) as approved_requests,
                     (SELECT COUNT(*) FROM talent_requests WHERE status = "rejected" AND deleted_at IS NULL) as rejected_requests,
 
-                    -- Recent registrations (last 30 days)
-                    COUNT(CASE WHEN u.is_active_talent = 1 AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_talents,
-                    COUNT(CASE WHEN ur.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_recruiters
+                    -- Recent registrations (last 30 days) - only actual talents
+                    COUNT(CASE WHEN ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1) AND u.is_active_talent = 1 AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_talents,
+                    COUNT(CASE WHEN ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_recruiters
 
                 FROM users u
-                LEFT JOIN model_has_roles ur ON u.id = ur.model_id AND ur.model_type = "App\\\\Models\\\\User"
+                LEFT JOIN model_has_roles ur_talent ON u.id = ur_talent.model_id AND ur_talent.model_type = "App\\\\Models\\\\User" AND ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1)
+                LEFT JOIN model_has_roles ur_rec ON u.id = ur_rec.model_id AND ur_rec.model_type = "App\\\\Models\\\\User" AND ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1)
             ')[0];
 
             return [
@@ -88,35 +92,57 @@ class TalentAdminController extends Controller
         // Extract cached values
         extract($dashboardStats);
 
-        // Optimized recent activity queries with caching
-        $recentActivity = Cache::remember('talent_admin_recent_activity', 300, function() {
-            return [
-                'latestTalents' => User::select(['id', 'name', 'email', 'created_at'])
-                    ->where('is_active_talent', true)
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get(),
+        // Get recent activity with minimal cache time for real-time updates
+        $recentActivity = Cache::remember('talent_admin_recent_activity_' . $user->id, 15, function() {
+            try {
+                return [
+                    'latestTalents' => User::select(['id', 'name', 'email', 'created_at', 'avatar', 'pekerjaan', 'is_active_talent'])
+                        ->whereHas('roles', function($query) {
+                            $query->where('name', 'talent');
+                        })
+                        ->where('is_active_talent', true)
+                        ->orderBy('created_at', 'desc')
+                        ->limit(5)
+                        ->get(),
 
-                'latestRecruiters' => User::select(['id', 'name', 'email', 'created_at'])
-                    ->whereHas('roles', function($query) {
-                        $query->where('name', 'recruiter');
-                    })
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get(),
+                    'latestRecruiters' => User::select(['id', 'name', 'email', 'created_at', 'avatar', 'pekerjaan', 'company_name'])
+                        ->whereHas('roles', function($query) {
+                            $query->where('name', 'recruiter');
+                        })
+                        ->with('roles')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(5)
+                        ->get(),
 
-                'latestRequests' => TalentRequest::select(['id', 'project_title', 'status', 'created_at', 'recruiter_id', 'talent_user_id'])
-                    ->with(['recruiter:id,user_id', 'recruiter.user:id,name', 'talentUser:id,name'])
-                    ->orderBy('created_at', 'desc')
-                    ->limit(5)
-                    ->get()
-            ];
+                    'latestRequests' => TalentRequest::select(['id', 'project_title', 'status', 'created_at', 'recruiter_id', 'talent_user_id'])
+                        ->with([
+                            'recruiter:id,user_id',
+                            'recruiter.user:id,name,avatar',
+                            'talentUser:id,name,avatar'
+                        ])
+                        ->whereNotNull('recruiter_id')
+                        ->whereNotNull('talent_user_id')
+                        ->orderBy('created_at', 'desc')
+                        ->limit(5)
+                        ->get()
+                ];
+            } catch (\Exception $e) {
+                Log::error('Error loading recent activity for talent admin dashboard: ' . $e->getMessage());
+                return [
+                    'latestTalents' => collect([]),
+                    'latestRecruiters' => collect([]),
+                    'latestRequests' => collect([])
+                ];
+            }
         });
 
         // Extract recent activity
-        $latestTalents = $recentActivity['latestTalents'];
-        $latestRecruiters = $recentActivity['latestRecruiters'];
-        $latestRequests = $recentActivity['latestRequests'];
+        $latestTalents = $recentActivity['latestTalents'] ?? collect([]);
+        $latestRecruiters = $recentActivity['latestRecruiters'] ?? collect([]);
+        $latestRequests = $recentActivity['latestRequests'] ?? collect([]);
+
+        // Debug: Log the count of latest requests
+        Log::info('Dashboard Latest Requests Count: ' . $latestRequests->count());
 
         return view('talent_admin.dashboard', compact(
             'user', 'title', 'roles', 'assignedKelas',
@@ -914,27 +940,179 @@ class TalentAdminController extends Controller
     public function destroyRecruiter(Recruiter $recruiter)
     {
         try {
-            $recruiterName = $recruiter->user->name;
+            $recruiterName = $recruiter->user->name ?? 'Unknown Recruiter';
+            $userId = $recruiter->user_id;
 
-            // Delete the recruiter (this will also soft-delete due to SoftDeletes trait)
+            // Check if the recruiter has active talent requests
+            $activeRequestsCount = TalentRequest::where('recruiter_id', $recruiter->id)
+                ->whereIn('status', ['pending', 'in_progress'])
+                ->count();
+
+            if ($activeRequestsCount > 0) {
+                $message = "Cannot delete recruiter '{$recruiterName}' because they have {$activeRequestsCount} active talent request(s). Please complete or cancel these requests first.";
+
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $message
+                    ], 422);
+                }
+
+                return redirect()->back()->with('error', $message);
+            }
+
+            // Begin transaction for data integrity
+            DB::beginTransaction();
+
+            // Update completed talent requests to remove recruiter reference
+            TalentRequest::where('recruiter_id', $recruiter->id)
+                ->whereIn('status', ['completed', 'cancelled'])
+                ->update(['recruiter_id' => null]);
+
+            // Delete the recruiter (this will soft-delete due to SoftDeletes trait)
             $recruiter->delete();
 
             // Also delete the user account
-            $recruiter->user->delete();
+            if ($userId) {
+                User::find($userId)?->delete();
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => "Perekrut '{$recruiterName}' berhasil dihapus!"
-            ]);
+            DB::commit();
+
+            $successMessage = "Perekrut '{$recruiterName}' berhasil dihapus!";
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $successMessage
+                ]);
+            }
+
+            return redirect()->route('talent_admin.manage_recruiters')->with('success', $successMessage);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Error deleting recruiter: ' . $e->getMessage());
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Terjadi kesalahan saat menghapus perekrut.',
-                'errors' => ['general' => ['Terjadi kesalahan sistem. Silakan coba lagi.']]
-            ], 500);
+            $errorMessage = 'Terjadi kesalahan saat menghapus perekrut. Silakan coba lagi.';
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $errorMessage,
+                    'errors' => ['general' => ['Terjadi kesalahan sistem. Silakan coba lagi.']]
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', $errorMessage);
         }
+    }
+
+    /**
+     * Clear dashboard cache manually
+     */
+    public function clearDashboardCache()
+    {
+        $user = Auth::user();
+
+        // Clear multiple cache keys
+        Cache::forget('talent_admin_dashboard_stats');
+        Cache::forget('talent_admin_recent_activity_' . $user->id);
+        Cache::forget('talent_admin_recent_activity'); // Legacy cache key
+
+        // Also clear for other admins to ensure consistency
+        $this->invalidateAllAdminCaches();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Dashboard cache cleared successfully'
+        ]);
+    }
+
+    /**
+     * Invalidate recent activity cache (called when new requests are created)
+     */
+    public function invalidateRecentActivityCache()
+    {
+        // Clear cache for all admin users since we don't know who's viewing
+        $this->invalidateAllAdminCaches();
+
+        Log::info('Talent admin recent activity cache invalidated');
+    }
+
+    /**
+     * Clear caches for all talent admin users
+     */
+    private function invalidateAllAdminCaches()
+    {
+        try {
+            // Get all talent admin users
+            $talentAdmins = User::whereHas('roles', function($query) {
+                $query->where('name', 'talent_admin');
+            })->get();
+
+            // Clear user-specific cache for each admin
+            foreach ($talentAdmins as $admin) {
+                Cache::forget('talent_admin_recent_activity_' . $admin->id);
+            }
+
+            // Clear general cache keys
+            Cache::forget('talent_admin_dashboard_stats');
+            Cache::forget('talent_admin_recent_activity');
+
+            Log::info('Cleared dashboard caches for ' . $talentAdmins->count() . ' talent admins');
+        } catch (\Exception $e) {
+            Log::error('Failed to clear talent admin dashboard caches: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get dashboard data for AJAX refresh
+     */
+    public function getDashboardData()
+    {
+        $user = Auth::user();
+
+        // Get current request count
+        $currentTotalRequests = TalentRequest::count();
+        $currentPendingRequests = TalentRequest::where('status', 'pending')->count();
+
+        // Get recent requests
+        $recentRequests = TalentRequest::select(['id', 'project_title', 'status', 'created_at', 'recruiter_id', 'talent_user_id'])
+            ->with([
+                'recruiter:id,user_id',
+                'recruiter.user:id,name,avatar',
+                'talentUser:id,name,avatar'
+            ])
+            ->whereNotNull('recruiter_id')
+            ->whereNotNull('talent_user_id')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        // Check if there are new requests since last check
+        $lastCheckTime = session('last_dashboard_check', now()->subMinutes(1));
+        $newRequestsCount = TalentRequest::where('created_at', '>', $lastCheckTime)->count();
+
+        // Update last check time
+        session(['last_dashboard_check' => now()]);
+
+        return response()->json([
+            'success' => true,
+            'totalRequests' => $currentTotalRequests,
+            'pendingRequests' => $currentPendingRequests,
+            'newRequestsCount' => $newRequestsCount,
+            'recentRequests' => $recentRequests->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'project_title' => $request->project_title,
+                    'status' => $request->status,
+                    'recruiter_name' => $request->recruiter?->user?->name ?? 'Unknown',
+                    'talent_name' => $request->talentUser?->name ?? 'Unknown',
+                    'created_at' => $request->created_at->format('M d, Y H:i'),
+                    'time_ago' => $request->created_at->diffForHumans()
+                ];
+            })
+        ]);
     }
 }

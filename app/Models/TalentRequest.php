@@ -207,7 +207,7 @@ class TalentRequest extends Model
             $this->update([
                 'both_parties_accepted' => true,
                 'workflow_completed_at' => now(),
-                'status' => 'approved' // Move to approved status when both accept
+                'status' => 'meeting_arranged' // Both parties accepted - ready for meeting
             ]);
 
             // Start time-blocking when both parties accept
@@ -218,7 +218,7 @@ class TalentRequest extends Model
     public function getAcceptanceStatus()
     {
         if ($this->both_parties_accepted) {
-            return 'Both parties accepted - Ready for meeting';
+            return 'Both parties accepted - Meeting can be arranged';
         } elseif ($this->talent_accepted && $this->admin_accepted) {
             return 'Both accepted - Processing';
         } elseif ($this->talent_accepted) {
@@ -528,8 +528,16 @@ class TalentRequest extends Model
                 self::clearTalentAvailabilityCache($request->talent_user_id);
 
                 // Clear discovery and recommendation caches
-                \Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
-                \Cache::flush(); // Clear all discovery caches (they have complex keys)
+                Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
+
+                // Clear dashboard cache to show new requests immediately
+                Cache::forget('talent_admin_dashboard_stats');
+                Cache::forget('talent_admin_recent_activity');
+
+                // Clear user-specific dashboard caches for all talent admins
+                self::clearAllTalentAdminDashboardCaches();
+
+                Cache::flush(); // Clear all discovery caches (they have complex keys)
             }
         });
 
@@ -539,9 +547,121 @@ class TalentRequest extends Model
                 self::clearTalentAvailabilityCache($request->talent_user_id);
 
                 // Clear discovery and recommendation caches
-                \Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
-                \Cache::flush(); // Clear all discovery caches
+                Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
+
+                // Clear dashboard caches
+                Cache::forget('talent_admin_dashboard_stats');
+                Cache::forget('talent_admin_recent_activity');
+
+                // Clear user-specific dashboard caches for all talent admins
+                self::clearAllTalentAdminDashboardCaches();
+
+                Cache::flush(); // Clear all discovery caches
             }
         });
+    }
+
+    /**
+     * Clear dashboard caches for all talent admin users
+     */
+    public static function clearAllTalentAdminDashboardCaches(): void
+    {
+        try {
+            // Get all talent admin users
+            $talentAdmins = \App\Models\User::whereHas('roles', function($query) {
+                $query->where('name', 'talent_admin');
+            })->get();
+
+            // Clear user-specific cache for each admin
+            foreach ($talentAdmins as $admin) {
+                Cache::forget('talent_admin_recent_activity_' . $admin->id);
+            }
+
+            \Illuminate\Support\Facades\Log::info('Cleared dashboard caches for ' . $talentAdmins->count() . ' talent admins');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to clear talent admin dashboard caches: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get comprehensive workflow status that considers both formal status and acceptance states
+     */
+    public function getCurrentWorkflowStatus()
+    {
+        // If request is rejected, that's final
+        if ($this->status === 'rejected') {
+            return 'Request Rejected';
+        }
+
+        // If both parties have accepted, check formal status progression
+        if ($this->both_parties_accepted) {
+            switch ($this->status) {
+                case 'meeting_arranged':
+                    return 'Meeting Arranged - Both parties accepted';
+                case 'agreement_reached':
+                    return 'Agreement Reached';
+                case 'onboarded':
+                    return 'Talent Onboarded';
+                case 'completed':
+                    return 'Project Completed';
+                default:
+                    return 'Both parties accepted - Ready for meeting';
+            }
+        }
+
+        // Check individual acceptance states
+        if ($this->talent_accepted && $this->admin_accepted) {
+            return 'Both parties accepted - Processing';
+        } elseif ($this->talent_accepted && !$this->admin_accepted) {
+            return 'Talent accepted - Waiting for admin approval';
+        } elseif (!$this->talent_accepted && $this->admin_accepted) {
+            return 'Admin approved - Waiting for talent acceptance';
+        }
+
+        // Default states based on formal status
+        switch ($this->status) {
+            case 'pending':
+                return 'Pending Review';
+            case 'approved':
+                return 'Approved - Waiting for talent and admin acceptance';
+            default:
+                return $this->getFormattedStatus();
+        }
+    }
+
+    /**
+     * Get status for recruiter dashboard display
+     */
+    public function getRecruiterDisplayStatus()
+    {
+        // Show the most relevant status for recruiters
+        if ($this->status === 'rejected') {
+            return 'Request Rejected';
+        }
+
+        if ($this->both_parties_accepted) {
+            switch ($this->status) {
+                case 'meeting_arranged':
+                    return 'Meeting Arranged';
+                case 'agreement_reached':
+                    return 'Agreement Reached';
+                case 'onboarded':
+                    return 'Talent Onboarded';
+                case 'completed':
+                    return 'Project Completed';
+                default:
+                    return 'Both Parties Accepted';
+            }
+        }
+
+        if ($this->talent_accepted && $this->admin_accepted) {
+            return 'Both Parties Accepted';
+        } elseif ($this->talent_accepted) {
+            return 'Talent Accepted - Pending Admin';
+        } elseif ($this->admin_accepted) {
+            return 'Admin Approved - Pending Talent';
+        }
+
+        return $this->getFormattedStatus();
     }
 }

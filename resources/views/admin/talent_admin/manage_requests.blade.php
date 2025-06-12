@@ -425,6 +425,7 @@
 
 @endsection
 
+@section('scripts')
 <script>
 function updateStatus(requestId, status) {
     const statusActions = {
@@ -521,6 +522,7 @@ document.addEventListener('keydown', function(e) {
     }
 });
 </script>
+@endsection
 
 <style>
 /* Enhanced pagination styling */

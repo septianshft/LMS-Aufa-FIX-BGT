@@ -80,9 +80,17 @@ class RecruiterController extends Controller
                 // Use cached availability to avoid repeated database calls
                 $talent->availability_status = $availabilityCache[$talent->user_id] ?? ['available' => false];
 
-                // Only get scouting metrics if explicitly requested to improve performance
-                if (request('show_metrics', false)) {
+                // Always load scouting metrics for dashboard display
+                // First check for cached metrics
+                $cacheKey = "talent_metrics_{$talent->id}";
+                $cachedMetrics = cache()->get($cacheKey);
+
+                if ($cachedMetrics) {
+                    $talent->scouting_metrics = $cachedMetrics;
+                } else {
+                    // Calculate and cache metrics if not found
                     $talent->scouting_metrics = $this->scoutingService->getTalentScoutingMetrics($talent);
+                    cache()->put($cacheKey, $talent->scouting_metrics, now()->addHours(24));
                 }
 
                 return $talent;

@@ -32,6 +32,17 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 rounded-lg shadow-md">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-3 text-lg"></i>
+                <div>
+                    <p class="font-medium">{{ session('error') }}</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Recruiters Table -->
     <div class="bg-white rounded-2xl shadow-xl border border-gray-100">
         <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-2xl p-6">
@@ -114,6 +125,10 @@
                                                     <i class="fas fa-{{ $recruiter->is_active ? 'pause' : 'play' }} mr-1"></i>
                                                 </button>
                                             </form>
+                                            <button onclick="deleteRecruiter({{ $recruiter->id }}, '{{ $recruiter->user->name }}')"
+                                                    class="inline-flex items-center px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl btn-delete">
+                                                <i class="fas fa-trash mr-1"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -186,6 +201,10 @@
                                         <i class="fas fa-{{ $recruiter->is_active ? 'pause' : 'play' }}"></i>
                                     </button>
                                 </form>
+                                <button onclick="deleteRecruiter({{ $recruiter->id }}, '{{ $recruiter->user->name }}')"
+                                        class="flex-shrink-0 px-4 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl btn-delete">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </div>
                     @endforeach
@@ -417,6 +436,10 @@ function displayRecruiterDetails(recruiter) {
             <button onclick="closeRecruiterModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
                 Close
             </button>
+            <button onclick="deleteRecruiter(${recruiter.id}, '${recruiter.name}')" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors btn-delete">
+                <i class="fas fa-trash mr-2"></i>
+                Delete Account
+            </button>
             <button onclick="toggleRecruiterStatus(${recruiter.id}, ${recruiter.is_active})" class="px-6 py-2 ${recruiter.is_active ? 'bg-orange-600 hover:bg-orange-700' : 'bg-green-600 hover:bg-green-700'} text-white rounded-lg transition-colors">
                 ${recruiter.is_active ? 'Deactivate' : 'Activate'} Recruiter
             </button>
@@ -452,6 +475,126 @@ function toggleRecruiterStatus(recruiterId, isActive) {
         document.body.appendChild(form);
         form.submit();
     }
+}
+
+// Delete recruiter functionality
+function deleteRecruiter(recruiterId, recruiterName) {
+    // Enhanced confirmation dialog
+    const confirmed = confirm(
+        `⚠️ WARNING: Delete Recruiter Account\n\n` +
+        `Are you absolutely sure you want to delete "${recruiterName}"?\n\n` +
+        `This action will:\n` +
+        `• Permanently delete the recruiter account\n` +
+        `• Remove all associated data\n` +
+        `• Cannot be undone\n\n` +
+        `Type "DELETE" to confirm this action.`
+    );
+
+    if (!confirmed) {
+        return;
+    }
+
+    // Additional security confirmation
+    const confirmText = prompt(
+        `To confirm deletion of "${recruiterName}", please type "DELETE" (in uppercase):`
+    );
+
+    if (confirmText !== 'DELETE') {
+        alert('❌ Deletion cancelled. Confirmation text did not match.');
+        return;
+    }
+
+    // Show loading state
+    const loadingModal = document.createElement('div');
+    loadingModal.id = 'deleteLoadingModal';
+    loadingModal.className = 'fixed inset-0 bg-gray-600 bg-opacity-75 flex items-center justify-center z-50';
+    loadingModal.innerHTML = `
+        <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
+            <div class="mb-4">
+                <i class="fas fa-spinner fa-spin text-4xl text-red-600"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Deleting Recruiter...</h3>
+            <p class="text-gray-600">Please wait while we process the deletion.</p>
+        </div>
+    `;
+    document.body.appendChild(loadingModal);
+
+    // Perform AJAX delete request
+    fetch(`/talent-admin/recruiter/${recruiterId}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Remove loading modal
+        document.body.removeChild(loadingModal);
+
+        if (data.success) {
+            // Success notification
+            showNotification('success', data.message || 'Recruiter deleted successfully!');
+
+            // Close modal if open
+            closeRecruiterModal();
+
+            // Refresh the page to update the list
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            // Error notification
+            showNotification('error', data.message || 'Failed to delete recruiter.');
+        }
+    })
+    .catch(error => {
+        // Remove loading modal
+        if (document.getElementById('deleteLoadingModal')) {
+            document.body.removeChild(loadingModal);
+        }
+
+        console.error('Delete error:', error);
+        showNotification('error', 'An error occurred while deleting the recruiter. Please try again.');
+    });
+}
+
+// Notification system
+function showNotification(type, message) {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 z-50 max-w-md rounded-lg shadow-lg p-4 transform transition-all duration-300 notification-enter ${
+        type === 'success'
+            ? 'bg-green-500 text-white'
+            : 'bg-red-500 text-white'
+    }`;
+
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} mr-3 text-lg"></i>
+            <div class="flex-1">
+                <p class="font-medium">${message}</p>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }
+    }, 5000);
 }
 
 // Close modal when clicking outside
@@ -511,6 +654,51 @@ document.getElementById('recruiterDetailsModal').addEventListener('click', funct
 .hover-lift:hover {
     transform: translateY(-4px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Delete button specific styling */
+.btn-delete {
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-delete:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-delete:hover:before {
+    left: 100%;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Notification animations */
+.notification-enter {
+    opacity: 0;
+    transform: translateX(100%);
+    animation: slideInRight 0.3s ease-out forwards;
+}
+
+@keyframes slideInRight {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 </style>
 @endsection

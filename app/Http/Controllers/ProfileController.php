@@ -3,14 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\TalentScoutingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
+    protected $scoutingService;
+
+    public function __construct(TalentScoutingService $scoutingService)
+    {
+        $this->scoutingService = $scoutingService;
+    }
+
     /**
      * Display the user's profile form.
      */
@@ -75,18 +84,47 @@ class ProfileController extends Controller
             }
 
             // Create Talent record if it doesn't exist
+            $talent = null;
             if (!$user->talent) {
-                \App\Models\Talent::create([
+                $talent = \App\Models\Talent::create([
                     'user_id' => $user->id,
                     'is_active' => true,
                 ]);
             } else {
-                $user->talent->update(['is_active' => true]);
+                $talent = $user->talent;
+                $talent->update(['is_active' => true]);
+            }
+
+            // Calculate and cache scouting metrics for the new/reactivated talent
+            // This ensures metrics are immediately available in dashboard views
+            try {
+                $metrics = $this->scoutingService->getTalentScoutingMetrics($talent);
+
+                // Cache the metrics for immediate access
+                $cacheKey = "talent_metrics_{$talent->id}";
+                cache()->put($cacheKey, $metrics, now()->addHours(24));
+
+                // Also store basic metrics in session for immediate feedback
+                session()->flash('talent_metrics', [
+                    'completed_courses' => $metrics['progress_tracking']['completed_courses'] ?? 0,
+                    'certificates' => $metrics['certifications']['total_certificates'] ?? 0,
+                    'quiz_average' => $metrics['quiz_performance']['average_score'] ?? 0,
+                ]);
+            } catch (\Exception $e) {
+                // Log error but don't prevent opt-in
+                Log::warning('Failed to calculate talent metrics during opt-in', [
+                    'user_id' => $user->id,
+                    'error' => $e->getMessage()
+                ]);
             }
         } else {
             // Deactivate talent but keep the role for potential future re-enabling
             if ($user->talent) {
                 $user->talent->update(['is_active' => false]);
+
+                // Clear cached metrics when deactivating
+                $cacheKey = "talent_metrics_{$user->talent->id}";
+                cache()->forget($cacheKey);
             }
         }
 
