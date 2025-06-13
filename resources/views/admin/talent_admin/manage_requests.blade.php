@@ -48,13 +48,25 @@
                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                                 onchange="document.getElementById('filterForm').submit();">
                             <option value="">Semua Status</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
-                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Disetujui</option>
-                            <option value="meeting_arranged" {{ request('status') == 'meeting_arranged' ? 'selected' : '' }}>Pertemuan Diatur</option>
-                            <option value="agreement_reached" {{ request('status') == 'agreement_reached' ? 'selected' : '' }}>Kesepakatan Tercapai</option>
-                            <option value="onboarded" {{ request('status') == 'onboarded' ? 'selected' : '' }}>Bergabung</option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                            
+                            <!-- Acceptance-based filters -->
+                            <optgroup label="Status Persetujuan">
+                                <option value="pending_review" {{ request('status') == 'pending_review' ? 'selected' : '' }}>Menunggu Review</option>
+                                <option value="talent_awaiting_admin" {{ request('status') == 'talent_awaiting_admin' ? 'selected' : '' }}>Talent Setuju - Menunggu Admin</option>
+                                <option value="admin_awaiting_talent" {{ request('status') == 'admin_awaiting_talent' ? 'selected' : '' }}>Admin Setuju - Menunggu Talent</option>
+                                <option value="both_accepted" {{ request('status') == 'both_accepted' ? 'selected' : '' }}>Kedua Pihak Setuju</option>
+                            </optgroup>
+                            
+                            <!-- Workflow status filters -->
+                            <optgroup label="Status Workflow">
+                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
+                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Disetujui</option>
+                                <option value="meeting_arranged" {{ request('status') == 'meeting_arranged' ? 'selected' : '' }}>Pertemuan Diatur</option>
+                                <option value="agreement_reached" {{ request('status') == 'agreement_reached' ? 'selected' : '' }}>Kesepakatan Tercapai</option>
+                                <option value="onboarded" {{ request('status') == 'onboarded' ? 'selected' : '' }}>Bergabung</option>
+                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
+                            </optgroup>
                         </select>
                     </div>
                     <div>
@@ -148,28 +160,9 @@
                                         </div>
                                     </td>
                                     <td class="py-6 px-4">
-                                        @php
-                                            $statusStyles = [
-                                                'pending' => 'bg-yellow-100 text-yellow-800',
-                                                'approved' => 'bg-green-100 text-green-800',
-                                                'meeting_arranged' => 'bg-blue-100 text-blue-800',
-                                                'agreement_reached' => 'bg-purple-100 text-purple-800',
-                                                'onboarded' => 'bg-green-100 text-green-800',
-                                                'rejected' => 'bg-red-100 text-red-800',
-                                                'completed' => 'bg-green-100 text-green-800'
-                                            ];
-                                            $statusTranslations = [
-                                                'pending' => 'Menunggu',
-                                                'approved' => 'Disetujui',
-                                                'meeting_arranged' => 'Pertemuan Diatur',
-                                                'agreement_reached' => 'Kesepakatan Tercapai',
-                                                'onboarded' => 'Bergabung',
-                                                'rejected' => 'Ditolak',
-                                                'completed' => 'Selesai'
-                                            ];
-                                        @endphp
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $statusStyles[$request->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                            {{ $statusTranslations[$request->status] ?? ucfirst(str_replace('_', ' ', $request->status)) }}
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $request->getStatusBadgeColorClasses() }}">
+                                            <i class="{{ $request->getStatusIcon() }} mr-1"></i>
+                                            {{ $request->getUnifiedDisplayStatus() }}
                                         </span>
                                     </td>
                                     <td class="py-6 px-4">
@@ -187,7 +180,20 @@
                                                title="Lihat Detail">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            @if($request->status == 'pending')
+                                            @if($request->talent_accepted && !$request->admin_accepted)
+                                                {{-- Talent accepted, awaiting admin approval --}}
+                                                <button type="button"
+                                                        class="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl"
+                                                        onclick="updateStatus({{ $request->id }}, 'approved')" title="Setujui Permintaan">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button"
+                                                        class="inline-flex items-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl"
+                                                        onclick="updateStatus({{ $request->id }}, 'rejected')" title="Tolak">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            @elseif(!$request->talent_accepted && !$request->admin_accepted && $request->status == 'pending')
+                                                {{-- Initial pending state - no acceptances yet --}}
                                                 <button type="button"
                                                         class="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl"
                                                         onclick="updateStatus({{ $request->id }}, 'approved')" title="Setujui">
@@ -198,7 +204,14 @@
                                                         onclick="updateStatus({{ $request->id }}, 'rejected')" title="Tolak">
                                                     <i class="fas fa-times"></i>
                                                 </button>
-                                            @elseif($request->status == 'approved')
+                                            @elseif($request->admin_accepted && !$request->talent_accepted)
+                                                {{-- Admin approved, waiting for talent acceptance --}}
+                                                <span class="inline-flex items-center px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
+                                                    <i class="fas fa-clock mr-2"></i>
+                                                    Menunggu Talent
+                                                </span>
+                                            @elseif($request->both_parties_accepted && $request->canAdminArrangeMeeting())
+                                                {{-- Both parties accepted, can proceed to meeting --}}
                                                 <button type="button"
                                                         class="inline-flex items-center px-3 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all duration-200 text-sm font-medium shadow-lg hover:shadow-xl"
                                                         onclick="updateStatus({{ $request->id }}, 'meeting_arranged')" title="Atur Pertemuan">
@@ -236,8 +249,8 @@
                                         #{{ $request->id }}
                                     </span>
                                 </div>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $statusStyles[$request->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                    {{ $statusTranslations[$request->status] ?? ucfirst(str_replace('_', ' ', $request->status)) }}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $request->getStatusBadgeColorClasses() }}">
+                                    {{ $request->getUnifiedDisplayStatus() }}
                                 </span>
                             </div>
 
@@ -300,7 +313,8 @@
                                    class="flex-1 min-w-0 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 font-medium text-sm text-center shadow-lg hover:shadow-xl">
                                     <i class="fas fa-eye mr-1"></i> Lihat
                                 </a>
-                                @if($request->status == 'pending')
+                                @if($request->talent_accepted && !$request->admin_accepted)
+                                    {{-- Talent accepted, awaiting admin approval --}}
                                     <button type="button"
                                             class="flex-1 min-w-0 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl"
                                             onclick="updateStatus({{ $request->id }}, 'approved')">
@@ -311,7 +325,26 @@
                                             onclick="updateStatus({{ $request->id }}, 'rejected')">
                                         <i class="fas fa-times mr-1"></i> Tolak
                                     </button>
-                                @elseif($request->status == 'approved')
+                                @elseif(!$request->talent_accepted && !$request->admin_accepted && $request->status == 'pending')
+                                    {{-- Initial pending state - no acceptances yet --}}
+                                    <button type="button"
+                                            class="flex-1 min-w-0 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl"
+                                            onclick="updateStatus({{ $request->id }}, 'approved')">
+                                        <i class="fas fa-check mr-1"></i> Setujui
+                                    </button>
+                                    <button type="button"
+                                            class="flex-1 min-w-0 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl"
+                                            onclick="updateStatus({{ $request->id }}, 'rejected')">
+                                        <i class="fas fa-times mr-1"></i> Tolak
+                                    </button>
+                                @elseif($request->admin_accepted && !$request->talent_accepted)
+                                    {{-- Admin approved, waiting for talent acceptance --}}
+                                    <div class="flex-1 min-w-0 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium text-center">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Menunggu Talent
+                                    </div>
+                                @elseif($request->both_parties_accepted && $request->canAdminArrangeMeeting())
+                                    {{-- Both parties accepted, can proceed to meeting --}}
                                     <button type="button"
                                             class="flex-1 min-w-0 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl"
                                             onclick="updateStatus({{ $request->id }}, 'meeting_arranged')">
@@ -436,21 +469,30 @@ function updateStatus(requestId, status) {
         'onboarded': 'Tandai talent telah bergabung'
     };
 
-    const statusColors = {
-        'approved': 'bg-green-600 hover:bg-green-700',
-        'rejected': 'bg-red-600 hover:bg-red-700',
-        'meeting_arranged': 'bg-yellow-600 hover:bg-yellow-700',
-        'agreement_reached': 'bg-purple-600 hover:bg-purple-700',
-        'onboarded': 'bg-green-600 hover:bg-green-700'
+    // Use semantic color mapping instead of hardcoded colors
+    const getStatusColor = (status) => {
+        switch(status) {
+            case 'approved':
+            case 'onboarded':
+                return 'bg-green-600 hover:bg-green-700';
+            case 'rejected':
+                return 'bg-red-600 hover:bg-red-700';
+            case 'meeting_arranged':
+                return 'bg-yellow-600 hover:bg-yellow-700';
+            case 'agreement_reached':
+                return 'bg-purple-600 hover:bg-purple-700';
+            default:
+                return 'bg-purple-600 hover:bg-purple-700';
+        }
     };
 
     document.getElementById('requestId').value = requestId;
     document.getElementById('newStatus').value = status;
     document.getElementById('statusAction').textContent = statusActions[status];
 
-    // Update button color
+    // Update button color using function
     const confirmButton = document.getElementById('confirmButton');
-    confirmButton.className = `px-6 py-3 ${statusColors[status] || 'bg-purple-600 hover:bg-purple-700'} text-white rounded-xl transition-all duration-200 font-medium shadow-lg`;
+    confirmButton.className = `px-6 py-3 ${getStatusColor(status)} text-white rounded-xl transition-all duration-200 font-medium shadow-lg`;
 
     // Show modal
     const modal = document.getElementById('statusModal');

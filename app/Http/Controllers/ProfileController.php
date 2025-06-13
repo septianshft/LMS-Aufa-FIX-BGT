@@ -128,7 +128,15 @@ class ProfileController extends Controller
             }
         }
 
-        return Redirect::route('profile.edit')->with('status', 'talent-updated');
+        $redirect = Redirect::route('profile.edit')->with('status', 'talent-updated');
+
+        if ($isOptingIn) {
+            $redirect->with('opted_in_talent', true);
+        } else {
+            $redirect->with('opted_out_talent', true);
+        }
+
+        return $redirect;
     }
 
     /**

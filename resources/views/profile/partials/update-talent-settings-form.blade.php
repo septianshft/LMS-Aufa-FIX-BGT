@@ -9,6 +9,28 @@
         </p>
     </header>
 
+    @if(session('status') === 'talent-updated')
+        <div class="mb-4 rounded-md bg-green-50 p-4 shadow-sm border border-green-200">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-green-800">
+                        {{ __('Talent settings updated successfully!') }}
+                        @if(session('opted_in_talent'))
+                            <span class="block sm:inline">{{ __('You are now discoverable by recruiters.') }}</span>
+                        @elseif(session('opted_out_talent'))
+                            <span class="block sm:inline">{{ __('You are no longer discoverable by recruiters.') }}</span>
+                        @endif
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <form method="post" action="{{ route('profile.update-talent') }}" class="mt-6 space-y-6">
         @csrf
         @method('patch')
@@ -145,15 +167,7 @@
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save Talent Settings') }}</x-primary-button>
 
-            @if (session('status') === 'talent-updated')
-                <p
-                    x-data="{ show: true }"
-                    x-show="show"
-                    x-transition
-                    x-init="setTimeout(() => show = false, 2000)"
-                    class="text-sm text-gray-600"
-                >{{ __('Saved.') }}</p>
-            @endif
+            {{-- Original "Saved." message removed as it is replaced by the new notification block above --}}
         </div>
     </form>
 

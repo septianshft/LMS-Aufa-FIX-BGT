@@ -231,8 +231,8 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <div>
-                        <h3 class="text-lg font-semibold text-white">Permintaan Talent Terbaru</h3>
-                        <p class="text-green-100 text-sm">Permintaan terbaru dari perekrut yang memerlukan perhatian Anda</p>
+                        <h3 class="text-lg font-semibold text-white">Permintaan yang Perlu Perhatian</h3>
+                        <p class="text-green-100 text-sm">Permintaan baru dan yang sudah diterima talent, menunggu persetujuan admin</p>
                     </div>
                 </div>
                 <a href="{{ route('talent_admin.manage_requests') }}" class="px-4 py-2 bg-white text-green-600 rounded-xl hover:bg-green-50 transition-all duration-200 font-medium text-sm shadow-sm border border-white border-opacity-30">
@@ -267,44 +267,28 @@
                                 <span class="text-gray-500 text-xs">
                                     Untuk: {{ $request->talentUser ? $request->talentUser->name : 'Unknown Talent' }}
                                 </span>
-                                @php
-                                    $statusColors = [
-                                        'pending' => 'bg-yellow-100 text-yellow-800',
-                                        'approved' => 'bg-green-100 text-green-800',
-                                        'meeting_arranged' => 'bg-blue-100 text-blue-800',
-                                        'agreement_reached' => 'bg-purple-100 text-purple-800',
-                                        'onboarded' => 'bg-green-100 text-green-800',
-                                        'rejected' => 'bg-red-100 text-red-800',
-                                        'completed' => 'bg-green-100 text-green-800'
-                                    ];
-                                    $statusIcons = [
-                                        'pending' => 'fas fa-clock',
-                                        'approved' => 'fas fa-check',
-                                        'meeting_arranged' => 'fas fa-calendar',
-                                        'agreement_reached' => 'fas fa-handshake',
-                                        'onboarded' => 'fas fa-user-plus',
-                                        'rejected' => 'fas fa-times',
-                                        'completed' => 'fas fa-flag-checkered'
-                                    ];
-                                    $statusTranslations = [
-                                        'pending' => 'Tertunda',
-                                        'approved' => 'Disetujui',
-                                        'meeting_arranged' => 'Pertemuan Diatur',
-                                        'agreement_reached' => 'Kesepakatan Tercapai',
-                                        'onboarded' => 'Bergabung',
-                                        'rejected' => 'Ditolak',
-                                        'completed' => 'Selesai'
-                                    ];
-                                    $currentStatus = $request->status ?? 'unknown';
-                                @endphp
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $statusColors[$currentStatus] ?? 'bg-gray-100 text-gray-800' }}">
-                                    <i class="{{ $statusIcons[$currentStatus] ?? 'fas fa-question' }} mr-1"></i>
-                                    {{ $statusTranslations[$currentStatus] ?? ucfirst(str_replace('_', ' ', $currentStatus)) }}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $request->getStatusBadgeColorClasses() }}">
+                                    <i class="{{ $request->getStatusIcon() }} mr-1"></i>
+                                    {{ $request->getUnifiedDisplayStatus() }}
                                 </span>
                             </div>
-                            <a href="{{ route('talent_admin.show_request', $request) }}" class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm">
-                                <i class="fas fa-eye mr-1"></i>Lihat
-                            </a>
+                            <div class="flex space-x-2">
+                                @if($request->talent_accepted && !$request->admin_accepted)
+                                    <form action="{{ route('talent_admin.update_request_status', $request) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="action" value="admin_approve">
+                                        <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 text-sm"
+                                                onclick="return confirm('Setujui permintaan talent ini?')">
+                                            <i class="fas fa-check mr-1"></i>Setujui
+                                        </button>
+                                    </form>
+                                @endif
+                                <a href="{{ route('talent_admin.show_request', $request) }}" 
+                                   class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm">
+                                    <i class="fas fa-eye mr-1"></i>Detail
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -312,10 +296,10 @@
             @empty
                 <div class="text-center py-12">
                     <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+                        <i class="fas fa-tasks text-gray-400 text-2xl"></i>
                     </div>
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Belum ada permintaan talent</h4>
-                    <p class="text-gray-500">Permintaan baru akan muncul di sini saat perekrut mengirimkannya.</p>
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Tidak ada permintaan yang perlu perhatian</h4>
+                    <p class="text-gray-500">Semua permintaan sudah diproses atau belum ada permintaan baru dari perekrut.</p>
                 </div>
             @endforelse
         </div>
