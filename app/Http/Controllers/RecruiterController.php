@@ -246,11 +246,46 @@ class RecruiterController extends Controller
             return response()->json(['error' => 'Recruiter profile not found'], 404);
         }
 
-        // Get talent user ID for time-blocking check
+        // Get talent user ID for later checks
         $talent = \App\Models\Talent::findOrFail($request->talent_id);
         $talentUserId = $talent->user_id;
 
-        // Calculate project start and end dates based on duration
+        // Check if request already exists for this talent FIRST (before time-blocking check)
+        // This ensures specific error messages for duplicate/onboarded requests
+        $existingRequest = TalentRequest::where('recruiter_id', $recruiter->id)
+            ->where('talent_id', $request->talent_id)
+            ->whereNotIn('status', ['rejected', 'completed'])
+            ->first();
+
+        if ($existingRequest) {
+            // Check if this is an already onboarded talent (more specific UX)
+            if ($existingRequest->status === 'onboarded') {
+                return response()->json([
+                    'error' => 'talent_already_onboarded',
+                    'message' => 'This talent is already onboarded in your organization',
+                    'details' => 'You cannot request a talent who is already working with you. The talent is currently onboarded for your project "' . $existingRequest->project_title . '".',
+                    'existing_project' => [
+                        'title' => $existingRequest->project_title,
+                        'onboarded_date' => $existingRequest->onboarded_at ? $existingRequest->onboarded_at->format('M d, Y') : 'N/A',
+                        'status' => $existingRequest->getRecruiterDisplayStatus()
+                    ]
+                ], 400);
+            }
+
+            // Generic message for other active request types
+            return response()->json([
+                'error' => 'active_request_exists',
+                'message' => 'You already have an active request for this talent',
+                'details' => 'Please wait for your current request to be processed or completed before submitting a new one.',
+                'existing_request' => [
+                    'status' => $existingRequest->getRecruiterDisplayStatus(),
+                    'submitted_date' => $existingRequest->created_at->format('M d, Y'),
+                    'project_title' => $existingRequest->project_title
+                ]
+            ], 400);
+        }
+
+        // Now calculate project dates and check availability
         $projectDuration = $request->project_duration;
         $durationInMonths = TalentRequest::parseDurationToMonths($projectDuration);
         $projectStartDate = now()->addDays(7); // Projects start 1 week from request
@@ -275,16 +310,6 @@ class RecruiterController extends Controller
                     ];
                 })->toArray()
             ], 409); // 409 Conflict status code
-        }
-
-        // Check if request already exists for this talent
-        $existingRequest = TalentRequest::where('recruiter_id', $recruiter->id)
-            ->where('talent_id', $request->talent_id)
-            ->whereNotIn('status', ['rejected', 'completed'])
-            ->first();
-
-        if ($existingRequest) {
-            return response()->json(['error' => 'You already have an active request for this talent'], 400);
         }
 
         $talentRequest = TalentRequest::create([

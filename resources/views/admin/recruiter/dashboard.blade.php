@@ -361,7 +361,7 @@
 
                             <!-- Status -->
                             @php $existingRequest = $talent->talentRequests->first(); @endphp
-                            @if($existingRequest)
+                            @if($existingRequest && !in_array($existingRequest->status, ['rejected', 'completed']))
                                 <div class="mb-4 text-center">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
                                         @if($existingRequest->getRecruiterStatusBadgeColor() == 'success') bg-green-100 text-green-800
@@ -376,18 +376,8 @@
 
                             <!-- Actions -->
                             <div class="space-y-2">
-                                @if(!$existingRequest || $existingRequest->status == 'rejected')
+                                @if(!$existingRequest || in_array($existingRequest->status, ['rejected', 'completed']))
                                     @if(isset($talent->availability_status) && $talent->availability_status['available'])
-                                        <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
-                                                class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
-                                            <i class="fas fa-handshake mr-2"></i>Request Talent
-                                        </button>
-                                    @elseif(isset($talent->availability_status) && !$talent->availability_status['available'])
-                                        <button onclick="showAvailabilityInfo('{{ $talent->user->name }}', @json($talent->availability_status))"
-                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-                                            <i class="fas fa-clock mr-2"></i>Check Availability
-                                        </button>
-                                    @else
                                         <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
                                                 class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
                                             <i class="fas fa-handshake mr-2"></i>Request Talent
@@ -641,65 +631,6 @@ function openRequestModal(talentId, talentName) {
     $('#talentRequestModal').modal('show');
 }
 
-function showAvailabilityInfo(talentName, availabilityStatus) {
-    let blockingProjectsHtml = '';
-    if (availabilityStatus.blocking_projects && availabilityStatus.blocking_projects.length > 0) {
-        blockingProjectsHtml = '<div class="mt-4"><h6 class="font-semibold text-gray-900 mb-2">Current Projects:</h6><ul class="space-y-2">';
-        availabilityStatus.blocking_projects.forEach(project => {
-            blockingProjectsHtml += `
-                <li class="bg-gray-50 p-3 rounded-lg">
-                    <div class="font-medium text-gray-900">${project.title}</div>
-                    <div class="text-sm text-gray-600">Company: ${project.company}</div>
-                    <div class="text-sm text-gray-600">Until: ${project.end_date}</div>
-                </li>`;
-        });
-        blockingProjectsHtml += '</ul></div>';
-    }
-
-    const availabilityDate = availabilityStatus.next_available_date ?
-        new Date(availabilityStatus.next_available_date).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric'
-        }) : 'Unknown';
-
-    const modalHtml = `
-        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
-                    <div class="text-center mb-4">
-                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-clock text-orange-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900">${talentName} is Currently Busy</h3>
-                        <p class="text-gray-600 mt-2">${availabilityStatus.status}</p>
-                    </div>
-
-                    <div class="text-center mb-4">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="text-sm font-medium text-blue-800">Next Available:</div>
-                            <div class="text-lg font-bold text-blue-900">${availabilityDate}</div>
-                        </div>
-                    </div>
-
-                    ${blockingProjectsHtml}
-
-                    <div class="mt-6 space-y-3">
-                        <button onclick="openRequestModal('${currentRequestTalentId}', '${talentName}')"
-                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                            <i class="fas fa-calendar-plus mr-2"></i>Schedule Future Request
-                        </button>
-                        <button onclick="this.closest('.fixed').remove()"
-                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
 function showTimeBlockingConflict(errorData) {
     // Close the request modal first
     $('#talentRequestModal').modal('hide');
@@ -750,6 +681,133 @@ function showTimeBlockingConflict(errorData) {
                         <button onclick="openRequestModal('${currentRequestTalentId}', '${currentRequestTalentName}')"
                                 class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             <i class="fas fa-calendar-plus mr-2"></i>Try Different Duration
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()"
+                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function showTalentAlreadyOnboardedModal(errorData) {
+    // Close the request modal first
+    $('#talentRequestModal').modal('hide');
+
+    const onboardedDate = errorData.existing_project?.onboarded_date || 'Unknown';
+    const projectTitle = errorData.existing_project?.title || 'Current Project';
+
+    const modalHtml = `
+        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-check text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Talent Already Onboarded</h3>
+                        <p class="text-gray-600 mt-2">${errorData.message}</p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <h6 class="font-semibold text-blue-900 mb-2">Current Project Details:</h6>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Project:</span>
+                                <span class="font-medium text-blue-900">${projectTitle}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Onboarded:</span>
+                                <span class="font-medium text-blue-900">${onboardedDate}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Status:</span>
+                                <span class="font-medium text-blue-900">${errorData.existing_project?.status || 'Onboarded'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-lightbulb text-yellow-600 mr-2 mt-0.5"></i>
+                            <div class="text-sm text-yellow-800">
+                                <p class="font-medium mb-1">Suggestion:</p>
+                                <p>Since this talent is already part of your team, consider reaching out directly or using your internal project management tools for new assignments.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button onclick="this.closest('.fixed').remove()"
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>Got It
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function showActiveRequestExistsModal(errorData) {
+    // Close the request modal first
+    $('#talentRequestModal').modal('hide');
+
+    const submittedDate = errorData.existing_request?.submitted_date || 'Unknown';
+    const projectTitle = errorData.existing_request?.project_title || 'Previous Request';
+    const requestStatus = errorData.existing_request?.status || 'In Progress';
+
+    const modalHtml = `
+        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-hourglass-half text-orange-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Active Request Pending</h3>
+                        <p class="text-gray-600 mt-2">${errorData.message}</p>
+                    </div>
+
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                        <h6 class="font-semibold text-orange-900 mb-2">Your Current Request:</h6>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-orange-700">Project:</span>
+                                <span class="font-medium text-orange-900">${projectTitle}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-orange-700">Submitted:</span>
+                                <span class="font-medium text-orange-900">${submittedDate}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-orange-700">Status:</span>
+                                <span class="font-medium text-orange-900">${requestStatus}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-600 mr-2 mt-0.5"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium mb-1">What's Next:</p>
+                                <p>Your request is being processed. You can track its progress in the "My Requests" section of your dashboard.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button onclick="window.location.href='{{ route('recruiter.my_requests') }}'"
+                                class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-list mr-2"></i>View My Requests
                         </button>
                         <button onclick="this.closest('.fixed').remove()"
                                 class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
@@ -1385,6 +1443,12 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
         if (error.status === 409 && error.data) {
             // Time-blocking conflict - show detailed availability info
             showTimeBlockingConflict(error.data);
+        } else if (error.status === 400 && error.data?.error === 'talent_already_onboarded') {
+            // Talent already onboarded with this recruiter - show specific modal
+            showTalentAlreadyOnboardedModal(error.data);
+        } else if (error.status === 400 && error.data?.error === 'active_request_exists') {
+            // Active request exists - show detailed info
+            showActiveRequestExistsModal(error.data);
         } else {
             // Regular error message
             const errorAlert = document.createElement('div');
