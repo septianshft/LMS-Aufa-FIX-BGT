@@ -3,11 +3,32 @@
 @section('title', 'Recruiter Dashboard')
 @section('container')
 
+{{-- Dashboard Container with Flexbox Layout --}}
+<div class="space-y-8">
 
-<!-- Premium Statistics Dashboard -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 mt-8 relative z-20 max-w-7xl mx-auto">
-    <!-- Available Talents Card - Enhanced -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+    {{-- Hero welcome greeting card - Full Width --}}
+    <div class="w-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl mt-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Welcome back, {{ $user->name }}! 👋</h1>
+                <p class="text-blue-100 text-lg">Ready to discover exceptional talent and build your dream team?</p>
+            </div>
+            <div class="hidden md:block">
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                    <i class="fas fa-star text-4xl text-yellow-300 mb-2"></i>
+                    <div class="text-sm font-medium">Recruiter Status</div>
+                    <div class="text-xs opacity-90">
+                        {{ $user->is_active_talent ? 'Active' : 'Inactive' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Stats Cards Row - 32% Width Each --}}
+    <div class="flex flex-wrap gap-[2%]">
+        {{-- Available Talents Card - 32% Width --}}
+        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-users text-xl text-white"></i>
@@ -34,11 +55,10 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                 Live
             </div>
-        </div>
-    </div>
+        </div>        </div>
 
-    <!-- Account Status Card - Enhanced -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        {{-- Account Status Card - 32% Width --}}
+        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-{{ $user->recruiter && $user->recruiter->is_active ? 'shield-check' : 'shield-exclamation' }} text-xl text-white"></i>
@@ -65,11 +85,10 @@
                 <div class="w-2 h-2 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-full mr-2"></div>
                 {{ $user->recruiter && $user->recruiter->is_active ? 'Live' : 'Offline' }}
             </div>
-        </div>
-    </div>
+        </div>        </div>
 
-    <!-- My Requests Card - Enhanced -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        {{-- My Requests Card - 32% Width --}}
+        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-paper-plane text-xl text-white"></i>
@@ -96,14 +115,12 @@
                 <div class="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
                 Active
             </div>
-        </div>
+        </div>        </div>
     </div>
-</div>
-</div>
 
-    <!-- Recent Requests Section -->
+    {{-- Recent Requests Section - Full Width --}}
     @if(isset($myRequests) && (method_exists($myRequests, 'count') ? $myRequests->count() > 0 : (is_countable($myRequests) ? count($myRequests) > 0 : false)))
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-7xl mx-auto mb-12">
+    <div class="w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <!-- Header with gradient background -->
         <div class="bg-blue-600 text-white p-6">
             <div class="flex items-center justify-between">
@@ -151,12 +168,12 @@
                                 <div class="bg-gray-50 py-2 rounded">
                                     <div class="text-xs text-gray-600">Status</div>
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                                        @if($request->getStatusBadgeColor() == 'success') bg-green-100 text-green-800
-                                        @elseif($request->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
-                                        @elseif($request->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
-                                        @elseif($request->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800
+                                        @if($request->getRecruiterStatusBadgeColor() == 'success') bg-green-100 text-green-800
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'danger') bg-red-100 text-red-800
                                         @else bg-gray-100 text-gray-800 @endif">
-                                        {{ $request->getFormattedStatus() }}
+                                        {{ $request->getRecruiterDisplayStatus() }}
                                     </span>
                                 </div>
                                 <div class="bg-gray-50 py-2 rounded">
@@ -194,8 +211,8 @@
     </div>
     @endif
 
-    <!-- Premium Talent Discovery Section -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-7xl mx-auto">
+    {{-- Premium Talent Discovery Section - Full Width --}}
+    <div class="w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <!-- Simple Header -->
         <div class="bg-emerald-600 text-white p-6">
             <div class="flex items-center justify-between">
@@ -347,12 +364,12 @@
                             @if($existingRequest)
                                 <div class="mb-4 text-center">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                        @if($existingRequest->getStatusBadgeColor() == 'success') bg-green-100 text-green-800
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800
+                                        @if($existingRequest->getRecruiterStatusBadgeColor() == 'success') bg-green-100 text-green-800
+                                        @elseif($existingRequest->getRecruiterStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
+                                        @elseif($existingRequest->getRecruiterStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
+                                        @elseif($existingRequest->getRecruiterStatusBadgeColor() == 'danger') bg-red-100 text-red-800
                                         @else bg-gray-100 text-gray-800 @endif">
-                                        {{ $existingRequest->getFormattedStatus() }}
+                                        {{ $existingRequest->getRecruiterDisplayStatus() }}
                                     </span>
                                 </div>
                             @endif
@@ -1676,6 +1693,29 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
     .grid-responsive {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    /* Mobile responsive flex layout */
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\] {
+        width: 100% !important;
+        margin-bottom: 1rem;
+    }
+
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\]:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    /* Tablet responsive flex layout */
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\] {
+        width: 48% !important;
+        margin-bottom: 1rem;
+    }
+
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\]:nth-child(3) {
+        width: 100% !important;
+        margin-bottom: 0;
     }
 }
 

@@ -368,18 +368,18 @@
                                             <td class="py-6 px-6">
                                                 <div class="space-y-3">
                                                     <span class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold shadow-lg
-                                                        @if($request->getStatusBadgeColor() == 'success') bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border-2 border-green-300
-                                                        @elseif($request->getStatusBadgeColor() == 'warning') bg-gradient-to-r from-yellow-100 to-orange-200 text-orange-800 border-2 border-orange-300
-                                                        @elseif($request->getStatusBadgeColor() == 'info') bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800 border-2 border-blue-300
-                                                        @elseif($request->getStatusBadgeColor() == 'danger') bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-2 border-red-300
+                                                        @if($request->getRecruiterStatusBadgeColor() == 'success') bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border-2 border-green-300
+                                                        @elseif($request->getRecruiterStatusBadgeColor() == 'warning') bg-gradient-to-r from-yellow-100 to-orange-200 text-orange-800 border-2 border-orange-300
+                                                        @elseif($request->getRecruiterStatusBadgeColor() == 'info') bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800 border-2 border-blue-300
+                                                        @elseif($request->getRecruiterStatusBadgeColor() == 'danger') bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-2 border-red-300
                                                         @else bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border-2 border-gray-300 @endif">
                                                         <i class="fas fa-circle mr-2 text-xs
-                                                            @if($request->getStatusBadgeColor() == 'success') text-green-500
-                                                            @elseif($request->getStatusBadgeColor() == 'warning') text-orange-500
-                                                            @elseif($request->getStatusBadgeColor() == 'info') text-blue-500
-                                                            @elseif($request->getStatusBadgeColor() == 'danger') text-red-500
+                                                            @if($request->getRecruiterStatusBadgeColor() == 'success') text-green-500
+                                                            @elseif($request->getRecruiterStatusBadgeColor() == 'warning') text-orange-500
+                                                            @elseif($request->getRecruiterStatusBadgeColor() == 'info') text-blue-500
+                                                            @elseif($request->getRecruiterStatusBadgeColor() == 'danger') text-red-500
                                                             @else text-gray-500 @endif"></i>
-                                                        {{ $request->getFormattedStatus() }}
+                                                        {{ $request->getRecruiterDisplayStatus() }}
                                                     </span>
                                                 </div>
                                             </td>
@@ -456,18 +456,18 @@
 
                                 <!-- Status Badge -->
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm
-                                    @if($request->getStatusBadgeColor() == 'success') bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border border-green-300
-                                    @elseif($request->getStatusBadgeColor() == 'warning') bg-gradient-to-r from-yellow-100 to-orange-200 text-orange-800 border border-orange-300
-                                    @elseif($request->getStatusBadgeColor() == 'info') bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800 border border-blue-300
-                                    @elseif($request->getStatusBadgeColor() == 'danger') bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300
+                                    @if($request->getRecruiterStatusBadgeColor() == 'success') bg-gradient-to-r from-green-100 to-emerald-200 text-green-800 border border-green-300
+                                    @elseif($request->getRecruiterStatusBadgeColor() == 'warning') bg-gradient-to-r from-yellow-100 to-orange-200 text-orange-800 border border-orange-300
+                                    @elseif($request->getRecruiterStatusBadgeColor() == 'info') bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800 border border-blue-300
+                                    @elseif($request->getRecruiterStatusBadgeColor() == 'danger') bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300
                                     @else bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-300 @endif">
                                     <i class="fas fa-circle mr-1 text-xs
-                                        @if($request->getStatusBadgeColor() == 'success') text-green-500
-                                        @elseif($request->getStatusBadgeColor() == 'warning') text-orange-500
-                                        @elseif($request->getStatusBadgeColor() == 'info') text-blue-500
-                                        @elseif($request->getStatusBadgeColor() == 'danger') text-red-500
+                                        @if($request->getRecruiterStatusBadgeColor() == 'success') text-green-500
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'warning') text-orange-500
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'info') text-blue-500
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'danger') text-red-500
                                         @else text-gray-500 @endif"></i>
-                                    {{ $request->getFormattedStatus() }}
+                                    {{ $request->getRecruiterDisplayStatus() }}
                                 </span>
                             </div>
 

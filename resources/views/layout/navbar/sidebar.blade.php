@@ -82,6 +82,13 @@
                  <i class="fas fa-fw fa-user-tie"></i>
                  <span>Talent Dashboard</span></a>
          </li>
+
+         <!-- Nav Item - My Requests -->
+         <li class="nav-item  {{ Request::is('talent/my-requests*') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent.my_requests') }}">
+                 <i class="fas fa-fw fa-tasks"></i>
+                 <span>My Requests</span></a>
+         </li>
      @endif
 
      @if (Auth()->user()->hasRole('recruiter'))

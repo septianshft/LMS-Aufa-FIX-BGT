@@ -93,7 +93,7 @@ class TalentAdminController extends Controller
         extract($dashboardStats);
 
         // Get recent activity with minimal cache time for real-time updates
-        $recentActivity = Cache::remember('talent_admin_recent_activity_' . $user->id, 15, function() {
+        $recentActivity = Cache::remember('talent_admin_recent_activity_' . $user->id, 5, function() {
             try {
                 return [
                     'latestTalents' => User::select(['id', 'name', 'email', 'created_at', 'avatar', 'pekerjaan', 'is_active_talent'])
@@ -105,7 +105,7 @@ class TalentAdminController extends Controller
                         ->limit(5)
                         ->get(),
 
-                    'latestRecruiters' => User::select(['id', 'name', 'email', 'created_at', 'avatar', 'pekerjaan', 'company_name'])
+                    'latestRecruiters' => User::select(['id', 'name', 'email', 'created_at', 'avatar', 'pekerjaan'])
                         ->whereHas('roles', function($query) {
                             $query->where('name', 'recruiter');
                         })
@@ -114,7 +114,11 @@ class TalentAdminController extends Controller
                         ->limit(5)
                         ->get(),
 
-                    'latestRequests' => TalentRequest::select(['id', 'project_title', 'status', 'created_at', 'recruiter_id', 'talent_user_id'])
+                    'latestRequests' => TalentRequest::select([
+                            'id', 'project_title', 'status', 'created_at', 'updated_at', 
+                            'recruiter_id', 'talent_user_id', 'talent_accepted', 'admin_accepted', 
+                            'both_parties_accepted', 'urgency_level'
+                        ])
                         ->with([
                             'recruiter:id,user_id',
                             'recruiter.user:id,name,avatar',
@@ -122,8 +126,22 @@ class TalentAdminController extends Controller
                         ])
                         ->whereNotNull('recruiter_id')
                         ->whereNotNull('talent_user_id')
+                        ->where(function($query) {
+                            // Show requests that need admin attention
+                            $query->where('status', 'pending') // New requests
+                                  ->orWhere(function($subQuery) {
+                                      // Talent accepted, waiting for admin (regardless of status)
+                                      $subQuery->where('talent_accepted', true)
+                                               ->where('admin_accepted', false);
+                                  })
+                                  ->orWhere(function($subQuery) {
+                                      // Handle inconsistent status - if status is approved but admin_accepted is false
+                                      $subQuery->where('status', 'approved')
+                                               ->where('admin_accepted', false);
+                                  });
+                        })
                         ->orderBy('created_at', 'desc')
-                        ->limit(5)
+                        ->limit(10) // Show more since these are actionable items
                         ->get()
                 ];
             } catch (\Exception $e) {
@@ -191,9 +209,44 @@ class TalentAdminController extends Controller
     {
         $query = TalentRequest::with(['recruiter.user', 'talent.user']);
 
-        // Filter by status if provided
+        // Enhanced filter by status including acceptance states
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            $status = $request->status;
+            
+            // Handle complex status filters
+            switch ($status) {
+                case 'talent_awaiting_admin':
+                    // Talent accepted, awaiting admin approval
+                    $query->where(function($q) {
+                        $q->where('talent_accepted', true)
+                          ->where('admin_accepted', false)
+                          ->whereIn('status', ['pending', 'approved']);
+                    });
+                    break;
+                case 'admin_awaiting_talent':
+                    // Admin approved, awaiting talent acceptance
+                    $query->where(function($q) {
+                        $q->where('talent_accepted', false)
+                          ->where('admin_accepted', true)
+                          ->whereIn('status', ['pending', 'approved']);
+                    });
+                    break;
+                case 'both_accepted':
+                    // Both parties accepted, ready for meeting
+                    $query->where('both_parties_accepted', true)
+                          ->whereIn('status', ['pending', 'approved']);
+                    break;
+                case 'pending_review':
+                    // No acceptances yet
+                    $query->where('talent_accepted', false)
+                          ->where('admin_accepted', false)
+                          ->where('status', 'pending');
+                    break;
+                default:
+                    // Standard status filter
+                    $query->where('status', $status);
+                    break;
+            }
         }
 
         // Search functionality - properly group the OR conditions
@@ -252,6 +305,19 @@ class TalentAdminController extends Controller
             'admin_notes' => 'nullable|string|max:1000'
         ]);
 
+        // Additional validation for meeting arrangement
+        if ($request->status === 'meeting_arranged') {
+            if (!$talentRequest->canAdminArrangeMeeting()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot arrange meeting: Both talent and admin must accept the request first.',
+                    'talent_accepted' => $talentRequest->talent_accepted,
+                    'admin_accepted' => $talentRequest->admin_accepted,
+                    'both_parties_accepted' => $talentRequest->both_parties_accepted
+                ], 400);
+            }
+        }
+
         $updateData = [
             'status' => $request->status,
             'admin_notes' => $request->admin_notes,
@@ -262,10 +328,23 @@ class TalentAdminController extends Controller
             case 'approved':
                 $updateData['approved_at'] = now();
                 // Mark admin as accepted when approving
-                $talentRequest->markAdminAccepted($request->admin_notes);
+                $updateData['admin_accepted'] = true;
+                $updateData['admin_accepted_at'] = now();
+                $updateData['admin_acceptance_notes'] = $request->admin_notes;
+
+                // Check if talent has already accepted and mark both accepted if so
+                if ($talentRequest->talent_accepted) {
+                    $updateData['both_parties_accepted'] = true;
+                    $updateData['workflow_completed_at'] = now();
+                }
                 break;
             case 'meeting_arranged':
                 $updateData['meeting_arranged_at'] = now();
+                // Ensure both parties are marked as accepted when meeting is arranged
+                if (!$talentRequest->both_parties_accepted) {
+                    $updateData['both_parties_accepted'] = true;
+                    $updateData['workflow_completed_at'] = now();
+                }
                 break;
             case 'onboarded':
                 $updateData['onboarded_at'] = now();
@@ -284,9 +363,9 @@ class TalentAdminController extends Controller
         $this->notificationService->notifyStatusChange($talentRequest, $talentRequest->getOriginal('status'), $request->status);
 
         $statusMessage = match($request->status) {
-            'approved' => 'Request has been approved successfully. Both parties have now accepted.',
+            'approved' => 'Request has been approved by admin. Waiting for talent acceptance to proceed to meeting arrangement.',
             'rejected' => 'Request has been rejected.',
-            'meeting_arranged' => 'Meeting has been arranged.',
+            'meeting_arranged' => 'Meeting has been arranged successfully.',
             'agreement_reached' => 'Agreement has been reached.',
             'onboarded' => 'Talent has been onboarded successfully.',
             'completed' => 'Project has been completed.',
@@ -298,7 +377,86 @@ class TalentAdminController extends Controller
             'message' => $statusMessage,
             'status' => $request->status,
             'both_parties_accepted' => $talentRequest->fresh()->both_parties_accepted,
-            'acceptance_status' => $talentRequest->fresh()->getAcceptanceStatus()
+            'acceptance_status' => $talentRequest->fresh()->getAcceptanceStatus(),
+            'can_arrange_meeting' => $talentRequest->fresh()->canAdminArrangeMeeting()
+        ]);
+    }
+
+    /**
+     * Check if admin can arrange meeting for a request
+     */
+    public function canArrangeMeeting(TalentRequest $talentRequest)
+    {
+        $canArrange = $talentRequest->canAdminArrangeMeeting();
+
+        $reason = '';
+        if (!$canArrange) {
+            if (!$talentRequest->talent_accepted) {
+                $reason = 'Talent has not accepted the request yet';
+            } elseif (!$talentRequest->admin_accepted) {
+                $reason = 'Admin has not accepted the request yet';
+            } elseif (!$talentRequest->both_parties_accepted) {
+                $reason = 'Both parties must accept before arranging meeting';
+            } elseif ($talentRequest->status !== 'approved') {
+                $reason = 'Request status must be approved';
+            } else {
+                $reason = 'Meeting arrangement requirements not met';
+            }
+        }
+
+        return response()->json([
+            'canArrangeMeeting' => $canArrange,
+            'reason' => $reason,
+            'talent_accepted' => $talentRequest->talent_accepted,
+            'admin_accepted' => $talentRequest->admin_accepted,
+            'both_parties_accepted' => $talentRequest->both_parties_accepted,
+            'current_status' => $talentRequest->status
+        ]);
+    }
+
+    /**
+     * Admin accepts a talent request (separate from approval)
+     */
+    public function adminAcceptRequest(Request $request, TalentRequest $talentRequest)
+    {
+        $request->validate([
+            'admin_acceptance_notes' => 'nullable|string|max:1000'
+        ]);
+
+        // Check if already accepted
+        if ($talentRequest->admin_accepted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin has already accepted this request.'
+            ], 400);
+        }
+
+        // Check if request is in valid state for acceptance
+        if ($talentRequest->status === 'rejected') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot accept a rejected request.'
+            ], 400);
+        }
+
+        // Mark admin as accepted
+        $oldStatus = $talentRequest->status;
+        $talentRequest->markAdminAccepted($request->admin_acceptance_notes);
+
+        // Refresh to get updated data
+        $talentRequest->refresh();
+
+        // Send notifications about acceptance
+        $this->notificationService->notifyStatusChange($talentRequest, $oldStatus, $talentRequest->status);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin acceptance recorded successfully!',
+            'admin_accepted' => true,
+            'both_parties_accepted' => $talentRequest->both_parties_accepted,
+            'acceptance_status' => $talentRequest->getAcceptanceStatus(),
+            'workflow_progress' => $talentRequest->getWorkflowProgress(),
+            'can_arrange_meeting' => $talentRequest->canAdminArrangeMeeting()
         ]);
     }
 

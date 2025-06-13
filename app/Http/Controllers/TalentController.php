@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Models\TalentRequest;
 use App\Models\User;
 use App\Services\AdvancedSkillAnalyticsService;
 use App\Services\TalentRequestNotificationService;
 use Carbon\Carbon;
+use Exception;
 
 class TalentController extends Controller
 {
@@ -148,7 +150,8 @@ class TalentController extends Controller
             ->whereHas('talent.user', function($query) use ($user) {
                 $query->where('id', $user->id);
             })
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'approved'])
+            ->where('talent_accepted', false) // Only show if talent hasn't accepted yet
             ->latest()
             ->take(6)
             ->get()
@@ -169,10 +172,11 @@ class TalentController extends Controller
                     'talent_accepted' => $request->talent_accepted ?? false,
                     'admin_accepted' => $request->admin_accepted ?? false,
                     'both_parties_accepted' => $request->both_parties_accepted ?? false,
-                    'acceptance_status' => $request->getAcceptanceStatus(),
+                    'acceptance_status' => $request->getTalentFriendlyAcceptanceStatus(),
+                    'is_pre_approved' => $request->isPreApproved(),
                     'workflow_progress' => $request->getWorkflowProgress(),
-                    'can_accept' => !$request->talent_accepted && $request->status === 'pending',
-                    'can_reject' => $request->status === 'pending'
+                    'can_accept' => !$request->talent_accepted && ($request->status === 'pending' || $request->status === 'approved'),
+                    'can_reject' => $request->status === 'pending' || $request->status === 'approved'
                 ];
             });
     }
@@ -281,7 +285,7 @@ class TalentController extends Controller
                     'created_at' => $request->created_at,
                     'is_completed' => $request->both_parties_accepted,
                     'is_in_progress' => $request->talent_accepted && !$request->both_parties_accepted,
-                    'formatted_status' => $request->getAcceptanceStatus(),
+                    'formatted_status' => $request->getTalentFriendlyAcceptanceStatus(),
                     'status_color' => $this->getStatusColor($request),
                     'duration_worked' => $request->talent_accepted_at
                         ? ($request->workflow_completed_at
@@ -343,9 +347,8 @@ class TalentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Request accepted successfully! Waiting for admin approval.',
-            'acceptance_status' => $talentRequest->getAcceptanceStatus(),
-            'workflow_progress' => $talentRequest->getWorkflowProgress(),
+            'message' => 'Request accepted successfully! Waiting for admin approval.',                    'acceptance_status' => $talentRequest->getTalentFriendlyAcceptanceStatus(),
+                    'workflow_progress' => $talentRequest->getWorkflowProgress(),
             'both_parties_accepted' => $talentRequest->both_parties_accepted
         ]);
     }
@@ -394,41 +397,174 @@ class TalentController extends Controller
      */
     public function getMyRequests()
     {
-        $user = Auth::user();
+        try {
+            $user = Auth::user();
 
-        $requests = TalentRequest::with(['recruiter.user'])
-            ->whereHas('talent.user', function($query) use ($user) {
-                $query->where('id', $user->id);
-            })
-            ->orderBy('created_at', 'desc')
-            ->take(50) // Limit results for better performance
-            ->get()
-            ->map(function($request) {
-                return [
-                    'id' => $request->id,
-                    'project_title' => $request->project_title,
-                    'project_description' => $request->project_description,
-                    'recruiter_name' => $request->recruiter->user->name,
-                    'recruiter_company' => $request->recruiter->user->pekerjaan,
-                    'budget_range' => $request->budget_range,
-                    'project_duration' => $request->project_duration,
-                    'urgency_level' => $request->urgency_level,
-                    'status' => $request->status,
-                    'formatted_status' => $request->getFormattedStatus(),
-                    'talent_accepted' => $request->talent_accepted,
-                    'admin_accepted' => $request->admin_accepted,
-                    'both_parties_accepted' => $request->both_parties_accepted,
-                    'acceptance_status' => $request->getAcceptanceStatus(),
-                    'workflow_progress' => $request->getWorkflowProgress(),
-                    'created_at' => $request->created_at->format('M d, Y H:i'),
-                    'can_accept' => !$request->talent_accepted && $request->status === 'pending',
-                    'can_reject' => $request->status === 'pending'
-                ];
-            });
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not authenticated'
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'requests' => $requests
-        ]);
+            $requests = TalentRequest::with(['recruiter.user'])
+                ->whereHas('talent.user', function($query) use ($user) {
+                    $query->where('id', $user->id);
+                })
+                ->orderBy('created_at', 'desc')
+                ->take(50) // Limit results for better performance
+                ->get()
+                ->map(function($request) {
+                    try {
+                        return [
+                            'id' => $request->id,
+                            'project_title' => $request->project_title ?? 'Untitled Project',
+                            'project_description' => $request->project_description ?? 'No description provided',
+                            'recruiter_name' => $request->recruiter?->user?->name ?? 'Unknown Recruiter',
+                            'recruiter_company' => $request->recruiter?->user?->pekerjaan ?? 'No company specified',
+                            'budget_range' => $request->budget_range ?? 'Not specified',
+                            'project_duration' => $request->project_duration ?? 'Not specified',
+                            'urgency_level' => $request->urgency_level ?? 'medium',
+                            'status' => $request->status ?? 'pending',
+                            'formatted_status' => $request->getUnifiedDisplayStatus() ?? 'Pending',
+                            'status_badge_color' => $request->getStatusBadgeColorClasses() ?? 'bg-gray-100 text-gray-800',
+                            'status_icon' => $request->getStatusIcon() ?? 'fas fa-clock',
+                            'talent_accepted' => $request->talent_accepted ?? false,
+                            'admin_accepted' => $request->admin_accepted ?? false,
+                            'both_parties_accepted' => $request->both_parties_accepted ?? false,
+                            'acceptance_status' => $request->getAcceptanceStatus() ?? 'Pending review',
+                            'workflow_progress' => $request->getWorkflowProgress() ?? 0,
+                            'created_at' => $request->created_at->format('M d, Y H:i'),
+                            'can_accept' => !$request->talent_accepted && in_array($request->status, ['pending', 'approved']),
+                            'can_reject' => in_array($request->status, ['pending', 'approved'])
+                        ];
+                    } catch (Exception $e) {
+                        // Log individual request errors but continue processing
+                        Log::error('Error processing talent request ' . $request->id . ': ' . $e->getMessage());
+                        return [
+                            'id' => $request->id ?? 0,
+                            'project_title' => 'Error loading project',
+                            'project_description' => 'There was an error loading this request.',
+                            'recruiter_name' => 'Unknown',
+                            'recruiter_company' => 'Unknown',
+                            'budget_range' => 'Unknown',
+                            'project_duration' => 'Unknown',
+                            'urgency_level' => 'medium',
+                            'status' => 'error',
+                            'formatted_status' => 'Error',
+                            'status_badge_color' => 'bg-red-100 text-red-800',
+                            'status_icon' => 'fas fa-exclamation-triangle',
+                            'talent_accepted' => false,
+                            'admin_accepted' => false,
+                            'both_parties_accepted' => false,
+                            'acceptance_status' => 'Error loading status',
+                            'workflow_progress' => 0,
+                            'created_at' => 'Unknown',
+                            'can_accept' => false,
+                            'can_reject' => false
+                        ];
+                    }
+                });
+
+            return response()->json([
+                'success' => true,
+                'requests' => $requests
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error in getMyRequests: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while loading your requests. Please try again later.',
+                'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+            ], 500);
+        }
+    }
+
+    public function myRequests()
+    {
+        $userId = Auth::id();
+        $user = User::with('talent')->find($userId);
+        $title = 'My Requests';
+        $roles = 'Talent';
+        $assignedKelas = [];
+        $talent = $user->talent;
+
+        $requests = collect();
+        if ($talent) {
+            $requests = TalentRequest::with(['recruiter.user'])
+                ->where('talent_id', $talent->id)
+                ->latest()
+                ->paginate(10);
+        }
+
+        return view('admin.talent.requests', compact('user', 'title', 'roles', 'assignedKelas', 'requests'));
+    }
+
+    /**
+     * Get detailed information about a specific talent request
+     */
+    public function getRequestDetails(TalentRequest $talentRequest)
+    {
+        try {
+            $user = Auth::user();
+            $talent = $user->talent;
+
+            // Ensure the request belongs to the authenticated talent
+            if (!$talent || $talentRequest->talent_id !== $talent->id) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Unauthorized access to this request'
+                ], 403);
+            }
+
+            // Load relationships with error handling
+            $talentRequest->load([
+                'recruiter.user',
+                'talent.user'
+            ]);
+
+            // Format the response with detailed information and null checks
+            $requestDetails = [
+                'id' => $talentRequest->id,
+                'title' => $talentRequest->project_title ?? 'Collaboration Request',
+                'description' => $talentRequest->project_description ?? 'No description provided',
+                'skills_required' => $talentRequest->skills_required ? 
+                    (is_string($talentRequest->skills_required) ? 
+                        json_decode($talentRequest->skills_required, true) ?? [] : 
+                        $talentRequest->skills_required) : [],
+                'budget_range' => $talentRequest->budget_range ?? 'Not specified',
+                'project_duration' => $talentRequest->project_duration ?? 'Not specified',
+                'collaboration_type' => $talentRequest->collaboration_type ?? 'General',
+                'status' => $talentRequest->status ?? 'pending',
+                'display_status' => $talentRequest->getDisplayStatus() ?? 'Pending',
+                'acceptance_status' => $talentRequest->getTalentFriendlyAcceptanceStatus() ?? 'Pending review',
+                'talent_accepted' => $talentRequest->talent_accepted ?? false,
+                'admin_accepted' => $talentRequest->admin_accepted ?? false,
+                'both_parties_accepted' => $talentRequest->both_parties_accepted ?? false,
+                'can_accept' => !$talentRequest->talent_accepted && in_array($talentRequest->status, ['pending', 'approved']),
+                'can_reject' => in_array($talentRequest->status, ['pending', 'approved']),
+                'workflow_progress' => $talentRequest->getWorkflowProgress() ?? [],
+                'submitted_at' => $talentRequest->created_at ? $talentRequest->created_at->format('M d, Y \a\t h:i A') : 'Unknown',
+                'updated_at' => $talentRequest->updated_at ? $talentRequest->updated_at->format('M d, Y \a\t h:i A') : 'Unknown',
+                'recruiter' => [
+                    'name' => $talentRequest->recruiter?->user?->name ?? 'Unknown',
+                    'email' => $talentRequest->recruiter?->user?->email ?? 'No email',
+                    'company' => $talentRequest->recruiter?->company_name ?? 
+                               $talentRequest->recruiter?->user?->pekerjaan ?? 'No company specified',
+                    'avatar' => $talentRequest->recruiter?->user?->avatar ?? null
+                ]
+            ];
+
+            return response()->json(['success' => true, 'request' => $requestDetails]);
+
+        } catch (Exception $e) {
+            Log::error('Error in getRequestDetails for request ' . $talentRequest->id . ': ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Failed to load request details. Please try again later.',
+                'debug' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }
