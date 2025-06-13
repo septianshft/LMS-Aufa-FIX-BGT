@@ -115,8 +115,8 @@ class TalentAdminController extends Controller
                         ->get(),
 
                     'latestRequests' => TalentRequest::select([
-                            'id', 'project_title', 'status', 'created_at', 'updated_at', 
-                            'recruiter_id', 'talent_user_id', 'talent_accepted', 'admin_accepted', 
+                            'id', 'project_title', 'status', 'created_at', 'updated_at',
+                            'recruiter_id', 'talent_user_id', 'talent_accepted', 'admin_accepted',
                             'both_parties_accepted', 'urgency_level'
                         ])
                         ->with([
@@ -212,7 +212,7 @@ class TalentAdminController extends Controller
         // Enhanced filter by status including acceptance states
         if ($request->filled('status')) {
             $status = $request->status;
-            
+
             // Handle complex status filters
             switch ($status) {
                 case 'talent_awaiting_admin':
@@ -349,6 +349,9 @@ class TalentAdminController extends Controller
             case 'onboarded':
                 $updateData['onboarded_at'] = now();
                 break;
+            case 'completed':
+                $updateData['completed_at'] = now();
+                break;
             case 'rejected':
                 // Reset acceptance flags if rejected
                 $updateData['admin_accepted'] = false;
@@ -358,6 +361,15 @@ class TalentAdminController extends Controller
         }
 
         $talentRequest->update($updateData);
+
+        // Handle special actions based on status
+        if ($request->status === 'completed') {
+            // Stop time-blocking when project is completed
+            $talentRequest->stopTimeBlocking();
+
+            // Clear talent availability cache to reflect updated status immediately
+            \App\Models\TalentRequest::clearTalentAvailabilityCache($talentRequest->talent_user_id);
+        }
 
         // Send notifications about status change
         $this->notificationService->notifyStatusChange($talentRequest, $talentRequest->getOriginal('status'), $request->status);
