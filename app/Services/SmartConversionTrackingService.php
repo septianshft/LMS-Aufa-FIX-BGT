@@ -54,7 +54,7 @@ class SmartConversionTrackingService
 
         $readinessData = [];
         foreach ($users as $user) {
-            $score = $this->calculateReadinessScore($user);
+            $score = $this->calculateReadinessScoreInternal($user);
             $readinessData[] = [
                 'user_id' => $user->id,
                 'name' => $user->name,
@@ -88,7 +88,7 @@ class SmartConversionTrackingService
         })->with(['courseProgress', 'quizAttempts'])->get();
 
         foreach ($users as $user) {
-            $readinessScore = $this->calculateReadinessScore($user);
+            $readinessScore = $this->calculateReadinessScoreInternal($user);
 
             // Only include high-readiness candidates (score >= 70)
             if ($readinessScore >= 70) {
@@ -115,9 +115,17 @@ class SmartConversionTrackingService
     }
 
     /**
-     * Calculate user's readiness score for talent conversion
+     * Calculate user's readiness score for talent conversion (public method)
      */
-    private function calculateReadinessScore(User $user): float
+    public function calculateReadinessScore(User $user): float
+    {
+        return $this->calculateReadinessScoreInternal($user);
+    }
+
+    /**
+     * Calculate user's readiness score for talent conversion (internal method)
+     */
+    private function calculateReadinessScoreInternal(User $user): float
     {
         $score = 0;
 

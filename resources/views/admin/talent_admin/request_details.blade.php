@@ -295,7 +295,7 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Phone:</strong></div>
-                        <div class="col-sm-9">{{ $talentRequest->recruiter->phone ?? $talentRequest->recruiter->user->nomor_telepon ?? 'Not provided' }}</div>
+                        <div class="col-sm-9">{{ $talentRequest->recruiter->phone ?? $talentRequest->recruiter->user->phone ?? 'Not provided' }}</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Company:</strong></div>
@@ -350,15 +350,40 @@
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Phone:</strong></div>
-                        <div class="col-sm-9">{{ $talentRequest->talent->phone ?? $talentRequest->talent->user->nomor_telepon ?? 'Not provided' }}</div>
+                        <div class="col-sm-9">{{ $talentRequest->talent->user->phone ?? 'Not provided' }}</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Skills:</strong></div>
-                        <div class="col-sm-9">{{ $talentRequest->talent->skills ?? 'Not specified' }}</div>
+                        <div class="col-sm-9">
+                            @if($talentRequest->talent->user->talent_skills)
+                                @php
+                                    $skills = is_string($talentRequest->talent->user->talent_skills)
+                                        ? json_decode($talentRequest->talent->user->talent_skills, true)
+                                        : $talentRequest->talent->user->talent_skills;
+                                @endphp
+                                @if(is_array($skills) && count($skills) > 0)
+                                    <div class="d-flex flex-wrap">
+                                        @foreach($skills as $skill)
+                                            <span class="badge bg-primary me-1 mb-1">{{ $skill }}</span>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    Not specified
+                                @endif
+                            @else
+                                Not specified
+                            @endif
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Experience:</strong></div>
-                        <div class="col-sm-9">{{ $talentRequest->talent->experience_level ?? 'Not specified' }}</div>
+                        <div class="col-sm-9">
+                            @if($talentRequest->talent->user->experience_level)
+                                <span class="badge bg-info">{{ ucfirst($talentRequest->talent->user->experience_level) }}</span>
+                            @else
+                                Not specified
+                            @endif
+                        </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Status:</strong></div>

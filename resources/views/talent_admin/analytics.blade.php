@@ -538,27 +538,7 @@ function suggestConversion(userId) {
                 }
             });
 
-            // Simulate API call (replace with actual endpoint when available)
-            setTimeout(() => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Saran Berhasil Dikirim!',
-                    text: `Notifikasi konversi talent telah dikirim ke pengguna`,
-                    confirmButtonColor: '#16a34a'
-                });
-
-                // Update button state to show it was sent
-                const button = document.querySelector(`button[onclick="suggestConversion(${userId})"]`);
-                if (button) {
-                    button.innerHTML = '<i class="fas fa-check mr-1"></i>Terkirim';
-                    button.classList.remove('bg-green-600', 'hover:bg-green-700');
-                    button.classList.add('bg-gray-500', 'cursor-not-allowed');
-                    button.disabled = true;
-                }
-            }, 1500);
-
-            // Uncomment and modify this when actual API endpoint is ready:
-            /*
+            // Make actual API call to the backend
             fetch(`/talent-admin/suggest-conversion/${userId}`, {
                 method: 'POST',
                 headers: {
@@ -568,14 +548,33 @@ function suggestConversion(userId) {
             })
             .then(response => response.json())
             .then(data => {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Saran Berhasil Dikirim!',
-                    text: `Notifikasi konversi talent telah dikirim ke ${data.user.name}`,
-                    confirmButtonColor: '#16a34a'
-                });
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saran Berhasil Dikirim!',
+                        text: `Notifikasi konversi talent telah dikirim ke ${data.user.name}`,
+                        confirmButtonColor: '#16a34a'
+                    });
+
+                    // Update button state to show it was sent
+                    const button = document.querySelector(`button[onclick="suggestConversion(${userId})"]`);
+                    if (button) {
+                        button.innerHTML = '<i class="fas fa-check mr-1"></i>Terkirim';
+                        button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        button.classList.add('bg-gray-500', 'cursor-not-allowed');
+                        button.disabled = true;
+                    }
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Gagal Mengirim Saran',
+                        text: data.message || 'Terjadi kesalahan saat mengirim saran konversi. Silakan coba lagi.',
+                        confirmButtonColor: '#dc2626'
+                    });
+                }
             })
             .catch(error => {
+                console.error('Error sending conversion suggestion:', error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Gagal Mengirim Saran',
@@ -583,7 +582,6 @@ function suggestConversion(userId) {
                     confirmButtonColor: '#dc2626'
                 });
             });
-            */
         }
     });
 }

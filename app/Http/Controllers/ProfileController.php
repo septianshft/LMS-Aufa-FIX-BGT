@@ -7,6 +7,7 @@ use App\Services\TalentScoutingService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
@@ -25,8 +26,21 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
+        $user = $request->user();
+
+        // Don't show conversion suggestions if user already has talent role
+        if (!$user->hasRole('talent')) {
+            // Check for cached conversion suggestion
+            $conversionSuggestion = Cache::get("conversion_suggestion_{$user->id}");
+
+            // If there's a cached suggestion, add it to the session
+            if ($conversionSuggestion && !session()->has('smart_talent_suggestion')) {
+                session()->flash('smart_talent_suggestion', $conversionSuggestion);
+            }
+        }
+
         return view('profile.edit', [
-            'user' => $request->user(),
+            'user' => $user,
         ]);
     }
 

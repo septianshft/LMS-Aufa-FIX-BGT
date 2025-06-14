@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\{
     FrontController,
     ProfileController,
@@ -85,6 +87,7 @@ Route::middleware('auth')->group(function () {
         ->name('materials.download');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('/dismiss-suggestion', [DashboardController::class, 'dismissSuggestion'])->name('dismiss.suggestion');
 
     // ====================
     // ADMIN ROUTES
@@ -198,6 +201,9 @@ Route::middleware('auth')->group(function () {
         // Details endpoints for modal views
         Route::get('talent-admin/talents/{talent}/details', [TalentAdminController::class, 'getTalentDetails'])->name('talent_admin.talent_details');
         Route::get('talent-admin/recruiters/{recruiter}/details', [TalentAdminController::class, 'getRecruiterDetails'])->name('talent_admin.recruiter_details');
+
+        // Conversion suggestion endpoint
+        Route::post('talent-admin/suggest-conversion/{user}', [TalentAdminController::class, 'suggestConversion'])->name('talent_admin.suggest_conversion');
     });
 
     // Talent Routes
@@ -251,6 +257,13 @@ Route::middleware('auth')->group(function () {
             Route::get('/analytics', [TalentDiscoveryController::class, 'analytics'])->name('analytics');
         });
     });
+});
+
+// Data Integrity Check Routes (for system administrators)
+Route::middleware(['auth', 'role:admin|talent_admin'])->group(function () {
+    Route::get('/admin/data-integrity', [App\Http\Controllers\DataIntegrityController::class, 'dashboard'])->name('admin.data_integrity.dashboard');
+    Route::post('/admin/data-integrity/run-checks', [App\Http\Controllers\DataIntegrityController::class, 'runChecks'])->name('admin.data_integrity.run_checks');
+    Route::get('/admin/data-integrity/download-report', [App\Http\Controllers\DataIntegrityController::class, 'downloadReport'])->name('admin.data_integrity.download_report');
 });
 
 require __DIR__.'/auth.php';

@@ -141,6 +141,9 @@
                 </div>
                 @endrole
                 @role('trainee')
+                <!-- Smart Talent Conversion Notifications for Trainees -->
+                @include('profile.partials.smart-talent-notifications')
+
                 <!-- Trainee Dashboard Content -->
                 <div class="text-center space-y-6">
                     <div class="max-w-md mx-auto">

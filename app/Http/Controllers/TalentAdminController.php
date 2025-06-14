@@ -1285,4 +1285,138 @@ class TalentAdminController extends Controller
             })
         ]);
     }
+
+    /**
+     * Suggest talent conversion to a trainee
+     */
+    public function suggestConversion(Request $request, User $user)
+    {
+        try {
+            // Validate that the user is a trainee
+            if (!$user->hasRole('trainee')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is not a trainee'
+                ], 400);
+            }
+
+            // Check if user already has talent role
+            if ($user->hasRole('talent')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User is already a talent'
+                ], 400);
+            }
+
+            // Get user's readiness score
+            $readinessScore = $this->conversionTracking->calculateReadinessScore($user);
+
+            // Validate readiness score (should be high enough for suggestion)
+            if ($readinessScore < 70) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User readiness score is too low for conversion suggestion'
+                ], 400);
+            }
+
+            // Get user's skills and course completion data
+            $completedCourses = $user->courseProgress()->where('progress', 100)->count();
+            $totalSkills = 0;
+            if ($user->talent_skills) {
+                $skills = is_string($user->talent_skills) ? json_decode($user->talent_skills, true) : $user->talent_skills;
+                $totalSkills = is_array($skills) ? count($skills) : 0;
+            }
+
+            // Create conversion suggestion message
+            $suggestionMessage = $this->generateConversionMessage($user, $readinessScore, $completedCourses, $totalSkills);
+
+            // Store the suggestion notification for the user
+            $this->storeConversionSuggestion($user, $suggestionMessage, $readinessScore, $completedCourses, $totalSkills);
+
+            // Log the suggestion
+            Log::info('Conversion suggestion sent', [
+                'admin_id' => Auth::id(),
+                'target_user_id' => $user->id,
+                'readiness_score' => $readinessScore,
+                'completed_courses' => $completedCourses,
+                'skills_count' => $totalSkills
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Conversion suggestion sent successfully',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email
+                ],
+                'suggestion_data' => [
+                    'readiness_score' => $readinessScore,
+                    'completed_courses' => $completedCourses,
+                    'skills_count' => $totalSkills,
+                    'message' => $suggestionMessage
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send conversion suggestion', [
+                'user_id' => $user->id,
+                'admin_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send conversion suggestion'
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate personalized conversion message
+     */
+    private function generateConversionMessage(User $user, float $readinessScore, int $completedCourses, int $totalSkills): string
+    {
+        $name = $user->name;
+
+        if ($readinessScore >= 90) {
+            return "Hi {$name}! 🌟 You've demonstrated exceptional learning progress with {$completedCourses} completed courses and {$totalSkills} skills. You're ready to showcase your expertise as a professional talent!";
+        } elseif ($readinessScore >= 80) {
+            return "Hello {$name}! 🚀 Your learning journey has been impressive with {$completedCourses} courses completed and {$totalSkills} verified skills. Consider becoming a discoverable talent to connect with potential employers!";
+        } else {
+            return "Hi {$name}! 📈 You've made great progress with {$completedCourses} completed courses and {$totalSkills} skills. You're ready to take the next step and become a professional talent!";
+        }
+    }
+
+    /**
+     * Store conversion suggestion for the user
+     */
+    private function storeConversionSuggestion(User $user, string $message, float $readinessScore, int $completedCourses, int $totalSkills): void
+    {
+        // Create a session-based notification that will be shown when the user logs in
+        // In a production system, you might want to store this in the database
+
+        $suggestionData = [
+            'type' => 'conversion_suggestion',
+            'message' => $message,
+            'reason' => "Based on your {$completedCourses} completed courses and {$totalSkills} verified skills, you're ready for professional opportunities.",
+            'readiness_score' => $readinessScore,
+            'skill_count' => $totalSkills,
+            'course_count' => $completedCourses,
+            'action_url' => route('profile.edit') . '#talent-settings',
+            'suggested_by' => Auth::user()->name,
+            'suggested_at' => now()->format('M d, Y H:i'),
+            'expires_at' => now()->addDays(7)->format('M d, Y H:i')
+        ];
+
+        // Store in cache with user-specific key (7 days expiration)
+        Cache::put("conversion_suggestion_{$user->id}", $suggestionData, now()->addDays(7));
+
+        // Also store in session if the user is currently logged in
+        if (Auth::check() && Auth::id() === $user->id) {
+            session()->flash('smart_talent_suggestion', $suggestionData);
+        }
+    }
+
+    // ...existing code...
 }
