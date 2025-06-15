@@ -187,7 +187,7 @@ public function store(StoreCourseRequest $request)
     // ✅ Buat Modul Default
     $module = CourseModule::create([
         'course_id' => $course->id,
-        'title' => 'Modul 1',
+        'name' => 'Modul 1',
         'description' => 'Modul default',
         'order' => 1,
     ]);
