@@ -241,6 +241,7 @@ public function store(StoreCourseRequest $request)
         'modules.videos',
         'modules.materials',
         'modules.tasks',
+        'meetings',
     ]);
 
     return view('admin.courses.show', compact('course'));
