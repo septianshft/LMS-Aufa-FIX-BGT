@@ -96,23 +96,30 @@ class TalentController extends Controller
 
     private function getUserSkillProgress($user)
     {
-        // Get user's actual skills from talent_skills or course completions
+        // Get user's actual skills using the simplified method
         $skills = [];
 
-        if ($user->talent_skills) {
-            $talentSkills = is_string($user->talent_skills)
-                ? json_decode($user->talent_skills, true)
-                : $user->talent_skills;
+        // Use the getTalentSkillsArray() method which handles the new structure properly
+        $userSkills = $user->getTalentSkillsArray();
 
-            if (is_array($talentSkills)) {
-                foreach ($talentSkills as $skill) {
-                    if (is_array($skill) && isset($skill['name'], $skill['level'])) {
-                        $skills[] = [
-                            'name' => $skill['name'],
-                            'level' => (int)$skill['level'],
-                            'percentage' => min(100, ((int)$skill['level']) * 20) // Convert level to percentage
-                        ];
-                    }
+        if (!empty($userSkills)) {
+            foreach ($userSkills as $skill) {
+                if (is_array($skill)) {
+                    // Convert proficiency to level number for dashboard display
+                    $proficiencyToLevel = [
+                        'beginner' => 1,
+                        'intermediate' => 3,
+                        'advanced' => 5
+                    ];
+
+                    $proficiency = $skill['proficiency'] ?? 'intermediate';
+                    $level = $proficiencyToLevel[$proficiency] ?? 3;
+
+                    $skills[] = [
+                        'name' => $skill['skill_name'] ?? 'Unknown Skill',
+                        'level' => $level,
+                        'percentage' => min(100, $level * 20) // Convert level to percentage
+                    ];
                 }
             }
         }
@@ -164,7 +171,6 @@ class TalentController extends Controller
                     'budget' => $request->budget_range ?? 'Budget TBD',
                     'duration' => $request->project_duration ?? 'Duration TBD',
                     'posted_date' => $request->created_at,
-                    'urgency' => $request->urgency_level ?? 'medium',
                     'description' => $request->project_description ?? '',
                     'requirements' => $request->requirements ?? '',
                     'project_description' => $request->project_description ?? '',
@@ -234,7 +240,8 @@ class TalentController extends Controller
         if ($user->avatar && $user->avatar !== 'images/default-avatar.svg') $completeness += 10; // Only custom avatars count
 
         // Skills (30 points)
-        if ($user->talent_skills && !empty(json_decode($user->talent_skills, true))) {
+        $userSkills = $user->getTalentSkillsArray();
+        if (!empty($userSkills)) {
             $completeness += 30;
         }
 
@@ -310,87 +317,7 @@ class TalentController extends Controller
         return 'gray'; // Default
     }
 
-    /**
-     * Accept a talent request (talent's acceptance)
-     */
-    public function acceptRequest(Request $request, TalentRequest $talentRequest)
-    {
-        $user = Auth::user();
 
-        // Verify the request belongs to the current talent
-        if ($talentRequest->talent->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access to this request.'
-            ], 403);
-        }
-
-        // Validate input
-        $request->validate([
-            'acceptance_notes' => 'nullable|string|max:1000'
-        ]);
-
-        // Check if already accepted
-        if ($talentRequest->talent_accepted) {
-            return response()->json([
-                'success' => false,
-                'message' => 'You have already accepted this request.'
-            ], 400);
-        }
-
-        // Mark as accepted by talent
-        $oldStatus = $talentRequest->status;
-        $talentRequest->markTalentAccepted($request->acceptance_notes);
-
-        // Send notifications about status change
-        $this->notificationService->notifyStatusChange($talentRequest, $oldStatus, $talentRequest->status);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Request accepted successfully! Waiting for admin approval.',                    'acceptance_status' => $talentRequest->getTalentFriendlyAcceptanceStatus(),
-                    'workflow_progress' => $talentRequest->getWorkflowProgress(),
-            'both_parties_accepted' => $talentRequest->both_parties_accepted
-        ]);
-    }
-
-    /**
-     * Reject a talent request (talent's rejection)
-     */
-    public function rejectRequest(Request $request, TalentRequest $talentRequest)
-    {
-        $user = Auth::user();
-
-        // Verify the request belongs to the current talent
-        if ($talentRequest->talent->user_id !== $user->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized access to this request.'
-            ], 403);
-        }
-
-        // Validate input
-        $request->validate([
-            'rejection_notes' => 'nullable|string|max:1000'
-        ]);
-
-        // Update status to rejected
-        $oldStatus = $talentRequest->status;
-        $talentRequest->update([
-            'status' => 'rejected',
-            'talent_acceptance_notes' => $request->rejection_notes,
-            'talent_accepted' => false,
-            'talent_accepted_at' => now()
-        ]);
-
-        // Send notifications about status change
-        $this->notificationService->notifyStatusChange($talentRequest, $oldStatus, 'rejected');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Request rejected successfully.',
-            'status' => 'rejected'
-        ]);
-    }
 
     /**
      * Get talent's pending requests with optimization
@@ -424,7 +351,6 @@ class TalentController extends Controller
                             'recruiter_company' => $request->recruiter?->user?->pekerjaan ?? 'No company specified',
                             'budget_range' => $request->budget_range ?? 'Not specified',
                             'project_duration' => $request->project_duration ?? 'Not specified',
-                            'urgency_level' => $request->urgency_level ?? 'medium',
                             'status' => $request->status ?? 'pending',
                             'formatted_status' => $request->getUnifiedDisplayStatus() ?? 'Pending',
                             'status_badge_color' => $request->getStatusBadgeColorClasses() ?? 'bg-gray-100 text-gray-800',
@@ -449,7 +375,6 @@ class TalentController extends Controller
                             'recruiter_company' => 'Unknown',
                             'budget_range' => 'Unknown',
                             'project_duration' => 'Unknown',
-                            'urgency_level' => 'medium',
                             'status' => 'error',
                             'formatted_status' => 'Error',
                             'status_badge_color' => 'bg-red-100 text-red-800',
@@ -529,9 +454,9 @@ class TalentController extends Controller
                 'id' => $talentRequest->id,
                 'title' => $talentRequest->project_title ?? 'Collaboration Request',
                 'description' => $talentRequest->project_description ?? 'No description provided',
-                'skills_required' => $talentRequest->skills_required ? 
-                    (is_string($talentRequest->skills_required) ? 
-                        json_decode($talentRequest->skills_required, true) ?? [] : 
+                'skills_required' => $talentRequest->skills_required ?
+                    (is_string($talentRequest->skills_required) ?
+                        json_decode($talentRequest->skills_required, true) ?? [] :
                         $talentRequest->skills_required) : [],
                 'budget_range' => $talentRequest->budget_range ?? 'Not specified',
                 'project_duration' => $talentRequest->project_duration ?? 'Not specified',
@@ -550,7 +475,7 @@ class TalentController extends Controller
                 'recruiter' => [
                     'name' => $talentRequest->recruiter?->user?->name ?? 'Unknown',
                     'email' => $talentRequest->recruiter?->user?->email ?? 'No email',
-                    'company' => $talentRequest->recruiter?->company_name ?? 
+                    'company' => $talentRequest->recruiter?->company_name ??
                                $talentRequest->recruiter?->user?->pekerjaan ?? 'No company specified',
                     'avatar' => $talentRequest->recruiter?->user?->avatar ?? null
                 ]
@@ -564,6 +489,118 @@ class TalentController extends Controller
                 'success' => false,
                 'error' => 'Failed to load request details. Please try again later.',
                 'debug' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Accept a talent request
+     */
+    public function acceptRequest(Request $request, TalentRequest $talentRequest)
+    {
+        try {
+            $user = Auth::user();
+            $talent = $user->talent;
+
+            // Ensure the request belongs to the authenticated talent
+            if (!$talent || $talentRequest->talent_id !== $talent->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access to this request'
+                ], 403);
+            }
+
+            // Check if request can be accepted
+            if ($talentRequest->talent_accepted) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You have already accepted this request'
+                ], 400);
+            }
+
+            if (!in_array($talentRequest->status, ['pending', 'approved'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This request cannot be accepted at this time'
+                ], 400);
+            }
+
+            // Mark talent as accepted
+            $oldStatus = $talentRequest->status;
+            $talentRequest->markTalentAccepted();
+
+            // Refresh to get updated data
+            $talentRequest->refresh();
+
+            // Send notifications about acceptance
+            $this->notificationService->notifyStatusChange($talentRequest, $oldStatus, $talentRequest->status);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request accepted successfully! Both parties have now accepted.',
+                'talent_accepted' => true,
+                'both_parties_accepted' => $talentRequest->both_parties_accepted,
+                'acceptance_status' => $talentRequest->getAcceptanceStatus(),
+                'workflow_progress' => $talentRequest->getWorkflowProgress()
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error accepting talent request ' . $talentRequest->id . ': ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while accepting the request. Please try again.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject a talent request
+     */
+    public function rejectRequest(Request $request, TalentRequest $talentRequest)
+    {
+        try {
+            $user = Auth::user();
+            $talent = $user->talent;
+
+            // Ensure the request belongs to the authenticated talent
+            if (!$talent || $talentRequest->talent_id !== $talent->id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized access to this request'
+                ], 403);
+            }
+
+            // Check if request can be rejected
+            if (!in_array($talentRequest->status, ['pending', 'approved'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This request cannot be rejected at this time'
+                ], 400);
+            }
+
+            // Update request status to rejected
+            $oldStatus = $talentRequest->status;
+            $talentRequest->update([
+                'status' => 'rejected',
+                'talent_accepted' => false,
+                'admin_accepted' => false,
+                'both_parties_accepted' => false,
+            ]);
+
+            // Send notifications about rejection
+            $this->notificationService->notifyStatusChange($talentRequest, $oldStatus, 'rejected');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Request declined successfully.',
+                'status' => 'rejected'
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error rejecting talent request ' . $talentRequest->id . ': ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while declining the request. Please try again.'
             ], 500);
         }
     }

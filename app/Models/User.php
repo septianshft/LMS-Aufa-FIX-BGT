@@ -38,7 +38,6 @@ class User extends Authenticatable
         'portfolio_url',
         'location',
         'phone',
-        'experience_level',
         'is_active_talent',
     ];
 
@@ -128,42 +127,37 @@ class User extends Authenticatable
     // TALENT SCOUTING INTEGRATION METHODS
 
     /**
-     * Add skill from course completion with enhanced categorization
+     * Add skill from course completion - simplified approach
      */
     public function addSkillFromCourse($course)
     {
         $existingSkills = $this->getTalentSkillsArray();
 
-        // Enhanced skill categorization
-        $category = $this->categorizeSkill($course);
-        $level = $this->calculateSkillLevel($course);
-
+        // Simplified: Use course name directly as skill name
         $skillName = $course->name;
+
+        // Simplified: Use course level directly as proficiency
+        $proficiency = $course->level ? strtolower($course->level->name) : 'intermediate';
 
         // Check if skill already exists
         $existingSkillIndex = collect($existingSkills)->search(function ($skill) use ($skillName) {
-            return $skill['name'] === $skillName;
+            return $skill['skill_name'] === $skillName;
         });
 
         if ($existingSkillIndex !== false) {
-            // Update existing skill with higher level if applicable
-            $existingLevel = $existingSkills[$existingSkillIndex]['level'];
-            if ($this->getSkillLevelNumber($level) > $this->getSkillLevelNumber($existingLevel)) {
-                $existingSkills[$existingSkillIndex]['level'] = $level;
-                $existingSkills[$existingSkillIndex]['updated_at'] = now()->toDateString();
+            // Update existing skill with higher proficiency if applicable
+            $existingProficiency = $existingSkills[$existingSkillIndex]['proficiency'];
+            if ($this->getSkillLevelNumber($proficiency) > $this->getSkillLevelNumber($existingProficiency)) {
+                $existingSkills[$existingSkillIndex]['proficiency'] = $proficiency;
+                $existingSkills[$existingSkillIndex]['completed_date'] = now()->toDateString();
             }
         } else {
-            // Add new skill with enhanced metadata
+            // Add new skill with simplified structure
             $existingSkills[] = [
-                'name' => $skillName,
-                'level' => $level,
-                'category' => $category,
-                'acquired_from' => 'Course Completion',
+                'skill_name' => $skillName,
+                'proficiency' => $proficiency,
                 'course_id' => $course->id,
-                'acquired_at' => now()->toDateString(),
-                'updated_at' => now()->toDateString(),
-                'market_demand' => $this->getMarketDemand($category),
-                'verified' => true
+                'completed_date' => now()->toDateString(),
             ];
         }
 
@@ -174,85 +168,16 @@ class User extends Authenticatable
     }
 
     /**
-     * Enhanced skill categorization
-     */
-    private function categorizeSkill($course)
-    {
-        $skillCategories = [
-            'web development' => 'Frontend Development',
-            'backend' => 'Backend Development',
-            'database' => 'Database Management',
-            'mobile' => 'Mobile Development',
-            'ui/ux' => 'UI/UX Design',
-            'data' => 'Data Science',
-            'digital marketing' => 'Digital Marketing',
-            'project management' => 'Project Management',
-            'cybersecurity' => 'Cybersecurity',
-            'cloud' => 'Cloud Computing'
-        ];
-
-        $courseName = strtolower($course->name);
-        $courseCategory = $course->category ? strtolower($course->category->name) : '';
-
-        foreach ($skillCategories as $keyword => $category) {
-            if (str_contains($courseName, $keyword) || str_contains($courseCategory, $keyword)) {
-                return $category;
-            }
-        }
-
-        return 'General Technology';
-    }
-
-    /**
-     * Calculate skill level based on course difficulty and completion
-     */
-    private function calculateSkillLevel($course)
-    {
-        if ($course->level) {
-            $levelMap = [
-                'beginner' => 'Beginner',
-                'intermediate' => 'Intermediate',
-                'advanced' => 'Advanced',
-                'expert' => 'Expert'
-            ];
-            return $levelMap[strtolower($course->level->name)] ?? 'Intermediate';
-        }
-
-        return 'Intermediate';
-    }
-
-    /**
      * Get skill level as number for comparison
      */
     private function getSkillLevelNumber($level)
     {
-        $levels = ['Beginner' => 1, 'Intermediate' => 2, 'Advanced' => 3, 'Expert' => 4];
-        return $levels[$level] ?? 2;
+        $levels = ['beginner' => 1, 'intermediate' => 2, 'advanced' => 3];
+        return $levels[strtolower($level)] ?? 2;
     }
 
     /**
-     * Get market demand indicator for skill category
-     */
-    private function getMarketDemand($category)
-    {
-        $demandMap = [
-            'Frontend Development' => 'High',
-            'Backend Development' => 'Very High',
-            'Mobile Development' => 'High',
-            'Data Science' => 'Very High',
-            'UI/UX Design' => 'High',
-            'Cybersecurity' => 'Very High',
-            'Cloud Computing' => 'Very High',
-            'Digital Marketing' => 'Medium',
-            'Project Management' => 'High',
-            'Database Management' => 'High'
-        ];
-
-        return $demandMap[$category] ?? 'Medium';
-    }
-
-    /**
-     * Check if user should be suggested for talent conversion
+     * Check if user should be suggested for talent conversion - simplified
      */
     private function checkConversionSuggestion()
     {
@@ -263,14 +188,12 @@ class User extends Authenticatable
         $skillCount = count($this->getTalentSkillsArray());
         $courseCount = $this->completedCourses()->count();
 
-        // Enhanced conversion criteria
-        $shouldSuggest = $skillCount >= 3 ||
-                        $courseCount >= 5 ||
-                        $this->hasHighDemandSkills();
+        // Simplified conversion criteria
+        $shouldSuggest = $skillCount >= 3 || $courseCount >= 5;
 
         if ($shouldSuggest) {
             session()->flash('smart_talent_suggestion', [
-                'message' => 'Great progress! You\'ve gained valuable skills that are in high demand. Consider joining our talent platform to connect with recruiters.',
+                'message' => 'Great progress! You\'ve gained valuable skills. Consider joining our talent platform to connect with recruiters.',
                 'action_url' => route('profile.edit') . '#talent-settings',
                 'skill_count' => $skillCount,
                 'reason' => $this->getConversionReason($skillCount, $courseCount)
@@ -279,21 +202,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if user has high-demand skills
-     */
-    private function hasHighDemandSkills()
-    {
-        $skills = $this->getTalentSkillsArray();
-        foreach ($skills as $skill) {
-            if (isset($skill['market_demand']) && in_array($skill['market_demand'], ['High', 'Very High'])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Get personalized conversion reason
+     * Get personalized conversion reason - simplified
      */
     private function getConversionReason($skillCount, $courseCount)
     {
@@ -302,9 +211,6 @@ class User extends Authenticatable
         }
         if ($courseCount >= 5) {
             return 'You\'ve completed ' . $courseCount . ' courses - show your dedication to employers!';
-        }
-        if ($this->hasHighDemandSkills()) {
-            return 'Your skills are in high market demand - great earning potential!';
         }
         return 'Your learning progress is impressive - time to monetize your skills!';
     }
@@ -389,12 +295,12 @@ class User extends Authenticatable
     }
 
     /**
-     * Get skills organized by category
+     * Get skills organized by proficiency level - simplified
      */
-    public function getSkillsByCategory()
+    public function getSkillsByProficiency()
     {
         $skills = $this->getTalentSkillsArray();
-        $categorized = [];
+        $organized = [];
 
         foreach ($skills as $skill) {
             // Ensure skill is an array
@@ -402,18 +308,18 @@ class User extends Authenticatable
                 continue;
             }
 
-            $category = $skill['category'] ?? 'General Technology';
-            if (!isset($categorized[$category])) {
-                $categorized[$category] = [];
+            $proficiency = $skill['proficiency'] ?? 'intermediate';
+            if (!isset($organized[$proficiency])) {
+                $organized[$proficiency] = [];
             }
-            $categorized[$category][] = $skill;
+            $organized[$proficiency][] = $skill;
         }
 
-        return $categorized;
+        return $organized;
     }
 
     /**
-     * Calculate talent readiness score
+     * Calculate talent readiness score - simplified
      */
     public function getTalentReadinessScore()
     {
@@ -421,26 +327,17 @@ class User extends Authenticatable
         $skillCount = count($this->getTalentSkillsArray());
         $completedCourses = $this->completedCourses()->count();
 
-        // Skills contribute 40% of score
-        $score += min(($skillCount * 8), 40);
+        // Skills contribute 50% of score
+        $score += min(($skillCount * 10), 50);
 
-        // Course completions contribute 30% of score
-        $score += min(($completedCourses * 6), 30);
-
-        // High-demand skills contribute 20% of score
-        $highDemandCount = 0;
-        foreach ($this->getTalentSkillsArray() as $skill) {
-            if (is_array($skill) && ($skill['market_demand'] ?? '') === 'Very High') {
-                $highDemandCount++;
-            }
-        }
-        $score += min(($highDemandCount * 10), 20);
+        // Course completions contribute 40% of score
+        $score += min(($completedCourses * 8), 40);
 
         // Recent activity contributes 10% of score
         $recentSkills = array_filter($this->getTalentSkillsArray(), function($skill) {
             if (!is_array($skill)) return false;
-            $acquiredDate = \Carbon\Carbon::parse($skill['acquired_at'] ?? now());
-            return $acquiredDate->gte(\Carbon\Carbon::now()->subMonths(3));
+            $completedDate = \Carbon\Carbon::parse($skill['completed_date'] ?? now());
+            return $completedDate->gte(\Carbon\Carbon::now()->subMonths(3));
         });
         $score += min((count($recentSkills) * 5), 10);
 
@@ -457,7 +354,7 @@ class User extends Authenticatable
 
         $dates = array_map(function($skill) {
             if (!is_array($skill)) return \Carbon\Carbon::now();
-            return \Carbon\Carbon::parse($skill['acquired_at'] ?? now());
+            return \Carbon\Carbon::parse($skill['completed_date'] ?? $skill['acquired_at'] ?? now());
         }, $skills);
 
         sort($dates);
@@ -468,45 +365,55 @@ class User extends Authenticatable
     }
 
     /**
-     * Get skill progress analytics
+     * Get skill progress analytics - simplified
      */
     public function getSkillAnalytics()
     {
         $skills = $this->getTalentSkillsArray();
-        $categories = collect($skills)->groupBy('category');
+        $proficiencies = collect($skills)->groupBy('proficiency');
+
+        // Create skill_levels array with default values
+        $skillLevels = [
+            'beginner' => 0,
+            'intermediate' => 0,
+            'advanced' => 0
+        ];
+
+        // Fill in actual counts
+        foreach ($proficiencies as $proficiency => $skillsGroup) {
+            $skillLevels[$proficiency] = $skillsGroup->count();
+        }
 
         return [
             'total_skills' => count($skills),
-            'categories_count' => $categories->count(),
-            'high_demand_skills' => collect($skills)->where('market_demand', 'Very High')->count(),
-            'skill_levels' => collect($skills)->groupBy('level')->map->count(),
-            'recent_skills' => collect($skills)->where('acquired_at', '>=', now()->subDays(30)->toDateString())->count()
+            'skill_levels' => $skillLevels,
+            'recent_skills' => collect($skills)->where('completed_date', '>=', now()->subDays(30)->toDateString())->count()
         ];
     }
 
     /**
-     * Get user's primary skill category for analytics
-     * Phase 1 Enhancement Method
+     * Get user's primary skill proficiency for analytics - simplified
      */
-    public function getSkillCategory(): string
+    public function getPrimarySkillProficiency(): string
     {
         $skills = $this->getTalentSkillsArray();
         if (empty($skills)) {
-            return 'General';
+            return 'beginner';
         }
 
-        // Count categories
-        $categories = [];
+        // Count proficiency levels
+        $proficiencies = [];
         foreach ($skills as $skill) {
             if (!is_array($skill)) {
                 continue;
             }
-            $category = $skill['category'] ?? 'General Technology';
-            $categories[$category] = ($categories[$category] ?? 0) + 1;
+            $proficiency = $skill['proficiency'] ?? 'intermediate';
+            $proficiencies[$proficiency] = ($proficiencies[$proficiency] ?? 0) + 1;
         }
 
-        // Return the most common category
-        return array_keys($categories)[0] ?? 'General';
+        // Return the most common proficiency level
+        arsort($proficiencies);
+        return array_keys($proficiencies)[0] ?? 'intermediate';
     }
 
     /**
@@ -579,22 +486,22 @@ class User extends Authenticatable
     }
 
     /**
-     * Get skill categories for analytics
+     * Get skill proficiencies for analytics - simplified
      */
-    public function getSkillCategories(): array
+    public function getSkillProficiencies(): array
     {
         $skills = $this->getTalentSkillsArray();
-        $categories = [];
+        $proficiencies = [];
 
         foreach ($skills as $skill) {
             if (!is_array($skill)) continue;
-            $category = $skill['category'] ?? 'General Technology';
-            if (!in_array($category, $categories)) {
-                $categories[] = $category;
+            $proficiency = $skill['proficiency'] ?? 'intermediate';
+            if (!in_array($proficiency, $proficiencies)) {
+                $proficiencies[] = $proficiency;
             }
         }
 
-        return $categories;
+        return $proficiencies;
     }
 
     /**
@@ -650,7 +557,7 @@ class User extends Authenticatable
     }
 
     /**
-     * Get talent conversion metrics for analytics
+     * Get talent conversion metrics for analytics - simplified
      */
     public function getConversionMetrics(): array
     {
@@ -659,7 +566,7 @@ class User extends Authenticatable
             'readiness_level' => $this->getReadinessLevel(),
             'completed_courses' => $this->courseProgress()->where('progress', 100)->count(),
             'skill_count' => count($this->getTalentSkillsArray()),
-            'skill_categories' => $this->getSkillCategories(),
+            'skill_proficiencies' => $this->getSkillProficiencies(),
             'quiz_average' => $this->getQuizAverage(),
             'learning_velocity' => $this->getLearningVelocity(),
             'conversion_suggested' => $this->shouldSuggestTalentConversion(),

@@ -82,7 +82,7 @@
             <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-dollar-sign mr-2"></i>Hourly Rate Range
+                        <i class="fas fa-money-bill mr-2"></i>Hourly Rate Range (IDR)
                     </label>
                     <div class="flex space-x-2">
                         <input type="number" id="minRate" placeholder="Min" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
@@ -859,7 +859,7 @@ function createGridCardHTML(talent, avatarHTML) {
         <div class="text-center mb-4">
             ${avatarHTML}
             <h3 class="text-lg font-semibold text-gray-900 mt-3 mb-1">${talent.name}</h3>
-            <p class="text-purple-600 font-medium">${talent.experience_level || 'Professional'}</p>
+            <p class="text-purple-600 font-medium">${talent.skills ? talent.skills.length + ' Skills' : 'Professional'}</p>
             ${talent.location ? `<p class="text-sm text-gray-500 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${talent.location}</p>` : ''}
         </div>
 
@@ -877,7 +877,7 @@ function createGridCardHTML(talent, avatarHTML) {
 
             <div class="flex justify-between items-center text-sm text-gray-500">
                 <span><i class="fas fa-trophy mr-1"></i>${skills.length} skills</span>
-                ${talent.hourly_rate ? `<span><i class="fas fa-dollar-sign mr-1"></i>$${talent.hourly_rate}/hr</span>` : ''}
+                ${talent.hourly_rate ? `<span><i class="fas fa-money-bill mr-1"></i>Rp ${new Intl.NumberFormat('id-ID').format(talent.hourly_rate)}/hr</span>` : ''}
             </div>
         </div>
 
@@ -909,12 +909,12 @@ function createListCardHTML(talent, avatarHTML) {
                 <div class="flex items-start justify-between">
                     <div class="flex-1">
                         <h3 class="text-lg font-semibold text-gray-900">${talent.name}</h3>
-                        <p class="text-purple-600 font-medium">${talent.experience_level || 'Professional'}</p>
+                        <p class="text-purple-600 font-medium">${talent.skills ? talent.skills.length + ' Skills' : 'Professional'}</p>
                         ${talent.location ? `<p class="text-sm text-gray-500 mt-1"><i class="fas fa-map-marker-alt mr-1"></i>${talent.location}</p>` : ''}
                         ${talent.bio ? `<p class="text-gray-600 text-sm mt-2 line-clamp-2">${talent.bio}</p>` : ''}
                     </div>
                     <div class="flex flex-col items-end space-y-2">
-                        ${talent.hourly_rate ? `<span class="text-lg font-semibold text-green-600">$${talent.hourly_rate}/hr</span>` : ''}
+                        ${talent.hourly_rate ? `<span class="text-lg font-semibold text-green-600">Rp ${new Intl.NumberFormat('id-ID').format(talent.hourly_rate * 15000)}/hr</span>` : ''}
                         <div class="flex gap-2">
                             <button onclick="showTalentProfile(${talent.id})"
                                     class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
@@ -1150,9 +1150,13 @@ function showAnalytics(results) {
             });
         }
 
-        // Count experience levels
-        const level = talent.experience_level || 'Not specified';
-        experienceLevels[level] = (experienceLevels[level] || 0) + 1;
+        // Count skill levels instead of experience levels
+        const skillCount = talent.skills ? talent.skills.length : 0;
+        const skillCategory = skillCount >= 10 ? 'Expert (10+ skills)' :
+                             skillCount >= 5 ? 'Experienced (5-9 skills)' :
+                             skillCount >= 2 ? 'Intermediate (2-4 skills)' :
+                             'Beginner (0-1 skills)';
+        experienceLevels[skillCategory] = (experienceLevels[skillCategory] || 0) + 1;
 
         // Calculate average rate
         if (talent.hourly_rate) {
@@ -1238,9 +1242,9 @@ function createTalentProfileHTML(talent) {
                      class="w-20 h-20 rounded-full object-cover">
                 <div>
                     <h4 class="text-xl font-semibold text-gray-900">${talent.name}</h4>
-                    <p class="text-purple-600 font-medium">${talent.experience_level || 'Professional'}</p>
+                    <p class="text-purple-600 font-medium">${talent.skills ? talent.skills.length + ' Skills' : 'Professional'}</p>
                     ${talent.location ? `<p class="text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${talent.location}</p>` : ''}
-                    ${talent.hourly_rate ? `<p class="text-green-600 font-semibold">$${talent.hourly_rate}/hour</p>` : ''}
+                    ${talent.hourly_rate ? `<p class="text-green-600 font-semibold">Rp ${new Intl.NumberFormat('id-ID').format(talent.hourly_rate * 15000)}/hour</p>` : ''}
                 </div>
             </div>
 

@@ -133,6 +133,34 @@
                        class="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-gray-50 transition-colors font-medium">
                         <i class="fas fa-eye mr-2"></i>View All
                     </a>
+
+                    <!-- PDF Export Dropdown -->
+                    <div class="relative">
+                        <button id="exportDropdownButton" class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors font-medium flex items-center">
+                            <i class="fas fa-download mr-2"></i>Export PDF
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+                        <div id="exportDropdownMenu" class="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible transition-all duration-200 z-10">
+                            <div class="py-2">
+                                <a href="{{ route('recruiter.export_request_history') }}"
+                                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-history mr-3 text-blue-500"></i>
+                                    <div>
+                                        <div class="font-medium">Request History</div>
+                                        <div class="text-xs text-gray-500">All your talent requests</div>
+                                    </div>
+                                </a>
+                                <a href="{{ route('recruiter.export_onboarded_talents') }}"
+                                   class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                    <i class="fas fa-user-check mr-3 text-green-500"></i>
+                                    <div>
+                                        <div class="font-medium">Onboarded Talents</div>
+                                        <div class="text-xs text-gray-500">Successfully hired talents</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -272,7 +300,7 @@
                             $metrics = $talent->scouting_metrics ?? [];
                             $overallScore = 0;
                             $scoreCount = 0;
-                            foreach(['learning_velocity', 'consistency', 'certifications', 'market_demand'] as $key) {
+                            foreach(['learning_velocity', 'consistency', 'certifications'] as $key) {
                                 if(isset($metrics[$key]['score'])) {
                                     $overallScore += $metrics[$key]['score'];
                                     $scoreCount++;
@@ -281,9 +309,13 @@
                             $overallScore = $scoreCount > 0 ? round($overallScore / $scoreCount) : 0;
                         @endphp
 
-                        <div class="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow talent-card" data-talent-id="{{ $talent->id }}">
+                        <div class="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow talent-card relative" data-talent-id="{{ $talent->id }}">
                             <!-- Compare Checkbox (Hidden by default) -->
                             <div class="compare-checkbox hidden absolute top-4 right-4 z-10">
+                                @php
+                                    $talentSkills = $talent->user->getTalentSkillsArray();
+                                    $skillsJson = json_encode($talentSkills);
+                                @endphp
                                 <input type="checkbox"
                                        class="talent-compare-check w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
                                        data-talent-id="{{ $talent->id }}"
@@ -294,6 +326,7 @@
                                        data-talent-courses="{{ $metrics['progress_tracking']['completed_courses'] ?? 0 }}"
                                        data-talent-certificates="{{ $metrics['certifications']['total_certificates'] ?? 0 }}"
                                        data-talent-quiz-avg="{{ $metrics['quiz_performance']['average_score'] ?? 0 }}"
+                                       data-talent-skills="{{ htmlspecialchars($skillsJson, ENT_QUOTES, 'UTF-8') }}"
                                        onchange="updateCompareSelection()">
                             </div>
 
@@ -355,6 +388,59 @@
                                     <div class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
                                         <div class="w-2 h-2 bg-gray-500 rounded-full mr-2"></div>
                                         Status Unknown
+                                    </div>
+                                @endif
+                            </div>
+
+                            <!-- Skills Section -->
+                            <div class="mb-4">
+                                @php
+                                    $skills = $talent->user->getTalentSkillsArray();
+                                @endphp
+                                @if(!empty($skills))
+                                    <div class="bg-gray-50 rounded-lg p-3">
+                                        <h4 class="text-sm font-semibold text-gray-700 mb-2 flex items-center">
+                                            <i class="fas fa-star text-yellow-500 mr-1"></i>Skills
+                                        </h4>
+                                        <div class="space-y-1">
+                                            @foreach(array_slice($skills, 0, 3) as $skill)
+                                                @php
+                                                    // Handle both string skills and object skills
+                                                    if (is_string($skill)) {
+                                                        $skillName = $skill;
+                                                        $skillProficiency = 'intermediate'; // Default
+                                                    } else {
+                                                        $skillName = $skill['skill_name'] ?? $skill['name'] ?? (is_string($skill) ? $skill : 'Unknown Skill');
+                                                        $skillProficiency = $skill['proficiency'] ?? $skill['level'] ?? 'intermediate';
+                                                    }
+                                                @endphp
+                                                <div class="flex justify-between items-center text-xs">
+                                                    <span class="text-gray-700 font-medium">{{ $skillName }}</span>
+                                                    <span class="px-2 py-1 rounded-full text-xs font-medium
+                                                        @if(strtolower($skillProficiency) == 'advanced' || strtolower($skillProficiency) == 'expert') bg-green-100 text-green-800
+                                                        @elseif(strtolower($skillProficiency) == 'intermediate') bg-blue-100 text-blue-800
+                                                        @elseif(strtolower($skillProficiency) == 'beginner') bg-yellow-100 text-yellow-800
+                                                        @else bg-gray-100 text-gray-800 @endif">
+                                                        {{ ucfirst($skillProficiency) }}
+                                                    </span>
+                                                </div>
+                                            @endforeach
+                                            @if(count($skills) > 3)
+                                                <div class="mt-2 text-center">
+                                                    <button onclick="showAllSkills('{{ $talent->id }}', '{{ $talent->user->name }}', {{ json_encode($skills) }})"
+                                                            class="text-xs text-blue-600 hover:text-blue-800 font-medium underline decoration-dotted hover:decoration-solid transition-all">
+                                                        <i class="fas fa-eye mr-1"></i>See all {{ count($skills) }} skills
+                                                    </button>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @else
+                                    <div class="bg-gray-50 rounded-lg p-3">
+                                        <div class="text-center text-gray-500 text-sm">
+                                            <i class="fas fa-graduation-cap text-gray-400 mb-1"></i>
+                                            <div>No skills acquired yet</div>
+                                        </div>
                                     </div>
                                 @endif
                             </div>
@@ -521,11 +607,11 @@
                                 <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                         id="budgetRange" name="budget_range">
                                     <option value="">Select budget range</option>
-                                    <option value="Under $1,000">Under $1,000</option>
-                                    <option value="$1,000 - $5,000">$1,000 - $5,000</option>
-                                    <option value="$5,000 - $10,000">$5,000 - $10,000</option>
-                                    <option value="$10,000 - $25,000">$10,000 - $25,000</option>
-                                    <option value="$25,000+">$25,000+</option>
+                                    <option value="Under Rp 10.000.000">Under Rp 10.000.000</option>
+                                    <option value="Rp 10.000.000 - Rp 50.000.000">Rp 10.000.000 - Rp 50.000.000</option>
+                                    <option value="Rp 50.000.000 - Rp 100.000.000">Rp 50.000.000 - Rp 100.000.000</option>
+                                    <option value="Rp 100.000.000 - Rp 250.000.000">Rp 100.000.000 - Rp 250.000.000</option>
+                                    <option value="Rp 250.000.000+">Rp 250.000.000+</option>
                                     <option value="Negotiable">Negotiable</option>
                                 </select>
                             </div>
@@ -546,18 +632,6 @@
                                 </select>
                                 <p class="text-xs text-gray-500 mt-1">Required for time-blocking to prevent overlapping projects</p>
                             </div>
-
-                            <div>
-                                <label for="urgencyLevel" class="block text-sm font-semibold text-gray-700 mb-2">
-                                    Urgency Level <span class="text-red-500">*</span>
-                                </label>
-                                <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                                        id="urgencyLevel" name="urgency_level" required>
-                                    <option value="low">Low - Flexible timeline</option>
-                                    <option value="medium" selected>Medium - Standard timeline</option>
-                                    <option value="high">High - Urgent requirement</option>
-                                </select>
-                            </div>
                         </div>
 
                         <div class="space-y-6">
@@ -576,13 +650,6 @@
                                           id="requirements" name="requirements" rows="3"
                                           placeholder="List any specific skills, technologies, or qualifications needed..."></textarea>
                             </div>
-
-                            <div>
-                                <label for="recruiterMessage" class="block text-sm font-semibold text-gray-700 mb-2">Personal Message</label>
-                                <textarea class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 resize-none"
-                                          id="recruiterMessage" name="recruiter_message" rows="3"
-                                          placeholder="Add a personal message to the talent (optional)..."></textarea>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -600,10 +667,153 @@
     </div>
 </div>
 
+<!-- Talent Skills Modal -->
+<div class="modal fade" id="talentSkillsModal" tabindex="-1" role="dialog" aria-labelledby="talentSkillsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content rounded-2xl border-0 shadow-2xl">
+            <div class="modal-header bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-t-2xl border-0 p-6">
+                <h5 class="modal-title text-xl font-bold flex items-center" id="talentSkillsModalLabel">
+                    <div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-star text-white"></i>
+                    </div>
+                    All Skills
+                </h5>
+                <button type="button" class="text-white hover:text-gray-200 transition-colors duration-200" data-dismiss="modal" aria-label="Close">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="modal-body p-8">
+                <div class="mb-4">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-user-graduate text-yellow-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h6 class="font-bold text-gray-900" id="skillsModalTalentName">Talent Name</h6>
+                            <p class="text-gray-600 text-sm">Complete Skills Overview</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Skills Grid -->
+                <div id="allSkillsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Skills will be populated here by JavaScript -->
+                </div>
+
+                <!-- Skills Summary -->
+                <div class="mt-6 bg-gray-50 rounded-xl p-4">
+                    <h6 class="font-semibold text-gray-900 mb-3">Skills Summary</h6>
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="text-2xl font-bold text-gray-900" id="totalSkillsCount">0</div>
+                            <div class="text-xs text-gray-600">Total Skills</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="text-2xl font-bold text-green-600" id="advancedSkillsCount">0</div>
+                            <div class="text-xs text-gray-600">Advanced</div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3">
+                            <div class="text-2xl font-bold text-blue-600" id="intermediateSkillsCount">0</div>
+                            <div class="text-xs text-gray-600">Intermediate</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-gray-50 rounded-b-2xl border-0 p-6">
+                <button type="button" class="px-6 py-3 bg-gray-500 text-white rounded-xl hover:bg-gray-600 transition-all duration-200 font-medium mr-3" data-dismiss="modal">
+                    <i class="fas fa-times mr-2"></i>Close
+                </button>
+                <button type="button" class="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all duration-200 font-medium" onclick="requestTalentFromSkillsModal()">
+                    <i class="fas fa-handshake mr-2"></i>Request This Talent
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 let currentTalentEmail = '';
 let currentRequestTalentId = '';
 let currentRequestTalentName = '';
+let currentSkillsModalTalentId = '';
+
+function showAllSkills(talentId, talentName, skills) {
+    currentSkillsModalTalentId = talentId;
+
+    // Update modal title
+    document.getElementById('skillsModalTalentName').textContent = talentName;
+    document.getElementById('talentSkillsModalLabel').innerHTML = `
+        <div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3">
+            <i class="fas fa-star text-white"></i>
+        </div>
+        ${talentName}'s Skills
+    `;
+
+    // Populate skills container
+    const skillsContainer = document.getElementById('allSkillsContainer');
+    skillsContainer.innerHTML = '';
+
+    // Count skills by proficiency
+    let totalSkills = skills.length;
+    let advancedCount = 0;
+    let intermediateCount = 0;
+    let beginnerCount = 0;
+
+    skills.forEach(skill => {
+        const proficiency = skill.proficiency ? skill.proficiency.toLowerCase() : 'unknown';
+        if (proficiency === 'advanced') advancedCount++;
+        else if (proficiency === 'intermediate') intermediateCount++;
+        else if (proficiency === 'beginner') beginnerCount++;
+
+        // Create skill card
+        const skillCard = document.createElement('div');
+        skillCard.className = 'bg-white border rounded-lg p-4 hover:shadow-md transition-shadow';
+
+        let proficiencyColorClass = 'bg-gray-100 text-gray-800';
+        if (proficiency === 'advanced') proficiencyColorClass = 'bg-green-100 text-green-800';
+        else if (proficiency === 'intermediate') proficiencyColorClass = 'bg-blue-100 text-blue-800';
+        else if (proficiency === 'beginner') proficiencyColorClass = 'bg-yellow-100 text-yellow-800';
+
+        skillCard.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <h6 class="font-semibold text-gray-900 text-sm">${skill.skill_name || 'Unknown Skill'}</h6>
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${proficiencyColorClass}">
+                    ${skill.proficiency ? skill.proficiency.charAt(0).toUpperCase() + skill.proficiency.slice(1) : 'Unknown'}
+                </span>
+            </div>
+            ${skill.completed_date ? `
+                <div class="text-xs text-gray-500 flex items-center">
+                    <i class="fas fa-calendar-check mr-1"></i>
+                    Completed: ${new Date(skill.completed_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    })}
+                </div>
+            ` : ''}
+        `;
+
+        skillsContainer.appendChild(skillCard);
+    });
+
+    // Update summary counts
+    document.getElementById('totalSkillsCount').textContent = totalSkills;
+    document.getElementById('advancedSkillsCount').textContent = advancedCount;
+    document.getElementById('intermediateSkillsCount').textContent = intermediateCount;
+
+    // Show modal
+    $('#talentSkillsModal').modal('show');
+}
+
+function requestTalentFromSkillsModal() {
+    // Close skills modal and open request modal
+    $('#talentSkillsModal').modal('hide');
+
+    // Wait for modal to close then open request modal
+    setTimeout(() => {
+        openRequestModal(currentSkillsModalTalentId, document.getElementById('skillsModalTalentName').textContent);
+    }, 300);
+}
 
 function viewTalentDetails(name, email, profession, address, phone) {
     document.getElementById('modalTalentName').textContent = name;
@@ -1128,7 +1338,94 @@ $(document).ready(function() {
             $(this).removeClass('transform scale-105');
         }
     );
+
+    // Add click handlers for talent cards in compare mode
+    $('.talent-card').on('click', function(e) {
+        // Only handle clicks when in compare mode
+        if (!isCompareMode) return;
+
+        // Don't trigger if clicking on buttons, links, or other interactive elements
+        if ($(e.target).closest('button, a, input, .modal').length > 0) return;
+
+        // Find the checkbox within this card
+        const checkbox = $(this).find('.talent-compare-check')[0];
+        if (checkbox) {
+            checkbox.checked = !checkbox.checked;
+            updateCompareSelection();
+
+            // Visual feedback
+            if (checkbox.checked) {
+                $(this).addClass('ring-2 ring-emerald-500 bg-emerald-50');
+            } else {
+                $(this).removeClass('ring-2 ring-emerald-500 bg-emerald-50');
+            }
+        }
+    });
+
+    // Initialize Export PDF Dropdown
+    initializeExportDropdown();
 });
+
+// Export PDF Dropdown Functionality
+function initializeExportDropdown() {
+    const dropdownButton = document.getElementById('exportDropdownButton');
+    const dropdownMenu = document.getElementById('exportDropdownMenu');
+
+    if (dropdownButton && dropdownMenu) {
+        // Toggle dropdown on button click
+        dropdownButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleExportDropdown();
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!dropdownButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                closeExportDropdown();
+            }
+        });
+
+        // Close dropdown on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeExportDropdown();
+            }
+        });
+    }
+}
+
+function toggleExportDropdown() {
+    console.log('toggleExportDropdown called'); // Debug log
+    const dropdownMenu = document.getElementById('exportDropdownMenu');
+    if (!dropdownMenu) {
+        console.error('Dropdown menu not found!'); // Debug log
+        return;
+    }
+
+    const isVisible = dropdownMenu.classList.contains('opacity-100');
+    console.log('Current visibility:', isVisible); // Debug log
+
+    if (isVisible) {
+        console.log('Closing dropdown'); // Debug log
+        closeExportDropdown();
+    } else {
+        console.log('Opening dropdown'); // Debug log
+        openExportDropdown();
+    }
+}
+
+function openExportDropdown() {
+    const dropdownMenu = document.getElementById('exportDropdownMenu');
+    dropdownMenu.classList.remove('opacity-0', 'invisible');
+    dropdownMenu.classList.add('opacity-100', 'visible');
+}
+
+function closeExportDropdown() {
+    const dropdownMenu = document.getElementById('exportDropdownMenu');
+    dropdownMenu.classList.remove('opacity-100', 'visible');
+    dropdownMenu.classList.add('opacity-0', 'invisible');
+}
 
 // ===== TALENT COMPARISON FUNCTIONALITY =====
 let isCompareMode = false;
@@ -1143,36 +1440,58 @@ function toggleCompareMode() {
     if (isCompareMode) {
         // Enable compare mode
         checkboxes.forEach(cb => cb.classList.remove('hidden'));
-        compareBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Exit Compare';
-        compareBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-        compareBtn.classList.remove('bg-white/20', 'hover:bg-white/30');
+        if (compareBtn) {
+            compareBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Exit Compare';
+            compareBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'text-white');
+            compareBtn.classList.remove('bg-white/20', 'hover:bg-white/30');
+        }
 
         // Show comparison panel
-        comparisonPanel.style.display = 'block';
-        setTimeout(() => {
-            comparisonPanel.classList.remove('translate-y-full');
-        }, 10);
+        if (comparisonPanel) {
+            comparisonPanel.style.display = 'block';
+            setTimeout(() => {
+                comparisonPanel.classList.remove('translate-y-full');
+            }, 10);
+        }
 
         // Add margin to body to account for panel
         document.body.style.marginBottom = '120px';
+
+        // Add visual indicator that cards are clickable
+        document.querySelectorAll('.talent-card').forEach(card => {
+            card.style.cursor = 'pointer';
+            card.classList.add('hover:ring-2', 'hover:ring-emerald-300', 'transition-all');
+        });
     } else {
         // Disable compare mode
         checkboxes.forEach(cb => {
             cb.classList.add('hidden');
-            cb.querySelector('input').checked = false;
+            const checkbox = cb.querySelector('input');
+            if (checkbox) checkbox.checked = false;
         });
-        compareBtn.innerHTML = '<i class="fas fa-balance-scale mr-2"></i>Compare';
-        compareBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-        compareBtn.classList.add('bg-white/20', 'hover:bg-white/30');
+
+        if (compareBtn) {
+            compareBtn.innerHTML = '<i class="fas fa-balance-scale mr-2"></i>Compare';
+            compareBtn.classList.remove('bg-red-600', 'hover:bg-red-700', 'text-white');
+            compareBtn.classList.add('bg-white/20', 'hover:bg-white/30');
+        }
 
         // Hide comparison panel
-        comparisonPanel.classList.add('translate-y-full');
-        setTimeout(() => {
-            comparisonPanel.style.display = 'none';
-        }, 300);
+        if (comparisonPanel) {
+            comparisonPanel.classList.add('translate-y-full');
+            setTimeout(() => {
+                comparisonPanel.style.display = 'none';
+            }, 300);
+        }
 
         // Reset margin
         document.body.style.marginBottom = '0';
+
+        // Remove visual indicators and selected states
+        document.querySelectorAll('.talent-card').forEach(card => {
+            card.style.cursor = 'default';
+            card.classList.remove('hover:ring-2', 'hover:ring-emerald-300', 'transition-all', 'ring-2', 'ring-emerald-500', 'bg-emerald-50');
+        });
 
         // Clear selection
         selectedTalents = [];
@@ -1182,24 +1501,44 @@ function toggleCompareMode() {
 
 function updateCompareSelection() {
     const checkedBoxes = document.querySelectorAll('.talent-compare-check:checked');
-    selectedTalents = Array.from(checkedBoxes).map(cb => ({
-        id: cb.dataset.talentId,
-        name: cb.dataset.talentName,
-        email: cb.dataset.talentEmail,
-        position: cb.dataset.talentPosition,
-        score: cb.dataset.talentScore,
-        courses: cb.dataset.talentCourses,
-        certificates: cb.dataset.talentCertificates,
-        quizAvg: cb.dataset.talentQuizAvg
-    }));
+
+    selectedTalents = Array.from(checkedBoxes).map(cb => {
+        const skills = cb.dataset.talentSkills ? JSON.parse(cb.dataset.talentSkills) : [];
+
+        return {
+            id: cb.dataset.talentId,
+            name: cb.dataset.talentName,
+            email: cb.dataset.talentEmail,
+            position: cb.dataset.talentPosition,
+            score: cb.dataset.talentScore,
+            courses: cb.dataset.talentCourses,
+            certificates: cb.dataset.talentCertificates,
+            quizAvg: cb.dataset.talentQuizAvg,
+            skills: skills
+        };
+    });
+
+    // Update visual state of all talent cards
+    document.querySelectorAll('.talent-card').forEach(card => {
+        const checkbox = card.querySelector('.talent-compare-check');
+        if (checkbox && checkbox.checked) {
+            card.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-50');
+        } else {
+            card.classList.remove('ring-2', 'ring-emerald-500', 'bg-emerald-50');
+        }
+    });
 
     // Update counter
     const selectedCount = document.getElementById('selectedCount');
-    selectedCount.textContent = `${selectedTalents.length} selected`;
+    if (selectedCount) {
+        selectedCount.textContent = `${selectedTalents.length} selected`;
+    }
 
     // Update compare button state
     const compareBtn = document.getElementById('compareBtn');
-    compareBtn.disabled = selectedTalents.length < 2;
+    if (compareBtn) {
+        compareBtn.disabled = selectedTalents.length < 2;
+    }
 
     // Update preview
     updateSelectedTalentsPreview();
@@ -1310,6 +1649,31 @@ function generateComparisonTable() {
                         <td class="border border-gray-200 p-4 font-medium bg-gray-50">Quiz Average</td>
                         ${selectedTalents.map(talent => `
                             <td class="border border-gray-200 p-4 text-center font-semibold">${talent.quizAvg}%</td>
+                        `).join('')}
+                    </tr>
+                    <tr>
+                        <td class="border border-gray-200 p-4 font-medium bg-gray-50">Skills</td>
+                        ${selectedTalents.map(talent => `
+                            <td class="border border-gray-200 p-4">
+                                <div class="space-y-1">
+                                    ${talent.skills && talent.skills.length > 0 ?
+                                        talent.skills.slice(0, 4).map(skill => `
+                                            <div class="flex justify-between items-center text-xs">
+                                                <span class="font-medium text-gray-700">${skill.skill_name || 'Unknown'}</span>
+                                                <span class="px-2 py-1 rounded-full text-xs font-medium
+                                                    ${skill.proficiency && skill.proficiency.toLowerCase() === 'advanced' ? 'bg-green-100 text-green-800' :
+                                                      skill.proficiency && skill.proficiency.toLowerCase() === 'intermediate' ? 'bg-blue-100 text-blue-800' :
+                                                      skill.proficiency && skill.proficiency.toLowerCase() === 'beginner' ? 'bg-yellow-100 text-yellow-800' :
+                                                      'bg-gray-100 text-gray-800'}">
+                                                    ${skill.proficiency ? skill.proficiency.charAt(0).toUpperCase() + skill.proficiency.slice(1) : 'Unknown'}
+                                                </span>
+                                            </div>
+                                        `).join('') +
+                                        (talent.skills.length > 4 ? `<div class="text-xs text-gray-500 text-center mt-1">+${talent.skills.length - 4} more</div>` : '')
+                                        : '<div class="text-xs text-gray-500 text-center">No skills acquired</div>'
+                                    }
+                                </div>
+                            </td>
                         `).join('')}
                     </tr>
                     <tr>

@@ -64,8 +64,10 @@
                     <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                     </svg>
-                    {{ is_array($skill) && isset($skill['name']) ? $skill['name'] : $skill }}
-                    @if(is_array($skill) && isset($skill['level']))
+                    {{ is_array($skill) ? ($skill['skill_name'] ?? $skill['name'] ?? 'Unknown') : $skill }}
+                    @if(is_array($skill) && isset($skill['proficiency']))
+                        <span class="ml-1 text-green-600">({{ ucfirst($skill['proficiency']) }})</span>
+                    @elseif(is_array($skill) && isset($skill['level']))
                         <span class="ml-1 text-green-600">({{ ucfirst($skill['level']) }})</span>
                     @endif
                 </span>
@@ -99,7 +101,7 @@
         <div id="talent-details" class="{{ $user->available_for_scouting ? '' : 'hidden' }}">
             <!-- Hourly Rate -->
             <div>
-                <x-input-label for="hourly_rate" :value="__('Hourly Rate (USD)')" />
+                <x-input-label for="hourly_rate" :value="__('Hourly Rate (IDR)')" />
                 <x-text-input id="hourly_rate" name="hourly_rate" type="number" step="0.01" min="0"
                              class="mt-1 block w-full" :value="old('hourly_rate', $user->hourly_rate)" />
                 <x-input-error class="mt-2" :messages="$errors->get('hourly_rate')" />
@@ -139,28 +141,6 @@
                              class="mt-1 block w-full" :value="old('phone', $user->phone)"
                              placeholder="+1 (555) 123-4567" />
                 <x-input-error class="mt-2" :messages="$errors->get('phone')" />
-            </div>
-
-            <!-- Experience Level -->
-            <div>
-                <x-input-label for="experience_level" :value="__('Experience Level')" />
-                <select id="experience_level" name="experience_level"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    <option value="">{{ __('Select experience level') }}</option>
-                    <option value="beginner" {{ old('experience_level', $user->experience_level) === 'beginner' ? 'selected' : '' }}>
-                        {{ __('Beginner') }}
-                    </option>
-                    <option value="intermediate" {{ old('experience_level', $user->experience_level) === 'intermediate' ? 'selected' : '' }}>
-                        {{ __('Intermediate') }}
-                    </option>
-                    <option value="advanced" {{ old('experience_level', $user->experience_level) === 'advanced' ? 'selected' : '' }}>
-                        {{ __('Advanced') }}
-                    </option>
-                    <option value="expert" {{ old('experience_level', $user->experience_level) === 'expert' ? 'selected' : '' }}>
-                        {{ __('Expert') }}
-                    </option>
-                </select>
-                <x-input-error class="mt-2" :messages="$errors->get('experience_level')" />
             </div>
         </div>
 

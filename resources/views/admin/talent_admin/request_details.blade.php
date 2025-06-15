@@ -27,7 +27,8 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6">                            <div class="form-group">
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label class="font-weight-bold">Request ID:</label>
                                 <p class="text-muted">#{{ $talentRequest->id }}</p>
                             </div>
@@ -47,25 +48,16 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-md-6">                            <div class="form-group">
+                        <div class="col-md-6">
+                            <div class="form-group">
                                 <label class="font-weight-bold">Project Title:</label>
                                 <p class="text-muted">{{ $talentRequest->project_title ?? 'Not specified' }}</p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label class="font-weight-bold">Urgency Level:</label>
-                                <p>
-                                    @php
-                                        $urgencyColors = [
-                                            'low' => 'success',
-                                            'medium' => 'warning',
-                                            'high' => 'danger'
-                                        ];
-                                    @endphp                                    <span class="badge bg-{{ $urgencyColors[$talentRequest->urgency_level] ?? 'secondary' }}">
-                                        {{ ucfirst($talentRequest->urgency_level ?? 'Not specified') }}
-                                    </span>
-                                </p>
+                                <label class="font-weight-bold">Collaboration Type:</label>
+                                <p class="text-muted">{{ $talentRequest->collaboration_type ?? 'Not specified' }}</p>
                             </div>
                         </div>
                     </div>                    @if($talentRequest->budget_range || $talentRequest->project_duration)
@@ -89,7 +81,8 @@
                     </div>
                     @endif
 
-                    <div class="row">                        <div class="col-md-6">
+                    <div class="row">
+                        <div class="col-md-6">
                             <div class="form-group">
                                 <label class="font-weight-bold">Request Date:</label>
                                 <p class="text-muted">{{ $talentRequest->created_at->format('F d, Y \a\t H:i') }}</p>
@@ -101,12 +94,11 @@
                                 <p class="text-muted">{{ $talentRequest->updated_at->format('F d, Y \a\t H:i') }}</p>
                             </div>
                         </div>
-                    </div>                    <div class="form-group">
+                    </div>
+
+                    <div class="form-group">
                         <label class="font-weight-bold">Skills Required:</label>
-                        <p class="text-muted">{{ $talentRequest->skills ?? 'Not specified' }}</p>
-                    </div><div class="form-group">
-                        <label class="font-weight-bold">Experience Level:</label>
-                        <p class="text-muted">{{ $talentRequest->experience_level ?? 'Not specified' }}</p>
+                        <p class="text-muted">Not specified in request</p>
                     </div>
 
                     @if($talentRequest->project_description)
@@ -130,28 +122,6 @@
                         </div>
                     </div>
                     @endif
-
-                    @if($talentRequest->recruiter_message)
-                    <div class="form-group">
-                        <label class="font-weight-bold">Recruiter Message:</label>
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <p class="mb-0">{{ $talentRequest->recruiter_message }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-
-                    @if($talentRequest->admin_notes)
-                    <div class="form-group">
-                        <label class="font-weight-bold">Admin Notes:</label>
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <p class="mb-0">{{ $talentRequest->admin_notes }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
                 </div>
             </div>
         </div>
@@ -161,7 +131,8 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-warning">Quick Actions</h6>
-                </div>                <div class="card-body">                    @if($talentRequest->status !== 'rejected' && $talentRequest->status !== 'completed')
+                </div>
+                <div class="card-body">                    @if($talentRequest->status !== 'rejected' && $talentRequest->status !== 'completed')
                         <div class="d-grid gap-2 mb-3">
                             @if($talentRequest->status == 'pending')
                             <button type="button" class="btn btn-success btn-sm" onclick="updateStatus({{ $talentRequest->id }}, 'approved')">
@@ -268,7 +239,8 @@
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-info">Recruiter Information</h6>
                 </div>
-                <div class="card-body">                    <div class="d-flex align-items-center mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
                         @if(optional($talentRequest->recruiter->user)->avatar)
                             <img class="rounded-circle me-3" src="{{ asset('storage/' . $talentRequest->recruiter->user->avatar) }}"
                                  alt="{{ $talentRequest->recruiter->user->name ?? 'Recruiter' }}" style="width: 60px; height: 60px; object-fit: cover;">
@@ -281,7 +253,9 @@
                             <h5 class="mb-1">{{ $talentRequest->recruiter->user->name ?? 'N/A' }}</h5>
                             <p class="text-muted mb-0">{{ $talentRequest->recruiter->user->pekerjaan ?? 'Not specified' }}</p>
                         </div>
-                    </div>                    <div class="row mb-3">
+                    </div>
+
+                    <div class="row mb-3">
                         <div class="col-sm-3"><strong>Email:</strong></div>
                         <div class="col-sm-9">
                             @if($talentRequest->recruiter->user->email ?? null)
@@ -323,7 +297,8 @@
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-success">Talent Information</h6>
                 </div>
-                <div class="card-body">                    <div class="d-flex align-items-center mb-3">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
                         @if(optional($talentRequest->talent->user)->avatar)
                             <img class="rounded-circle me-3" src="{{ asset('storage/' . $talentRequest->talent->user->avatar) }}"
                                  alt="{{ $talentRequest->talent->user->name ?? 'Talent' }}" style="width: 60px; height: 60px; object-fit: cover;">
@@ -336,7 +311,9 @@
                             <h5 class="mb-1">{{ $talentRequest->talent->user->name ?? 'N/A' }}</h5>
                             <p class="text-muted mb-0">{{ $talentRequest->talent->user->pekerjaan ?? 'Not specified' }}</p>
                         </div>
-                    </div>                    <div class="row mb-3">
+                    </div>
+
+                    <div class="row mb-3">
                         <div class="col-sm-3"><strong>Email:</strong></div>
                         <div class="col-sm-9">
                             @if($talentRequest->talent->user->email ?? null)
@@ -355,33 +332,24 @@
                     <div class="row mb-3">
                         <div class="col-sm-3"><strong>Skills:</strong></div>
                         <div class="col-sm-9">
-                            @if($talentRequest->talent->user->talent_skills)
-                                @php
-                                    $skills = is_string($talentRequest->talent->user->talent_skills)
-                                        ? json_decode($talentRequest->talent->user->talent_skills, true)
-                                        : $talentRequest->talent->user->talent_skills;
-                                @endphp
-                                @if(is_array($skills) && count($skills) > 0)
-                                    <div class="d-flex flex-wrap">
-                                        @foreach($skills as $skill)
-                                            <span class="badge bg-primary me-1 mb-1">{{ $skill }}</span>
-                                        @endforeach
-                                    </div>
-                                @else
-                                    Not specified
-                                @endif
+                            @php
+                                $skills = $talentRequest->talent->user->getTalentSkillsArray();
+                                $skillCount = count($skills);
+                            @endphp
+                            @if($skillCount > 0)
+                                <span class="badge bg-success">{{ $skillCount }} Verified Skills</span>
+                                <div class="mt-2">
+                                    @foreach(array_slice($skills, 0, 5) as $skill)
+                                        @if(is_array($skill) && isset($skill['skill_name']))
+                                            <span class="badge bg-light text-dark me-1">{{ $skill['skill_name'] }} ({{ ucfirst($skill['proficiency'] ?? 'intermediate') }})</span>
+                                        @endif
+                                    @endforeach
+                                    @if($skillCount > 5)
+                                        <span class="text-muted">+{{ $skillCount - 5 }} more</span>
+                                    @endif
+                                </div>
                             @else
-                                Not specified
-                            @endif
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-sm-3"><strong>Experience:</strong></div>
-                        <div class="col-sm-9">
-                            @if($talentRequest->talent->user->experience_level)
-                                <span class="badge bg-info">{{ ucfirst($talentRequest->talent->user->experience_level) }}</span>
-                            @else
-                                Not specified
+                                <span class="text-muted">No skills verified yet</span>
                             @endif
                         </div>
                     </div>
@@ -502,17 +470,12 @@ function acceptAsAdmin(requestId) {
         return;
     }
 
-    const notes = prompt('Optional: Add admin acceptance notes:') || '';
-
     fetch(`/talent-admin/request/${requestId}/admin-accept`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            admin_acceptance_notes: notes
-        })
+        }
     })
     .then(response => response.json())
     .then(data => {

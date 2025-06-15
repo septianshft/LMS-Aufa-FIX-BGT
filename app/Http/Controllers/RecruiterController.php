@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\Snappy\Facades\SnappyPdf;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\User;
 use App\Models\Talent;
 use App\Models\TalentRequest;
@@ -234,9 +236,7 @@ class RecruiterController extends Controller
             'project_description' => 'required|string',
             'requirements' => 'nullable|string',
             'budget_range' => 'nullable|string|max:100',
-            'project_duration' => 'required|string|max:100',
-            'urgency_level' => 'required|in:low,medium,high',
-            'recruiter_message' => 'nullable|string'
+            'project_duration' => 'required|string|max:100'
         ]);
 
         $user = Auth::user();
@@ -321,8 +321,6 @@ class RecruiterController extends Controller
             'requirements' => $request->requirements,
             'budget_range' => $request->budget_range,
             'project_duration' => $request->project_duration,
-            'urgency_level' => $request->urgency_level,
-            'recruiter_message' => $request->recruiter_message,
             'status' => 'pending',
             // Time-blocking fields
             'project_start_date' => $projectStartDate,
@@ -428,8 +426,6 @@ class RecruiterController extends Controller
                     'requirements' => $request->requirements,
                     'budget' => $request->budget_range,
                     'project_duration' => $request->project_duration,
-                    'urgency_level' => ucfirst($request->urgency_level),
-                    'recruiter_message' => $request->recruiter_message,
                     'status' => ucfirst($request->status),
                     'created_at' => $request->created_at->format('M d, Y h:i A'),
                     'updated_at' => $request->updated_at->format('M d, Y h:i A'),
@@ -668,4 +664,117 @@ class RecruiterController extends Controller
 
         return array_unique(array_map('strtolower', $skills));
     }
+
+    public function exportRequestsToPdf()
+    {
+        $userId = Auth::id();
+        $user = User::with('recruiter')->find($userId);
+        $recruiter = $user->recruiter;
+
+        if (!$recruiter) {
+            return response()->json(['error' => 'Recruiter profile not found'], 404);
+        }
+
+        $requests = TalentRequest::with(['talent.user'])
+            ->where('recruiter_id', $recruiter->id)
+            ->latest()
+            ->get();
+
+        $pdf = SnappyPdf::loadView('admin.recruiter.requests_pdf', compact('user', 'requests'));
+        return $pdf->download('talent_requests.pdf');
+    }
+
+    /**
+     * Export recruiter's talent request history as PDF
+     */
+    public function exportRequestHistory()
+    {
+        try {
+            $recruiter = Auth::user()->recruiter;
+
+            if (!$recruiter) {
+                return response()->json(['error' => 'Recruiter profile not found'], 404);
+            }
+
+            // Get all talent requests for this recruiter
+            $requests = TalentRequest::with(['talent.user', 'recruiter.user'])
+                ->where('recruiter_id', $recruiter->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $data = [
+                'recruiter' => $recruiter,
+                'recruiter_user' => Auth::user(),
+                'requests' => $requests,
+                'total_requests' => $requests->count(),
+                'pending_requests' => $requests->where('status', 'pending')->count(),
+                'approved_requests' => $requests->where('status', 'approved')->count(),
+                'completed_requests' => $requests->where('status', 'completed')->count(),
+                'export_date' => now()->format('d M Y H:i'),
+            ];
+
+            $filename = 'talent-request-history-' . now()->format('Y-m-d') . '.pdf';
+
+            // Use DomPDF directly since wkhtmltopdf is not installed
+            $pdf = Pdf::loadView('exports.recruiter.request-history', $data);
+            $pdf->setPaper('A4', 'portrait');
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('PDF Export Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Failed to generate PDF',
+                'message' => 'Please contact support if this issue persists.',
+                'debug' => app()->isLocal() ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Export onboarded talent information as PDF
+     */
+    public function exportOnboardedTalents()
+    {
+        try {
+            $recruiter = Auth::user()->recruiter;
+
+            if (!$recruiter) {
+                return response()->json(['error' => 'Recruiter profile not found'], 404);
+            }
+
+            // Get successfully onboarded talents (both admin and talent accepted)
+            $onboardedRequests = TalentRequest::with(['talent.user', 'recruiter.user'])
+                ->where('recruiter_id', $recruiter->id)
+                ->whereIn('status', ['onboarded', 'completed'])
+                ->where('both_parties_accepted', true)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $data = [
+                'recruiter' => $recruiter,
+                'recruiter_user' => Auth::user(),
+                'onboarded_requests' => $onboardedRequests,
+                'total_onboarded' => $onboardedRequests->count(),
+                'export_date' => now()->format('d M Y H:i'),
+            ];
+
+            $filename = 'onboarded-talents-' . now()->format('Y-m-d') . '.pdf';
+
+            // Use DomPDF directly since wkhtmltopdf is not installed
+            $pdf = Pdf::loadView('exports.recruiter.onboarded-talents', $data);
+            $pdf->setPaper('A4', 'portrait');
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('PDF Export Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Failed to generate PDF',
+                'message' => 'Please contact support if this issue persists.',
+                'debug' => app()->isLocal() ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
 }

@@ -22,11 +22,6 @@ return new class extends Migration
                 $table->index(['created_at', 'status'], 'idx_analytics_timeframe');
             }
 
-            // Index for urgent requests filtering (unique to this migration)
-            if (!in_array('idx_urgent_requests', $existingIndexes)) {
-                $table->index(['urgency_level', 'status', 'created_at'], 'idx_urgent_requests');
-            }
-
             // Index for workflow state queries (unique to this migration)
             if (!in_array('idx_workflow_state', $existingIndexes)) {
                 $table->index(['talent_accepted', 'admin_accepted', 'both_parties_accepted'], 'idx_workflow_state');
@@ -56,7 +51,6 @@ return new class extends Migration
             SELECT
                 DATE(created_at) as date,
                 status,
-                urgency_level,
                 COUNT(*) as request_count,
                 COUNT(DISTINCT talent_user_id) as unique_talents,
                 COUNT(DISTINCT recruiter_id) as unique_recruiters,
@@ -64,7 +58,7 @@ return new class extends Migration
             FROM talent_requests
             WHERE created_at >= DATE_SUB(NOW(), INTERVAL 90 DAY)
             AND deleted_at IS NULL
-            GROUP BY DATE(created_at), status, urgency_level
+            GROUP BY DATE(created_at), status
         ');
     }    /**
      * Reverse the migrations.

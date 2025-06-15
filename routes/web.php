@@ -232,6 +232,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/recommendations', [RecruiterController::class, 'getTalentRecommendations'])->name('recommendations');
         });
 
+        // PDF Export Routes
+        Route::get('recruiter/exports/request-history', [RecruiterController::class, 'exportRequestHistory'])->name('recruiter.export_request_history');
+        Route::get('recruiter/exports/onboarded-talents', [RecruiterController::class, 'exportOnboardedTalents'])->name('recruiter.export_onboarded_talents');
+
         // Talent Discovery Routes for Recruiters
         Route::prefix('recruiter/discovery')->name('recruiter.discovery.')->group(function () {
             Route::get('/', [TalentDiscoveryController::class, 'index'])->name('index');
@@ -264,6 +268,97 @@ Route::middleware(['auth', 'role:admin|talent_admin'])->group(function () {
     Route::get('/admin/data-integrity', [App\Http\Controllers\DataIntegrityController::class, 'dashboard'])->name('admin.data_integrity.dashboard');
     Route::post('/admin/data-integrity/run-checks', [App\Http\Controllers\DataIntegrityController::class, 'runChecks'])->name('admin.data_integrity.run_checks');
     Route::get('/admin/data-integrity/download-report', [App\Http\Controllers\DataIntegrityController::class, 'downloadReport'])->name('admin.data_integrity.download_report');
+});
+
+// Test routes for debugging
+Route::get('/test-dashboard-data', function () {
+    // Test data availability and integrity
+    $results = [];
+
+    try {
+        // Test 1: Check if talents exist
+        $totalTalents = \App\Models\Talent::count();
+        $activeTalents = \App\Models\Talent::where('is_active', true)->count();
+        $results['talents'] = [
+            'total' => $totalTalents,
+            'active' => $activeTalents,
+            'status' => $totalTalents > 0 ? 'PASS' : 'FAIL'
+        ];
+
+        // Test 2: Check if users with talent role exist
+        $talentUsers = \App\Models\User::whereHas('roles', function($query) {
+            $query->where('name', 'talent');
+        })->count();
+
+        $scoutingReady = \App\Models\User::where('available_for_scouting', true)->count();
+        $results['talent_users'] = [
+            'total' => $talentUsers,
+            'scouting_ready' => $scoutingReady,
+            'status' => $scoutingReady > 0 ? 'PASS' : 'WARNING'
+        ];
+
+        // Test 3: Check if recruiters exist
+        $totalRecruiters = \App\Models\Recruiter::count();
+        $activeRecruiters = \App\Models\Recruiter::where('is_active', true)->count();
+        $results['recruiters'] = [
+            'total' => $totalRecruiters,
+            'active' => $activeRecruiters,
+            'status' => $totalRecruiters > 0 ? 'PASS' : 'FAIL'
+        ];
+
+        // Test 4: Check talent requests
+        $totalRequests = \App\Models\TalentRequest::count();
+        $pendingRequests = \App\Models\TalentRequest::where('status', 'pending')->count();
+        $results['requests'] = [
+            'total' => $totalRequests,
+            'pending' => $pendingRequests,
+            'status' => 'PASS'
+        ];
+
+        // Test 5: Check specific data for dashboard
+        $talentsWithMetrics = \App\Models\Talent::with(['user'])
+            ->where('is_active', true)
+            ->whereHas('user', function($query) {
+                $query->where('available_for_scouting', true);
+            })
+            ->limit(5)
+            ->get();
+
+        $results['dashboard_data'] = [
+            'talents_for_display' => $talentsWithMetrics->count(),
+            'sample_talent' => $talentsWithMetrics->first() ? [
+                'id' => $talentsWithMetrics->first()->id,
+                'name' => $talentsWithMetrics->first()->user->name,
+                'email' => $talentsWithMetrics->first()->user->email,
+                'scouting_ready' => $talentsWithMetrics->first()->user->available_for_scouting
+            ] : null,
+            'status' => $talentsWithMetrics->count() > 0 ? 'PASS' : 'WARNING'
+        ];
+
+        // Test 6: Check for potential issues
+        $issues = [];
+
+        if ($totalTalents === 0) {
+            $issues[] = 'No talents in database - run seeders';
+        }
+
+        if ($scoutingReady === 0) {
+            $issues[] = 'No talents available for scouting - check available_for_scouting field';
+        }
+
+        if ($totalRecruiters === 0) {
+            $issues[] = 'No recruiters in database - run seeders';
+        }
+
+        $results['issues'] = $issues;
+        $results['overall_status'] = empty($issues) ? 'HEALTHY' : 'NEEDS_ATTENTION';
+
+    } catch (\Exception $e) {
+        $results['error'] = $e->getMessage();
+        $results['overall_status'] = 'ERROR';
+    }
+
+    return response()->json($results, 200, [], JSON_PRETTY_PRINT);
 });
 
 require __DIR__.'/auth.php';

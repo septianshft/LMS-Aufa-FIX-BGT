@@ -18,14 +18,14 @@ use Faker\Factory as Faker;
 class TraineeSeeder extends Seeder
 {
     /**
-     * Seed a trainee user with completed LMS courses for testing trainee-to-talent conversion.
-     * This creates a realistic learning history that will be used to generate talent skills.
+     * Seed 3 trainee users with completed LMS courses for testing trainee-to-talent conversion.
+     * This creates realistic learning histories that will be used to generate talent skills.
      */
     public function run(): void
     {
         $faker = Faker::create();
 
-        $this->command->info('🎓 Creating trainee with LMS completion data...');
+        $this->command->info('🎓 Creating 3 trainees with LMS completion data...');
 
         // ===============================================
         // CREATE SAMPLE COURSES IF NEEDED
@@ -33,113 +33,148 @@ class TraineeSeeder extends Seeder
         $this->createSampleCourses();
 
         // ===============================================
-        // CREATE TRAINEE USER
+        // TRAINEE PROFILES DATA
         // ===============================================
+        $traineeProfiles = [
+            [
+                'email' => 'trainee1@test.com',
+                'name' => 'Lisa Web Developer',
+                'pekerjaan' => 'Junior Frontend Developer',
+                'location' => 'Jakarta, Indonesia',
+                'courses' => [
+                    'Complete Web Development Bootcamp',
+                    'Advanced JavaScript Programming',
+                    'React.js Frontend Development'
+                ]
+            ],
+            [
+                'email' => 'ttrainee2@test.com',
+                'name' => 'Ahmad Backend Dev',
+                'pekerjaan' => 'Junior Backend Developer',
+                'location' => 'Bandung, Indonesia',
+                'courses' => [
+                    'Laravel Framework Mastery',
+                    'Advanced JavaScript Programming',
+                    'Complete Web Development Bootcamp'
+                ]
+            ],
+            [
+                'email' => 'trainee3@test.com',
+                'name' => 'Maria Fullstack',
+                'pekerjaan' => 'Junior Fullstack Developer',
+                'location' => 'Surabaya, Indonesia',
+                'courses' => [
+                    'Complete Web Development Bootcamp',
+                    'Advanced JavaScript Programming',
+                    'Laravel Framework Mastery',
+                    'React.js Frontend Development'
+                ]
+            ]
+        ];
 
-        $traineeUser = User::firstOrCreate([
-            'email' => 'trainee@test.com'
-        ], [
-            'name' => 'Lisa Trainee',
-            'pekerjaan' => 'Junior Developer',
-            'avatar' => null,
-            'password' => bcrypt('password123'),
-            'available_for_scouting' => false, // Will be enabled when they opt-in
-            'talent_skills' => null, // Will be auto-generated from courses
-            'hourly_rate' => null,
-            'talent_bio' => null,
-            'portfolio_url' => null,
-            'location' => 'Jakarta, Indonesia',
-            'experience_level' => 'beginner',
-            'is_active_talent' => false, // Will be enabled after conversion
-        ]);        // Assign trainee role if not already assigned
-        if (!$traineeUser->hasRole('trainee')) {
-            $traineeUser->assignRole('trainee');
+        // ===============================================
+        // CREATE EACH TRAINEE
+        // ===============================================
+        foreach ($traineeProfiles as $index => $profile) {
+            $this->command->info("   📚 Creating trainee " . ($index + 1) . ": {$profile['name']}");
+
+            // Create trainee user
+            $traineeUser = User::firstOrCreate([
+                'email' => $profile['email']
+            ], [
+                'name' => $profile['name'],
+                'pekerjaan' => $profile['pekerjaan'],
+                'avatar' => null,
+                'password' => bcrypt('password123'),
+                'available_for_scouting' => false, // Will be enabled when they opt-in
+                'talent_skills' => null, // Will be auto-generated from courses
+                'hourly_rate' => null,
+                'talent_bio' => null,
+                'portfolio_url' => null,
+                'location' => $profile['location'],
+                'is_active_talent' => false, // Will be enabled after conversion
+            ]);
+
+            // Assign trainee role if not already assigned
+            if (!$traineeUser->hasRole('trainee')) {
+                $traineeUser->assignRole('trainee');
+            }
+
+            // Get courses for this trainee
+            $courses = Course::whereIn('name', $profile['courses'])->get();
+
+            // Complete courses for this trainee
+            foreach ($courses as $course) {
+                // Create course enrollment (trainee relationship)
+                CourseTrainee::firstOrCreate([
+                    'user_id' => $traineeUser->id,
+                    'course_id' => $course->id,
+                ]);
+
+                // Create course progress (100% completed)
+                CourseProgress::firstOrCreate([
+                    'user_id' => $traineeUser->id,
+                    'course_id' => $course->id,
+                ], [
+                    'completed_videos' => [],
+                    'completed_materials' => [],
+                    'completed_tasks' => [],
+                    'quiz_passed' => true,
+                    'progress' => 100.0,
+                ]);
+
+                // Generate certificate
+                Certificate::firstOrCreate([
+                    'user_id' => $traineeUser->id,
+                    'course_id' => $course->id,
+                ], [
+                    'path' => '/certificates/' . $traineeUser->id . '/' . $course->id . '.pdf',
+                    'generated_at' => $faker->dateTimeBetween('-3 months', '-1 month'),
+                ]);
+
+                // Create final quiz for the course if it doesn't exist
+                $finalQuiz = FinalQuiz::firstOrCreate([
+                    'course_id' => $course->id,
+                ], [
+                    'title' => $course->name . ' - Final Assessment',
+                    'passing_score' => 70,
+                    'is_hidden_from_trainee' => false,
+                ]);
+
+                // Create quiz attempt with a realistic score (75-95%)
+                $quizScore = $faker->numberBetween(75, 95);
+                QuizAttempt::firstOrCreate([
+                    'final_quiz_id' => $finalQuiz->id,
+                    'user_id' => $traineeUser->id,
+                ], [
+                    'score' => $quizScore,
+                    'is_passed' => $quizScore >= $finalQuiz->passing_score,
+                ]);
+
+                // Generate simplified skills from course completion
+                $traineeUser->addSkillFromCourse($course);
+            }
+
+            // Update user with learning-based profile data
+            $traineeUser->update([
+                'talent_bio' => $this->generateLearningBasedBio($traineeUser->name, count($courses)),
+            ]);
+
+            $skills = $traineeUser->getTalentSkillsArray();
+            $skillNames = array_column($skills, 'skill_name');
+
+            $this->command->info("      ✓ Completed {$courses->count()} courses");
+            $this->command->info("      ✓ Generated skills: " . implode(', ', array_slice($skillNames, 0, 4)) . (count($skillNames) > 4 ? '...' : ''));
         }
-        $this->command->info("   ✓ Trainee user created: {$traineeUser->email}");
 
-        // ===============================================
-        // ENROLL IN COURSES & COMPLETE THEM
-        // ===============================================
-          $courses = Course::whereIn('name', [
-            'Complete Web Development Bootcamp',
-            'Advanced JavaScript Programming',
-            'Laravel Framework Mastery',
-            'React.js Frontend Development'
-        ])->get();
-
-        $completedSkills = [];
-
-        foreach ($courses as $course) {
-            // Create course enrollment (trainee relationship)
-            $enrollment = CourseTrainee::firstOrCreate([
-                'user_id' => $traineeUser->id,
-                'course_id' => $course->id,
-            ]);
-
-            // Create course progress (100% completed)
-            CourseProgress::firstOrCreate([
-                'user_id' => $traineeUser->id,
-                'course_id' => $course->id,
-            ], [
-                'completed_videos' => [],
-                'completed_materials' => [],
-                'completed_tasks' => [],
-                'quiz_passed' => true,
-                'progress' => 100.0,
-            ]);            // Generate certificate
-            Certificate::firstOrCreate([
-                'user_id' => $traineeUser->id,
-                'course_id' => $course->id,
-            ], [
-                'path' => '/certificates/' . $traineeUser->id . '/' . $course->id . '.pdf',
-                'generated_at' => $faker->dateTimeBetween('-3 months', '-1 month'),
-            ]);
-
-            // Create final quiz for the course if it doesn't exist
-            $finalQuiz = FinalQuiz::firstOrCreate([
-                'course_id' => $course->id,
-            ], [
-                'title' => $course->name . ' - Final Assessment',
-                'passing_score' => 70,
-                'is_hidden_from_trainee' => false,
-            ]);
-
-            // Create quiz attempt with a realistic score (70-95%)
-            $quizScore = $faker->numberBetween(75, 95);
-            QuizAttempt::firstOrCreate([
-                'final_quiz_id' => $finalQuiz->id,
-                'user_id' => $traineeUser->id,
-            ], [
-                'score' => $quizScore,
-                'is_passed' => $quizScore >= $finalQuiz->passing_score,
-            ]);
-
-            // Extract skills from course content for talent profile
-            $courseSkills = $this->extractSkillsFromCourse($course);
-            $completedSkills = array_merge($completedSkills, $courseSkills);
-
-            $this->command->info("   ✓ Completed course: {$course->name} (Quiz: {$quizScore}%)");
-        }
-
-        // ===============================================
-        // UPDATE USER WITH LEARNING-BASED PROFILE DATA
-        // ===============================================
-
-        $traineeUser->update([
-            'talent_skills' => json_encode(array_unique($completedSkills)),
-            'talent_bio' => $this->generateLearningBasedBio($traineeUser->name, count($courses)),
-            'experience_level' => 'intermediate', // Promoted after completing courses
-        ]);
-
-        $this->command->info("   ✓ Generated skills from courses: " . implode(', ', array_slice($completedSkills, 0, 5)) . '...');
-        $this->command->info('✅ Trainee with LMS completion data created successfully!');
+        $this->command->info('✅ Created 3 trainees with LMS completion data successfully!');
         $this->command->info('');
         $this->command->info('🧪 TEST SCENARIO:');
-        $this->command->info('   1. Login as: trainee@test.com / password123');
-        $this->command->info('   2. View completed courses and certificates');
-        $this->command->info('   3. Navigate to profile → opt-in as talent');
-        $this->command->info('   4. Login again with same credentials');
-        $this->command->info('   5. Verify talent role and auto-generated skills');
+        $this->command->info('   Available trainees for testing:');
+        $this->command->info('   • trainee1@test.com / password123 (Frontend focus)');
+        $this->command->info('   • trainee2@test.com / password123 (Backend focus)');
+        $this->command->info('   • trainee3@test.com / password123 (Fullstack)');
+        $this->command->info('   Steps: Login → View completed courses → Opt-in as talent');
     }    /**
      * Create sample courses for testing if they don't exist
      */
@@ -162,10 +197,10 @@ class TraineeSeeder extends Seeder
             'user_id' => $defaultTrainerUser->id
         ], [
             'is_active' => true
-        ]);// Ensure we have course levels
-        $beginnerLevel = CourseLevel::firstOrCreate(['name' => 'Beginner']);
-        $intermediateLevel = CourseLevel::firstOrCreate(['name' => 'Intermediate']);
-        $advancedLevel = CourseLevel::firstOrCreate(['name' => 'Advanced']);
+        ]);        // Ensure we have course levels
+        $beginnerLevel = CourseLevel::firstOrCreate(['name' => 'beginner']);
+        $intermediateLevel = CourseLevel::firstOrCreate(['name' => 'intermediate']);
+        $advancedLevel = CourseLevel::firstOrCreate(['name' => 'advanced']);
 
         // Ensure we have a default course mode (check if CourseMode exists)
         $onlineMode = null;
@@ -248,21 +283,6 @@ class TraineeSeeder extends Seeder
         }
 
         $this->command->info('   ✓ Sample courses ensured');
-    }
-
-    /**
-     * Extract relevant skills from course content
-     */
-    private function extractSkillsFromCourse(Course $course): array
-    {
-        $skillsMap = [
-            'Complete Web Development Bootcamp' => ['HTML', 'CSS', 'JavaScript', 'Bootstrap', 'Git', 'Web Design'],
-            'Advanced JavaScript Programming' => ['JavaScript', 'ES6+', 'Async Programming', 'Design Patterns', 'DOM Manipulation'],
-            'Laravel Framework Mastery' => ['PHP', 'Laravel', 'MVC Architecture', 'Database Design', 'API Development'],
-            'React.js Frontend Development' => ['React.js', 'JSX', 'Component Architecture', 'State Management', 'Frontend Development']
-        ];
-
-        return $skillsMap[$course->name] ?? ['Programming', 'Web Development'];
     }
 
     /**

@@ -12,7 +12,7 @@ class CourseLevelSeeder extends Seeder
         DB::table('course_levels')->insert([
             ['name' => 'beginner'],
             ['name' => 'intermediate'],
-            ['name' => 'advance'],
+            ['name' => 'advanced'],
         ]);
     }
 }

@@ -98,34 +98,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Urgency Filter -->
-                        <div class="relative">
-                            <button id="urgencyFilterBtn" class="px-6 py-3 bg-white/60 border border-gray-200 rounded-xl hover:bg-white transition-all duration-300 flex items-center gap-2 min-w-[140px]">
-                                <i class="fas fa-exclamation-triangle text-gray-500"></i>
-                                <span id="urgencyFilterText">All Urgency</span>
-                                <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
-                            </button>
-                            <div id="urgencyFilterDropdown" class="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 min-w-[200px] z-50 hidden">
-                                <div class="p-2">
-                                    <button class="urgency-filter-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-urgency="">
-                                        All Urgency
-                                    </button>
-                                    <button class="urgency-filter-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-urgency="low">
-                                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-3"></span>
-                                        Low
-                                    </button>
-                                    <button class="urgency-filter-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-urgency="medium">
-                                        <span class="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-3"></span>
-                                        Medium
-                                    </button>
-                                    <button class="urgency-filter-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-urgency="high">
-                                        <span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-3"></span>
-                                        High
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -170,7 +142,6 @@
                     <div class="request-card bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 overflow-hidden hover:shadow-2xl transition-all duration-300"
                          data-search-content="{{ strtolower($request->project_title . ' ' . $request->recruiter->user->name . ' ' . ($request->recruiter->user->pekerjaan ?? '')) }}"
                          data-status="{{ $displayStatus }}"
-                         data-urgency="{{ $request->urgency_level ?? 'medium' }}"
                          data-created="{{ $request->created_at->timestamp }}">
 
                         <div class="p-6">
@@ -196,27 +167,16 @@
                                                 @endif
                                             </div>
 
-                                            <!-- Status and Urgency Badges -->
+                                            <!-- Status Badges -->
                                             <div class="flex flex-wrap gap-2">
                                                 @php
                                                     $displayStatus = $request->getDisplayStatus();
                                                     $statusClasses = $request->getStatusBadgeClasses();
-                                                    $urgencyConfig = [
-                                                        'low' => ['bg-gray-100', 'text-gray-800', 'border-gray-200'],
-                                                        'medium' => ['bg-yellow-100', 'text-yellow-800', 'border-yellow-200'],
-                                                        'high' => ['bg-red-100', 'text-red-800', 'border-red-200'],
-                                                    ];
-                                                    $urgencyClasses = $urgencyConfig[$request->urgency_level] ?? $urgencyConfig['medium'];
                                                 @endphp
 
                                                 <span class="px-3 py-1 text-sm font-medium rounded-full border {{ $statusClasses }}">
                                                     {{ ucfirst($displayStatus) }}
                                                 </span>
-                                                @if($request->urgency_level)
-                                                    <span class="px-3 py-1 text-sm font-medium rounded-full border {{ implode(' ', $urgencyClasses) }}">
-                                                        {{ ucfirst($request->urgency_level) }} Priority
-                                                    </span>
-                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -390,42 +350,9 @@ function initializeFilters() {
         });
     }
 
-    // Urgency Filter
-    const urgencyBtn = document.getElementById('urgencyFilterBtn');
-    const urgencyDropdown = document.getElementById('urgencyFilterDropdown');
-    const urgencyOptions = document.querySelectorAll('.urgency-filter-option');
-
-    console.log('Urgency elements found:', {
-        button: !!urgencyBtn,
-        dropdown: !!urgencyDropdown,
-        optionsCount: urgencyOptions.length
-    });
-
-    if (urgencyBtn && urgencyDropdown) {
-        urgencyBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            console.log('Urgency button clicked, toggling dropdown');
-            urgencyDropdown.classList.toggle('hidden');
-            // Close other dropdowns
-            document.getElementById('statusFilterDropdown')?.classList.add('hidden');
-            document.getElementById('sortDropdown')?.classList.add('hidden');
-        });
-
-        urgencyOptions.forEach((option, index) => {
-            option.addEventListener('click', function() {
-                const urgency = this.dataset.urgency;
-                console.log('Urgency option clicked:', urgency, 'Index:', index);
-                document.getElementById('urgencyFilterText').textContent = this.textContent.trim();
-                urgencyDropdown.classList.add('hidden');
-                filterByUrgency(urgency);
-            });
-        });
-    }
-
     // Close dropdowns when clicking outside
     document.addEventListener('click', function() {
         document.getElementById('statusFilterDropdown')?.classList.add('hidden');
-        document.getElementById('urgencyFilterDropdown')?.classList.add('hidden');
         document.getElementById('sortDropdown')?.classList.add('hidden');
     });
 
@@ -437,18 +364,6 @@ function filterByStatus(status) {
 
     requestCards.forEach(card => {
         if (!status || card.dataset.status === status) {
-            card.style.display = 'block';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-}
-
-function filterByUrgency(urgency) {
-    const requestCards = document.querySelectorAll('.request-card');
-
-    requestCards.forEach(card => {
-        if (!urgency || card.dataset.urgency === urgency) {
             card.style.display = 'block';
         } else {
             card.style.display = 'none';
@@ -560,7 +475,7 @@ function openRequestModal(requestId) {
     document.body.style.overflow = 'hidden';
 
     // Fetch request details
-    fetch(`{{ route('talent.api.request_details', '') }}/${requestId}`, {
+    fetch(`/talent/api/request/${requestId}`, {
         method: 'GET',
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -608,7 +523,7 @@ function displayRequestDetails(request) {
     // Use acceptance_status for talent-friendly status display
     const displayStatus = request.display_status || request.status;
     const acceptanceStatus = request.acceptance_status || request.formatted_status || 'Pending review';
-    
+
     // Use backend-provided status badge color instead of hardcoded mapping
     const statusColor = request.status_badge_color || 'bg-gray-100 text-gray-800';
 
@@ -740,7 +655,7 @@ function closeModal() {
 
 function acceptRequest(requestId) {
     if (confirm('Are you sure you want to accept this request?')) {
-        fetch(`{{ route('talent.accept_request', '') }}/${requestId}`, {
+        fetch(`/talent/request/${requestId}/accept`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -764,7 +679,7 @@ function acceptRequest(requestId) {
 
 function rejectRequest(requestId) {
     if (confirm('Are you sure you want to reject this request?')) {
-        fetch(`{{ route('talent.reject_request', '') }}/${requestId}`, {
+        fetch(`/talent/request/${requestId}/reject`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

@@ -2,93 +2,111 @@
 
 @section('title', 'My Talent Requests')
 @section('container')
-<div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-    <!-- Premium Page Header -->
-    <div class="relative overflow-hidden">
-        <!-- Background Pattern -->
-        <div class="absolute inset-0 bg-gradient-to-r from-emerald-600/5 to-blue-600/5"></div>
-        <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%2316a34a" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="4"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-40"></div>
 
-        <div class="relative max-w-7xl mx-auto px-6 py-12">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div class="mb-8 lg:mb-0">
-                    <div class="flex items-center mb-4">
-                        <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center mr-4 shadow-lg">
-                            <i class="fas fa-clipboard-check text-2xl text-white"></i>
-                        </div>
-                        <div>
-                            <h1 class="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
-                                My Talent Requests
-                            </h1>
-                            <p class="text-lg text-gray-600 font-medium">Track and manage your collaboration requests with talented professionals</p>
-                        </div>
-                    </div>
+{{-- Full Width Dashboard Container like dashboard.blade.php --}}
+<div class="space-y-8">
+
+    {{-- Hero welcome greeting card - Full Width --}}
+    <div class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-8 text-white shadow-xl mt-8">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mr-6">
+                    <i class="fas fa-clipboard-check text-2xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-4xl lg:text-5xl font-bold text-white mb-2">
+                        My Talent Requests
+                    </h1>
+                    <p class="text-lg text-emerald-100">Track and manage your collaboration requests with talented professionals</p>
 
                     <!-- Quick Stats -->
-                    <div class="flex flex-wrap gap-4 mt-6">
-                        <div class="bg-white/70 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/50">
-                            <span class="text-sm text-gray-600">Total Requests:</span>
-                            <span class="font-bold text-emerald-600 ml-1">{{ $requests->total() ?? $requests->count() }}</span>
+                    <div class="flex flex-wrap gap-4 mt-4">
+                        <div class="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
+                            <span class="text-sm text-emerald-100">Total Requests:</span>
+                            <span class="font-bold text-white ml-1">{{ $requests->total() ?? $requests->count() }}</span>
                         </div>
-                        <div class="bg-white/70 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/50">
-                            <span class="text-sm text-gray-600">This Page:</span>
-                            <span class="font-bold text-blue-600 ml-1">{{ $requests->count() }}</span>
+                        <div class="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 border border-white/30">
+                            <span class="text-sm text-emerald-100">This Page:</span>
+                            <span class="font-bold text-white ml-1">{{ $requests->count() }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3">
+                <!-- PDF Export Dropdown -->
+                <div class="relative">
+                    <button id="exportDropdownButtonRequests" class="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-300 font-medium border border-white/30 shadow-lg">
+                        <i class="fas fa-download mr-2"></i>Export PDF
+                        <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                    </button>
+                    <div id="exportDropdownMenuRequests" class="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible transition-all duration-200 z-10">
+                        <div class="py-2">
+                            <a href="{{ route('recruiter.export_request_history') }}"
+                               class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-history mr-3 text-blue-500"></i>
+                                <div>
+                                    <div class="font-medium">Request History</div>
+                                    <div class="text-xs text-gray-500">All your talent requests</div>
+                                </div>
+                            </a>
+                            <a href="{{ route('recruiter.export_onboarded_talents') }}"
+                               class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-user-check mr-3 text-green-500"></i>
+                                <div>
+                                    <div class="font-medium">Onboarded Talents</div>
+                                    <div class="text-xs text-gray-500">Successfully hired talents</div>
+                                </div>
+                            </a>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button onclick="window.location.reload()"
-                            class="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur-sm text-gray-700 rounded-xl hover:bg-white/30 transition-all duration-300 font-medium border border-white/30 shadow-lg">
-                        <i class="fas fa-sync-alt mr-2"></i>
-                        Refresh
-                    </button>
-                    <a href="{{ route('recruiter.dashboard') }}"
-                       class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all duration-300 font-medium shadow-xl hover:shadow-2xl hover:scale-105">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Back to Dashboard
-                    </a>
-                </div>
+                <button onclick="window.location.reload()"
+                        class="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-300 font-medium border border-white/30 shadow-lg">
+                    <i class="fas fa-sync-alt mr-2"></i>
+                    Refresh
+                </button>
+                <a href="{{ route('recruiter.dashboard') }}"
+                   class="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-300 font-medium border border-white/30 shadow-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Dashboard
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Premium Requests Container -->
-    <div class="max-w-7xl mx-auto px-6 pb-12">
-        <div class="bg-white rounded-3xl shadow-2xl border border-gray-100/50 overflow-hidden backdrop-blur-sm">
-            <!-- Enhanced Header -->
-            <div class="relative bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white">
-                <!-- Background Pattern -->
-                <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.05"%3E%3Cpath d="m0 40l40-40h-40v40zm10-10a10 10 0 1 1 20 0 10 10 0 0 1-20 0z"/%3E%3C/g%3E%3C/svg%3E')] opacity-30"></div>
+    {{-- Full Width Requests Section - like dashboard --}}
+    <div class="w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+        <!-- Header with gradient background -->
+        <div class="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 text-white p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mr-4 border border-white/30">
+                        <i class="fas fa-handshake text-xl text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold mb-1">Talent Collaboration Requests</h2>
+                        <p class="text-emerald-100">Professional network management hub</p>
+                    </div>
+                </div>
 
-                <div class="relative px-8 py-8">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center mb-6">
-                            <div class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mr-6 border border-white/30">
-                                <i class="fas fa-handshake text-2xl text-white"></i>
-                            </div>
-                            <div>
-                                <h2 class="text-3xl font-bold mb-2">Talent Collaboration Requests</h2>
-                                <p class="text-emerald-100 text-lg">Professional network management hub</p>
-                            </div>
-                        </div>
-
-                        <!-- Filter & Sort Controls -->
-                        <div class="hidden lg:flex items-center space-x-4">
-                            <div class="relative">
-                                <button id="filterButton" class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all duration-300 border border-white/30 flex items-center">
-                                    <i class="fas fa-filter mr-2"></i>Filter
-                                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
-                                </button>
-                                <!-- Filter Dropdown -->
-                                <div id="filterDropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 z-50 hidden">
-                                    <div class="p-4">
-                                        <h4 class="font-semibold text-gray-800 mb-3">Filter by Status</h4>
-                                        <div class="space-y-2">
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="all" class="filter-status rounded text-emerald-600 mr-2" checked>
-                                                <span class="text-sm text-gray-700">All Requests</span>
-                                            </label>
+                <!-- Filter & Sort Controls -->
+                <div class="hidden lg:flex items-center space-x-4">
+                    <div class="relative">
+                        <button id="filterButton" class="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-lg hover:bg-white/30 transition-all duration-300 border border-white/30 flex items-center">
+                            <i class="fas fa-filter mr-2"></i>Filter
+                            <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                        </button>
+                        <!-- Filter Dropdown -->
+                        <div id="filterDropdown" class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 z-50 hidden">
+                            <div class="p-4">
+                                <h4 class="font-semibold text-gray-800 mb-3">Filter by Status</h4>
+                                <div class="space-y-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="all" class="filter-status rounded text-emerald-600 mr-2" checked>
+                                        <span class="text-sm text-gray-700">All Requests</span>
+                                    </label>
                                             <label class="flex items-center">
                                                 <input type="checkbox" value="pending" class="filter-status rounded text-yellow-600 mr-2">
                                                 <span class="text-sm text-gray-700">Pending</span>
@@ -104,22 +122,6 @@
                                             <label class="flex items-center">
                                                 <input type="checkbox" value="meeting_arranged" class="filter-status rounded text-blue-600 mr-2">
                                                 <span class="text-sm text-gray-700">Meeting Arranged</span>
-                                            </label>
-                                        </div>
-                                        <hr class="my-3">
-                                        <h4 class="font-semibold text-gray-800 mb-3">Filter by Priority</h4>
-                                        <div class="space-y-2">
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="high" class="filter-priority rounded text-red-600 mr-2">
-                                                <span class="text-sm text-gray-700">High Priority</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="medium" class="filter-priority rounded text-yellow-600 mr-2">
-                                                <span class="text-sm text-gray-700">Medium Priority</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="low" class="filter-priority rounded text-blue-600 mr-2">
-                                                <span class="text-sm text-gray-700">Low Priority</span>
                                             </label>
                                         </div>
                                         <div class="mt-4 flex gap-2">
@@ -154,112 +156,92 @@
                                             <button onclick="sortRequests('status')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
                                                 <i class="fas fa-tasks mr-2 text-gray-500"></i>Status
                                             </button>
-                                            <button onclick="sortRequests('urgency')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm text-black">
-                                                <i class="fas fa-exclamation-triangle mr-2 text-gray-500"></i>Priority Level
-                                            </button>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+            </div>
+
+            <!-- Mobile Filter & Sort Controls -->
+            <div class="lg:hidden mb-6">
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <button id="mobileFilterButton" class="w-full px-4 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30">
+                            <i class="fas fa-filter mr-2"></i>Filter
+                            <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                        </button>
+                        <!-- Mobile Filter Dropdown -->
+                        <div id="mobileFilterDropdown" class="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 hidden">
+                            <div class="p-4">
+                                <h4 class="font-semibold text-gray-800 mb-3">Filter by Status</h4>
+                                <div class="space-y-2">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="all" class="mobile-filter-status rounded text-emerald-600 mr-2" checked>
+                                        <span class="text-sm text-gray-700">All Requests</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="pending" class="mobile-filter-status rounded text-yellow-600 mr-2">
+                                        <span class="text-sm text-gray-700">Pending</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="approved" class="mobile-filter-status rounded text-green-600 mr-2">
+                                        <span class="text-sm text-gray-700">Approved</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="rejected" class="mobile-filter-status rounded text-red-600 mr-2">
+                                        <span class="text-sm text-gray-700">Rejected</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" value="meeting_arranged" class="mobile-filter-status rounded text-blue-600 mr-2">
+                                        <span class="text-sm text-gray-700">Meeting Arranged</span>
+                                    </label>
+                                </div>
+                                <div class="mt-4 flex gap-2">
+                                    <button onclick="applyMobileFilters()" class="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700">Apply</button>
+                                    <button onclick="clearMobileFilters()" class="flex-1 px-3 py-2 bg-gray-400 text-white rounded-lg text-sm hover:bg-gray-500">Clear</button>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Mobile Filter & Sort Controls -->
-                    <div class="lg:hidden mb-6">
-                        <div class="flex gap-3">
-                            <div class="relative flex-1">
-                                <button id="mobileFilterButton" class="w-full px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 flex items-center justify-center shadow-lg">
-                                    <i class="fas fa-filter mr-2"></i>Filter
-                                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
-                                </button>
-                                <!-- Mobile Filter Dropdown -->
-                                <div id="mobileFilterDropdown" class="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 hidden">
-                                    <div class="p-4">
-                                        <h4 class="font-semibold text-gray-800 mb-3">Filter by Status</h4>
-                                        <div class="space-y-2">
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="all" class="mobile-filter-status rounded text-emerald-600 mr-2" checked>
-                                                <span class="text-sm text-gray-700">All Requests</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="pending" class="mobile-filter-status rounded text-yellow-600 mr-2">
-                                                <span class="text-sm text-gray-700">Pending</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="approved" class="mobile-filter-status rounded text-green-600 mr-2">
-                                                <span class="text-sm text-gray-700">Approved</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="rejected" class="mobile-filter-status rounded text-red-600 mr-2">
-                                                <span class="text-sm text-gray-700">Rejected</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="meeting_arranged" class="mobile-filter-status rounded text-blue-600 mr-2">
-                                                <span class="text-sm text-gray-700">Meeting Arranged</span>
-                                            </label>
-                                        </div>
-                                        <hr class="my-3">
-                                        <h4 class="font-semibold text-gray-800 mb-3">Filter by Priority</h4>
-                                        <div class="space-y-2">
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="high" class="mobile-filter-priority rounded text-red-600 mr-2">
-                                                <span class="text-sm text-gray-700">High Priority</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="medium" class="mobile-filter-priority rounded text-yellow-600 mr-2">
-                                                <span class="text-sm text-gray-700">Medium Priority</span>
-                                            </label>
-                                            <label class="flex items-center">
-                                                <input type="checkbox" value="low" class="mobile-filter-priority rounded text-blue-600 mr-2">
-                                                <span class="text-sm text-gray-700">Low Priority</span>
-                                            </label>
-                                        </div>
-                                        <div class="mt-4 flex gap-2">
-                                            <button onclick="applyMobileFilters()" class="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700">Apply</button>
-                                            <button onclick="clearMobileFilters()" class="flex-1 px-3 py-2 bg-gray-400 text-white rounded-lg text-sm hover:bg-gray-500">Clear</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="relative flex-1">
-                                <button id="mobileSortButton" class="w-full px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 flex items-center justify-center shadow-lg">
-                                    <i class="fas fa-sort mr-2"></i>Sort
-                                    <i class="fas fa-chevron-down ml-2 text-sm"></i>
-                                </button>
-                                <!-- Mobile Sort Dropdown -->
-                                <div id="mobileSortDropdown" class="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 hidden">
-                                    <div class="p-4">
-                                        <h4 class="font-semibold text-gray-800 mb-3">Sort by</h4>
-                                        <div class="space-y-2">
-                                            <button onclick="sortMobileRequests('date_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-                                                <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>Newest First
-                                            </button>
-                                            <button onclick="sortMobileRequests('date_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-                                                <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>Oldest First
-                                            </button>
-                                            <button onclick="sortMobileRequests('title_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-                                                <i class="fas fa-sort-alpha-down mr-2 text-gray-500"></i>Project Title A-Z
-                                            </button>
-                                            <button onclick="sortMobileRequests('title_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-                                                <i class="fas fa-sort-alpha-up mr-2 text-gray-500"></i>Project Title Z-A
-                                            </button>
-                                            <button onclick="sortMobileRequests('status')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-                                                <i class="fas fa-tasks mr-2 text-gray-500"></i>Status
-                                            </button>
-                                            <button onclick="sortMobileRequests('urgency')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
-                                                <i class="fas fa-exclamation-triangle mr-2 text-gray-500"></i>Priority Level
-                                            </button>
-                                        </div>
-                                    </div>
+                    <div class="relative flex-1">
+                        <button id="mobileSortButton" class="w-full px-4 py-3 bg-white/20 backdrop-blur-sm text-white rounded-xl hover:bg-white/30 transition-all duration-300 flex items-center justify-center border border-white/30">
+                            <i class="fas fa-sort mr-2"></i>Sort
+                            <i class="fas fa-chevron-down ml-2 text-sm"></i>
+                        </button>
+                        <!-- Mobile Sort Dropdown -->
+                        <div id="mobileSortDropdown" class="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-200 z-50 hidden">
+                            <div class="p-4">
+                                <h4 class="font-semibold text-gray-800 mb-3">Sort by</h4>
+                                <div class="space-y-2">
+                                    <button onclick="sortMobileRequests('date_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                        <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>Newest First
+                                    </button>
+                                    <button onclick="sortMobileRequests('date_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                        <i class="fas fa-calendar-alt mr-2 text-gray-500"></i>Oldest First
+                                    </button>
+                                    <button onclick="sortMobileRequests('title_asc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                        <i class="fas fa-sort-alpha-down mr-2 text-gray-500"></i>Project Title A-Z
+                                    </button>
+                                    <button onclick="sortMobileRequests('title_desc')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                        <i class="fas fa-sort-alpha-up mr-2 text-gray-500"></i>Project Title Z-A
+                                    </button>
+                                    <button onclick="sortMobileRequests('status')" class="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 text-sm">
+                                        <i class="fas fa-tasks mr-2 text-gray-500"></i>Status
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                @if($requests->count() > 0)
-                    <!-- Enhanced Desktop View -->
-                    <div class="hidden lg:block">
-                        <div class="overflow-hidden rounded-2xl border border-gray-100">
+        <!-- Content -->
+        <div class="p-6">
+            @if($requests->count() > 0)
+                <!-- Enhanced Desktop View -->
+                <div class="hidden lg:block">
+                    <div class="overflow-hidden rounded-2xl border border-gray-100">
                             <table class="w-full">
                                 <thead>
                                     <tr class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
@@ -275,7 +257,7 @@
                                         </th>
                                         <th class="text-left py-6 px-6 font-bold text-gray-800 uppercase tracking-wider text-sm">
                                             <div class="flex items-center">
-                                                <i class="fas fa-dollar-sign mr-2 text-green-600"></i>Budget & Duration
+                                                <i class="fas fa-money-bill mr-2 text-green-600"></i>Budget & Duration
                                             </div>
                                         </th>
                                         <th class="text-left py-6 px-6 font-bold text-gray-800 uppercase tracking-wider text-sm">
@@ -299,7 +281,6 @@
                                     @foreach($requests as $request)
                                         <tr class="request-row hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 transition-all duration-300 group"
                                             data-status="{{ $request->status }}"
-                                            data-urgency="{{ $request->urgency_level }}"
                                             data-title="{{ $request->project_title }}"
                                             data-date="{{ $request->created_at->format('Y-m-d') }}"
                                             data-timestamp="{{ $request->created_at->timestamp }}">
@@ -342,7 +323,7 @@
                                                     @if($request->budget_range)
                                                         <div class="flex items-center p-3 bg-green-50 rounded-xl border border-green-100">
                                                             <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center mr-3 shadow-sm">
-                                                                <i class="fas fa-dollar-sign text-white text-sm"></i>
+                                                                <i class="fas fa-money-bill text-white text-sm"></i>
                                                             </div>
                                                             <div>
                                                                 <div class="text-xs text-green-600 font-semibold uppercase tracking-wide">Budget</div>
@@ -403,10 +384,8 @@
                                                                 {{ json_encode($request->project_description) }},
                                                                 {{ json_encode($request->requirements ?? '') }},
                                                                 {{ json_encode($request->budget_range ?? 'Not specified') }},
-                                                                {{ json_encode($request->project_duration ?? 'Not specified') }},
-                                                                {{ json_encode(ucfirst($request->urgency_level)) }},
-                                                                {{ json_encode($request->recruiter_message ?? '') }}
-                                                            )">
+                                                                {{ json_encode($request->project_duration ?? 'Not specified') }}
+                                                            )">>
                                                         <i class="fas fa-eye mr-1.5 text-xs"></i>View Details
                                                     </button>
                                                     <a href="mailto:{{ $request->talent->user->email }}"
@@ -423,14 +402,14 @@
                     </div>
 
                 <!-- Enhanced Mobile Card View -->
-                <div class="lg:hidden space-y-8">
-                    @foreach($requests as $request)
-                        <div class="request-card bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] hover:border-emerald-200"
-                             data-status="{{ $request->status }}"
-                             data-urgency="{{ $request->urgency_level }}"
-                             data-title="{{ $request->project_title }}"
-                             data-date="{{ $request->created_at->format('Y-m-d') }}"
-                             data-timestamp="{{ $request->created_at->timestamp }}">
+                <div class="lg:hidden">
+                    <div class="flex gap-[2%] flex-wrap">
+                        @foreach($requests as $request)
+                            <div class="w-full md:w-[49%] h-auto mb-4 request-card bg-gradient-to-br from-white to-gray-50 border-2 border-gray-100 rounded-3xl p-6 shadow-xl hover:shadow-2xl transition-all duration-500 transform hover:scale-[1.02] hover:border-emerald-200"
+                                 data-status="{{ $request->status }}"
+                                 data-title="{{ $request->project_title }}"
+                                 data-date="{{ $request->created_at->format('Y-m-d') }}"
+                                 data-timestamp="{{ $request->created_at->timestamp }}">
                             <!-- Mobile Card Header -->
                             <div class="flex items-center justify-between mb-6">
                                 <div class="flex items-center">
@@ -487,20 +466,6 @@
                                             <span class="text-xs">{{ Str::limit($request->requirements, 120) }}</span>
                                         </div>
                                     @endif
-
-                                    <!-- Priority Badge -->
-                                    <div class="mt-3">
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold
-                                            @if($request->urgency_level == 'high') bg-gradient-to-r from-red-100 to-red-200 text-red-800 border border-red-300
-                                            @elseif($request->urgency_level == 'medium') bg-gradient-to-r from-yellow-100 to-orange-200 text-orange-800 border border-orange-300
-                                            @else bg-gradient-to-r from-blue-100 to-indigo-200 text-blue-800 border border-blue-300 @endif">
-                                            <div class="w-2 h-2 rounded-full mr-2 animate-pulse
-                                                @if($request->urgency_level == 'high') bg-red-500
-                                                @elseif($request->urgency_level == 'medium') bg-orange-500
-                                                @else bg-blue-500 @endif"></div>
-                                            {{ ucfirst($request->urgency_level) }} Priority
-                                        </span>
-                                    </div>
                                 </div>
 
                                 <!-- Budget & Timeline -->
@@ -509,7 +474,7 @@
                                         <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-4 border border-green-100">
                                             <div class="flex items-center mb-2">
                                                 <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center mr-2">
-                                                    <i class="fas fa-dollar-sign text-white text-sm"></i>
+                                                    <i class="fas fa-money-bill text-white text-sm"></i>
                                                 </div>
                                                 <span class="text-xs text-green-600 font-bold uppercase tracking-wide">Budget</span>
                                             </div>
@@ -553,9 +518,7 @@
                                                 {{ json_encode($request->project_description) }},
                                                 {{ json_encode($request->requirements ?? '') }},
                                                 {{ json_encode($request->budget_range ?? 'Not specified') }},
-                                                {{ json_encode($request->project_duration ?? 'Not specified') }},
-                                                {{ json_encode(ucfirst($request->urgency_level)) }},
-                                                {{ json_encode($request->recruiter_message ?? '') }}
+                                                {{ json_encode($request->project_duration ?? 'Not specified') }}
                                             )">
                                         <i class="fas fa-eye mr-2"></i>View Details
                                     </button>
@@ -565,8 +528,9 @@
                                     </a>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
 
                 <!-- Pagination -->
@@ -637,11 +601,6 @@
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Project Duration</label>
                             <p id="modalProjectDuration" class="text-gray-900 font-medium"></p>
                         </div>
-
-                        <div class="bg-gray-50 rounded-xl p-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Urgency Level</label>
-                            <p id="modalUrgencyLevel" class="text-gray-900 font-medium"></p>
-                        </div>
                     </div>
 
                     <!-- Right Column -->
@@ -654,11 +613,6 @@
                         <div class="bg-gray-50 rounded-xl p-4">
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Requirements</label>
                             <p id="modalRequirements" class="text-gray-900 leading-relaxed"></p>
-                        </div>
-
-                        <div class="bg-gray-50 rounded-xl p-4">
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Personal Message</label>
-                            <p id="modalRecruiterMessage" class="text-gray-900 leading-relaxed"></p>
                         </div>
                     </div>
                 </div>
@@ -679,9 +633,66 @@
 </div>
 
 <script>
-function viewRequestDetails(title, description, requirements, budget, duration, urgency, message) {
+// Initialize dropdowns when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeExportDropdownRequests();
+});
+
+// Export PDF Dropdown Functionality for Requests Page
+function initializeExportDropdownRequests() {
+    const dropdownButton = document.getElementById('exportDropdownButtonRequests');
+    const dropdownMenu = document.getElementById('exportDropdownMenuRequests');
+
+    if (dropdownButton && dropdownMenu) {
+        // Toggle dropdown on button click
+        dropdownButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleExportDropdownRequests();
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!dropdownButton.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                closeExportDropdownRequests();
+            }
+        });
+
+        // Close dropdown on escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeExportDropdownRequests();
+            }
+        });
+    }
+}
+
+function toggleExportDropdownRequests() {
+    const dropdownMenu = document.getElementById('exportDropdownMenuRequests');
+    const isVisible = dropdownMenu.classList.contains('opacity-100');
+
+    if (isVisible) {
+        closeExportDropdownRequests();
+    } else {
+        openExportDropdownRequests();
+    }
+}
+
+function openExportDropdownRequests() {
+    const dropdownMenu = document.getElementById('exportDropdownMenuRequests');
+    dropdownMenu.classList.remove('opacity-0', 'invisible');
+    dropdownMenu.classList.add('opacity-100', 'visible');
+}
+
+function closeExportDropdownRequests() {
+    const dropdownMenu = document.getElementById('exportDropdownMenuRequests');
+    dropdownMenu.classList.remove('opacity-100', 'visible');
+    dropdownMenu.classList.add('opacity-0', 'invisible');
+}
+
+function viewRequestDetails(title, description, requirements, budget, duration) {
     console.log('viewRequestDetails called with:', {
-        title, description, requirements, budget, duration, urgency, message
+        title, description, requirements, budget, duration
     });
 
     try {
@@ -691,8 +702,6 @@ function viewRequestDetails(title, description, requirements, budget, duration, 
         document.getElementById('modalRequirements').textContent = requirements || 'Not specified';
         document.getElementById('modalBudgetRange').textContent = budget;
         document.getElementById('modalProjectDuration').textContent = duration;
-        document.getElementById('modalUrgencyLevel').textContent = urgency;
-        document.getElementById('modalRecruiterMessage').textContent = message || 'No personal message';
 
         // Show modal
         const modal = document.getElementById('requestDetailsModal');
@@ -851,7 +860,6 @@ function initializeFiltersAndSort() {
 
 function applyFilters() {
     const statusFilters = Array.from(document.querySelectorAll('.filter-status:checked')).map(cb => cb.value);
-    const priorityFilters = Array.from(document.querySelectorAll('.filter-priority:checked')).map(cb => cb.value);
 
     // Get all request rows and cards
     const desktopRows = document.querySelectorAll('.request-row');
@@ -861,12 +869,10 @@ function applyFilters() {
 
     function filterElement(element) {
         const status = element.dataset.status;
-        const urgency = element.dataset.urgency;
 
         let showStatus = statusFilters.includes('all') || statusFilters.includes(status);
-        let showPriority = priorityFilters.length === 0 || priorityFilters.includes(urgency);
 
-        if (showStatus && showPriority) {
+        if (showStatus) {
             element.style.display = '';
             visibleCount++;
         } else {
@@ -880,7 +886,7 @@ function applyFilters() {
 
     // Update filter button text to show active filters
     const filterButton = document.getElementById('filterButton');
-    const activeFilters = statusFilters.length + priorityFilters.length;
+    const activeFilters = statusFilters.length;
     if (activeFilters === 0 || statusFilters.includes('all')) {
         filterButton.innerHTML = '<i class="fas fa-filter mr-2"></i>Filter<i class="fas fa-chevron-down ml-2 text-sm"></i>';
     } else {
@@ -896,7 +902,7 @@ function applyFilters() {
 
 function clearFilters() {
     // Reset all checkboxes
-    document.querySelectorAll('.filter-status, .filter-priority').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.filter-status').forEach(cb => cb.checked = false);
     document.querySelector('input[value="all"]').checked = true;
 
     // Show all elements
@@ -937,8 +943,7 @@ function sortRequests(sortType) {
         'date_asc': 'Oldest First',
         'title_asc': 'Title A-Z',
         'title_desc': 'Title Z-A',
-        'status': 'Status',
-        'urgency': 'Priority'
+        'status': 'Status'
     };
 
     sortButton.innerHTML = `<i class="fas fa-sort mr-2"></i>${sortLabels[sortType]}<i class="fas fa-chevron-down ml-2 text-sm"></i>`;
@@ -961,9 +966,6 @@ function sortElements(elements, sortType) {
             case 'status':
                 const statusOrder = { 'pending': 1, 'approved': 2, 'meeting_arranged': 3, 'rejected': 4 };
                 return (statusOrder[a.dataset.status] || 5) - (statusOrder[b.dataset.status] || 5);
-            case 'urgency':
-                const urgencyOrder = { 'high': 1, 'medium': 2, 'low': 3 };
-                return (urgencyOrder[a.dataset.urgency] || 4) - (urgencyOrder[b.dataset.urgency] || 4);
             default:
                 return 0;
         }
@@ -1009,7 +1011,6 @@ function updateNoResultsMessage(visibleCount) {
 // Mobile-specific filter and sort functions
 function applyMobileFilters() {
     const statusFilters = Array.from(document.querySelectorAll('.mobile-filter-status:checked')).map(cb => cb.value);
-    const priorityFilters = Array.from(document.querySelectorAll('.mobile-filter-priority:checked')).map(cb => cb.value);
 
     // Get all request cards (mobile view)
     const mobileCards = document.querySelectorAll('.request-card');
@@ -1018,16 +1019,16 @@ function applyMobileFilters() {
 
     function filterElement(element) {
         const status = element.dataset.status;
-        const urgency = element.dataset.urgency;
 
         let showStatus = statusFilters.includes('all') || statusFilters.includes(status);
-        let showPriority = priorityFilters.length === 0 || priorityFilters.includes(urgency);
 
-        if (showStatus && showPriority) {
+        if (showStatus) {
             element.style.display = '';
+            element.classList.remove('hidden');
             visibleCount++;
         } else {
             element.style.display = 'none';
+            element.classList.add('hidden');
         }
     }
 
@@ -1036,7 +1037,7 @@ function applyMobileFilters() {
 
     // Update filter button text to show active filters
     const filterButton = document.getElementById('mobileFilterButton');
-    const activeFilters = statusFilters.length + priorityFilters.length;
+    const activeFilters = statusFilters.length;
     if (activeFilters === 0 || statusFilters.includes('all')) {
         filterButton.innerHTML = '<i class="fas fa-filter mr-2"></i>Filter<i class="fas fa-chevron-down ml-2 text-sm"></i>';
     } else {
@@ -1052,7 +1053,7 @@ function applyMobileFilters() {
 
 function clearMobileFilters() {
     // Reset all checkboxes
-    document.querySelectorAll('.mobile-filter-status, .mobile-filter-priority').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.mobile-filter-status').forEach(cb => cb.checked = false);
     document.querySelector('.mobile-filter-status[value="all"]').checked = true;
 
     // Show all elements
@@ -1071,7 +1072,7 @@ function clearMobileFilters() {
 }
 
 function sortMobileRequests(sortType) {
-    const mobileContainer = document.querySelector('.request-card')?.parentElement;
+    const mobileContainer = document.querySelector('.flex.gap-\\[2\\%\\].flex-wrap');
 
     if (mobileContainer) {
         const cards = Array.from(document.querySelectorAll('.request-card'));
@@ -1086,8 +1087,7 @@ function sortMobileRequests(sortType) {
         'date_asc': 'Oldest First',
         'title_asc': 'Title A-Z',
         'title_desc': 'Title Z-A',
-        'status': 'Status',
-        'urgency': 'Priority'
+        'status': 'Status'
     };
 
     sortButton.innerHTML = `<i class="fas fa-sort mr-2"></i>${sortLabels[sortType]}<i class="fas fa-chevron-down ml-2 text-sm"></i>`;
@@ -1186,6 +1186,33 @@ function sortMobileRequests(sortType) {
 
 .status-badge:hover {
     transform: scale(1.05);
+}
+
+/* Enhanced flex layout for request cards */
+.request-card {
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Responsive adjustments for the flex layout */
+@media (max-width: 768px) {
+    .request-card {
+        width: 100% !important;
+        margin-bottom: 1rem;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    .request-card {
+        width: 49% !important;
+    }
+}
+
+/* Ensure equal height for cards in the same row */
+.flex-wrap > .request-card {
+    align-self: stretch;
 }
 </style>
 @endsection

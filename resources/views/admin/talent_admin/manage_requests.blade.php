@@ -48,7 +48,7 @@
                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                                 onchange="document.getElementById('filterForm').submit();">
                             <option value="">Semua Status</option>
-                            
+
                             <!-- Acceptance-based filters -->
                             <optgroup label="Status Persetujuan">
                                 <option value="pending_review" {{ request('status') == 'pending_review' ? 'selected' : '' }}>Menunggu Review</option>
@@ -56,7 +56,7 @@
                                 <option value="admin_awaiting_talent" {{ request('status') == 'admin_awaiting_talent' ? 'selected' : '' }}>Admin Setuju - Menunggu Talent</option>
                                 <option value="both_accepted" {{ request('status') == 'both_accepted' ? 'selected' : '' }}>Kedua Pihak Setuju</option>
                             </optgroup>
-                            
+
                             <!-- Workflow status filters -->
                             <optgroup label="Status Workflow">
                                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
@@ -418,13 +418,6 @@
                     <input type="hidden" id="requestId" name="request_id">
                     <input type="hidden" id="newStatus" name="status">
 
-                    <div class="mb-6">
-                        <label for="admin_notes" class="block text-sm font-semibold text-gray-700 mb-2">Catatan Admin (Opsional)</label>
-                        <textarea class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
-                                  id="admin_notes" name="admin_notes" rows="4"
-                                  placeholder="Tambahkan catatan untuk pembaruan status ini..."></textarea>
-                    </div>
-
                     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
                         <div class="flex items-center">
                             <i class="fas fa-info-circle text-blue-500 mr-3"></i>
@@ -515,7 +508,6 @@ document.getElementById('statusForm').addEventListener('submit', function(e) {
 
     const requestId = document.getElementById('requestId').value;
     const status = document.getElementById('newStatus').value;
-    const adminNotes = document.getElementById('admin_notes').value;
 
     // Disable submit button during request
     const confirmButton = document.getElementById('confirmButton');
@@ -530,8 +522,7 @@ document.getElementById('statusForm').addEventListener('submit', function(e) {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
-            status: status,
-            admin_notes: adminNotes
+            status: status
         })
     })
     .then(response => response.json())

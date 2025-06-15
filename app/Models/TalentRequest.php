@@ -22,20 +22,15 @@ class TalentRequest extends Model
         'requirements',
         'budget_range',
         'project_duration',
-        'urgency_level',
         'status',
-        'recruiter_message',
-        'admin_notes',
         'approved_at',
         'meeting_arranged_at',
         'onboarded_at',
         // New dual acceptance fields
         'talent_accepted',
         'talent_accepted_at',
-        'talent_acceptance_notes',
         'admin_accepted',
         'admin_accepted_at',
-        'admin_acceptance_notes',
         'both_parties_accepted',
         'workflow_completed_at',
         // Time-blocking fields
@@ -111,7 +106,7 @@ class TalentRequest extends Model
             ],
             'approved' => [
                 'label' => 'Approved by Admin',
-                'color' => 'info', 
+                'color' => 'info',
                 'bootstrap_class' => 'bg-info',
                 'tailwind_class' => 'bg-blue-100 text-blue-800',
                 'icon' => 'fas fa-check',
@@ -267,12 +262,11 @@ class TalentRequest extends Model
         return $this->talent_accepted && $this->admin_accepted && $this->status !== 'rejected';
     }
 
-    public function markTalentAccepted($notes = null)
+    public function markTalentAccepted()
     {
         $updateData = [
             'talent_accepted' => true,
             'talent_accepted_at' => now(),
-            'talent_acceptance_notes' => $notes,
             // Update status to approved if still pending
             'status' => $this->status === 'pending' ? 'approved' : $this->status
         ];
@@ -292,16 +286,15 @@ class TalentRequest extends Model
         if ($this->admin_accepted) {
             $this->startTimeBlocking();
         }
-        
+
         return $this;
     }
 
-    public function markAdminAccepted($notes = null)
+    public function markAdminAccepted()
     {
         $updateData = [
             'admin_accepted' => true,
-            'admin_accepted_at' => now(),
-            'admin_acceptance_notes' => $notes
+            'admin_accepted_at' => now()
         ];
 
         // If talent has already accepted, mark both accepted and auto-transition
@@ -319,7 +312,7 @@ class TalentRequest extends Model
         if ($this->talent_accepted) {
             $this->startTimeBlocking();
         }
-        
+
         return $this;
     }
 
@@ -485,7 +478,7 @@ class TalentRequest extends Model
     {
         $startDate = $startDate ?: now();
         $endDate = $this->calculateProjectEndDate($startDate);
-        
+
         // If end date calculation fails, use default 3 months
         if (!$endDate) {
             $endDate = $startDate->copy()->addMonths(3);
@@ -871,7 +864,7 @@ class TalentRequest extends Model
         $bothAccepted = $this->talent_accepted && $this->admin_accepted;
         $statusAllowsMeeting = in_array($this->status, ['approved']);
         $notRejected = $this->status !== 'rejected';
-        
+
         return $bothAccepted && $statusAllowsMeeting && $notRejected;
     }
 
@@ -982,7 +975,7 @@ class TalentRequest extends Model
 
         return 'secondary';
     }
-    
+
     /**
      * Get Tailwind CSS classes for status badges (for JavaScript usage)
      */
@@ -996,7 +989,7 @@ class TalentRequest extends Model
             'danger' => 'bg-red-100 text-red-800',
             'secondary' => 'bg-gray-100 text-gray-800'
         ];
-        
+
         $colorType = $this->getUnifiedStatusBadgeColor();
         return $colorMapping[$colorType] ?? 'bg-gray-100 text-gray-800';
     }

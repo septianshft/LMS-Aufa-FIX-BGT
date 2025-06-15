@@ -129,8 +129,6 @@
                                                 </span>
                                             @elseif($opportunity['posted_date']->diffInDays() <= 3)
                                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">New</span>
-                                            @elseif($opportunity['urgency'] === 'high')
-                                                <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">Urgent</span>
                                             @else
                                                 <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium">Available</span>
                                             @endif
@@ -363,28 +361,33 @@
                     </div>
                 </div>
 
-                {{-- Recent Messages --}}
+                {{-- Recent Requests --}}
                 <div class="bg-white rounded-xl shadow-lg border border-gray-100">
                     <div class="p-6 border-b border-gray-100">
                         <div class="flex items-center justify-between">
-                            <h2 class="text-lg font-bold text-gray-800">💬 Messages</h2>
-                            <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full">{{ $talentStats['new_messages'] }}</span>
+                            <h2 class="text-lg font-bold text-gray-800">� Recent Requests</h2>
+                            <span class="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">{{ $recentRequests->count() }}</span>
                         </div>
                     </div>
                     <div class="p-6 space-y-4">
                         @forelse($recentRequests->take(2) as $request)
-                            <div class="flex items-center space-x-3">
-                                <img src="/asset/icons/profile-women.svg" alt="Recruiter" class="w-8 h-8 rounded-full">
-                                <div class="flex-1">
-                                    <div class="text-sm font-medium text-gray-800">{{ $request->recruiter->user->name ?? 'Recruiter' }}</div>
-                                    <div class="text-xs text-gray-500">{{ Str::limit($request->project_title ?? 'New opportunity', 30) }}</div>
+                            <div class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                                 onclick="viewRequestDetails({{ $request->id }})">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-briefcase text-blue-600 text-sm"></i>
                                 </div>
-                                <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-800">{{ $request->project_title ?? 'New opportunity' }}</div>
+                                    <div class="text-xs text-gray-500">from {{ $request->recruiter->user->name ?? 'Recruiter' }}</div>
+                                </div>
+                                <span class="px-2 py-1 bg-{{ $request->status === 'pending' ? 'yellow' : ($request->status === 'accepted' ? 'green' : 'red') }}-100 text-{{ $request->status === 'pending' ? 'yellow' : ($request->status === 'accepted' ? 'green' : 'red') }}-800 text-xs rounded-full">
+                                    {{ ucfirst($request->status) }}
+                                </span>
                             </div>
                         @empty
                             <div class="text-center py-4">
-                                <i class="fas fa-envelope-open text-gray-300 text-2xl mb-2"></i>
-                                <p class="text-gray-500 text-sm">No messages yet</p>
+                                <i class="fas fa-inbox text-gray-300 text-2xl mb-2"></i>
+                                <p class="text-gray-500 text-sm">No requests yet</p>
                             </div>
                         @endforelse
                     </div>
@@ -531,17 +534,12 @@ function acceptRequest(requestId) {
         `;
     }
 
-    const notes = prompt('Optional: Add a note about your acceptance:') || '';
-
     fetch(`/talent/request/${requestId}/accept`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            acceptance_notes: notes
-        })
+        }
     })
     .then(response => response.json())
     .then(data => {
@@ -603,17 +601,12 @@ function rejectRequest(requestId) {
         `;
     }
 
-    const notes = prompt('Please provide a reason for declining (optional):') || '';
-
     fetch(`/talent/request/${requestId}/reject`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({
-            rejection_notes: notes
-        })
+        }
     })
     .then(response => response.json())
     .then(data => {
@@ -724,7 +717,6 @@ function viewJobDetails(jobId) {
                                     <div><span class="font-medium">Role:</span> ${job.recruiter_company || 'Not specified'}</div>
                                     <div><span class="font-medium">Budget:</span> ${job.budget_range || 'Budget TBD'}</div>
                                     <div><span class="font-medium">Duration:</span> ${job.project_duration || 'Duration TBD'}</div>
-                                    <div><span class="font-medium">Priority:</span> <span class="capitalize">${job.urgency_level || 'Medium'}</span></div>
                                 </div>
                             </div>
                             <div class="bg-blue-50 p-4 rounded-xl">
@@ -833,11 +825,11 @@ function viewRequestDetails(requestId) {
     .then(response => {
         clearTimeout(timeoutId);
         console.log('Response status:', response.status);
-        
+
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         return response.json();
     })
     .then(data => {
@@ -858,7 +850,6 @@ function viewRequestDetails(requestId) {
                                     <div><span class="font-medium">Description:</span> <div class="text-sm text-gray-700 mt-1 max-h-20 overflow-y-auto">${request.project_description || 'No description provided'}</div></div>
                                     <div><span class="font-medium">Budget:</span> ${request.budget_range || 'Budget TBD'}</div>
                                     <div><span class="font-medium">Duration:</span> ${request.project_duration || 'Duration TBD'}</div>
-                                    <div><span class="font-medium">Urgency:</span> <span class="capitalize">${request.urgency_level || 'Medium'}</span></div>
                                 </div>
                             </div>
                             <div class="bg-green-50 p-4 rounded-xl">
@@ -891,7 +882,7 @@ function viewRequestDetails(requestId) {
                                     </div>
                                 </div>
                                 ${request.acceptance_status ? `
-                                    <div><span class="font-medium">Acceptance Status:</span> 
+                                    <div><span class="font-medium">Acceptance Status:</span>
                                         <span class="text-sm text-gray-700">${request.acceptance_status}</span>
                                     </div>
                                 ` : ''}
@@ -913,8 +904,8 @@ function viewRequestDetails(requestId) {
                             ` : ''}
                             ${!request.can_accept && !request.can_reject ? `
                                 <div class="flex-1 text-center py-3 bg-gray-100 text-gray-600 rounded-xl">
-                                    ${request.both_parties_accepted ? 
-                                        '<i class="fas fa-check-circle text-green-600 mr-2"></i>Request accepted by both parties' : 
+                                    ${request.both_parties_accepted ?
+                                        '<i class="fas fa-check-circle text-green-600 mr-2"></i>Request accepted by both parties' :
                                         '<i class="fas fa-clock text-gray-500 mr-2"></i>No actions available'}
                                 </div>
                             ` : ''}
@@ -943,10 +934,10 @@ function viewRequestDetails(requestId) {
     .catch(error => {
         clearTimeout(timeoutId);
         console.error('Error fetching request details:', error);
-        
+
         let errorMessage = 'Network error occurred.';
         let errorDetail = 'Please check your internet connection and try again.';
-        
+
         if (error.name === 'AbortError') {
             errorMessage = 'Request timed out.';
             errorDetail = 'The server took too long to respond. Please try again.';
@@ -954,7 +945,7 @@ function viewRequestDetails(requestId) {
             errorMessage = 'Server error occurred.';
             errorDetail = error.message;
         }
-        
+
         modalContent.innerHTML = `
             <div class="text-center py-8">
                 <i class="fas fa-wifi text-4xl text-red-600 mb-4"></i>
@@ -1006,7 +997,7 @@ function getStatusBadgeClasses(statusBadgeColor) {
     if (typeof statusBadgeColor === 'string' && statusBadgeColor.includes('bg-')) {
         return statusBadgeColor;
     }
-    
+
     // Map status types to Tailwind classes
     const colorMapping = {
         'success': 'bg-green-100 text-green-800',
@@ -1016,7 +1007,7 @@ function getStatusBadgeClasses(statusBadgeColor) {
         'danger': 'bg-red-100 text-red-800',
         'secondary': 'bg-gray-100 text-gray-800'
     };
-    
+
     return colorMapping[statusBadgeColor] || 'bg-gray-100 text-gray-800';
 }
 

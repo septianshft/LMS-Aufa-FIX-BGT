@@ -168,43 +168,49 @@
                 </div>
             </div>
 
-            <!-- Market Demand Analysis -->
+            <!-- Skill Proficiency Analysis -->
             <div class="bg-white rounded-2xl shadow-xl border border-gray-100 hover-lift">
                 <div class="bg-gradient-to-r from-orange-600 to-orange-700 rounded-t-2xl p-6">
                     <h2 class="text-xl font-bold text-white flex items-center">
                         <i class="fas fa-chart-bar mr-3"></i>
-                        Permintaan Pasar
+                        Distribusi Tingkat Keahlian
                     </h2>
-                    <p class="text-orange-100 text-sm mt-1">Analisis permintaan pasar keahlian</p>
+                    <p class="text-orange-100 text-sm mt-1">Analisis tingkat kemahiran talent</p>
                 </div>
                 <div class="p-6">
-                    @if(isset($skillAnalytics['market_demand_analysis']['distribution']))
+                    @if(isset($skillAnalytics['skill_levels']))
                         <div class="space-y-4">
-                            @php $distribution = $skillAnalytics['market_demand_analysis']['distribution']; @endphp
-                            <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg">
-                                <span class="font-medium">🔥 Permintaan Sangat Tinggi</span>
-                                <span class="text-red-600 font-bold">{{ $distribution['Very High'] ?? 0 }}</span>
-                            </div>
+                            @php $skillLevels = $skillAnalytics['skill_levels']; @endphp
                             <div class="flex justify-between items-center p-3 bg-yellow-50 rounded-lg">
-                                <span class="font-medium">⚡ Permintaan Tinggi</span>
-                                <span class="text-yellow-600 font-bold">{{ $distribution['High'] ?? 0 }}</span>
+                                <span class="font-medium">⭐ Tingkat Lanjutan</span>
+                                <span class="text-yellow-600 font-bold">{{ $skillLevels['advanced'] ?? 0 }}</span>
                             </div>
                             <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                                <span class="font-medium">📊 Permintaan Sedang</span>
-                                <span class="text-blue-600 font-bold">{{ $distribution['Medium'] ?? 0 }}</span>
+                                <span class="font-medium">📈 Tingkat Menengah</span>
+                                <span class="text-blue-600 font-bold">{{ $skillLevels['intermediate'] ?? 0 }}</span>
                             </div>
-                            <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="font-medium">📉 Permintaan Rendah</span>
-                                <span class="text-gray-600 font-bold">{{ $distribution['Low'] ?? 0 }}</span>
+                            <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                <span class="font-medium">🌱 Tingkat Pemula</span>
+                                <span class="text-green-600 font-bold">{{ $skillLevels['beginner'] ?? 0 }}</span>
                             </div>
                         </div>
 
-                        <!-- Top Demanded Skills -->
-                        @if(isset($skillAnalytics['market_demand_analysis']['top_demanded_skills']))
+                        <!-- Top Skills by Proficiency -->
+                        @if(isset($skillAnalytics['total_skills']) && $skillAnalytics['total_skills'] > 0)
                             <div class="mt-6">
-                                <h3 class="font-bold text-gray-700 mb-3">🏆 Keahlian Paling Diminati</h3>
+                                <h3 class="font-bold text-gray-700 mb-3">🏆 Keahlian Paling Populer</h3>
                                 <div class="space-y-2">
-                                    @foreach(array_slice($skillAnalytics['market_demand_analysis']['top_demanded_skills'], 0, 5, true) as $skill => $count)
+                                    @php
+                                        $allSkills = collect();
+                                        foreach(\App\Models\User::whereHas('talent')->get() as $user) {
+                                            $userSkills = $user->getSkills();
+                                            foreach($userSkills as $skill) {
+                                                $allSkills->push($skill['skill_name']);
+                                            }
+                                        }
+                                        $popularSkills = $allSkills->countBy()->sortDesc()->take(5);
+                                    @endphp
+                                    @foreach($popularSkills as $skill => $count)
                                         <div class="flex justify-between items-center text-sm">
                                             <span class="text-gray-600">{{ $skill }}</span>
                                             <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">{{ $count }}</span>
@@ -213,6 +219,11 @@
                                 </div>
                             </div>
                         @endif
+                    @else
+                        <div class="text-center py-8">
+                            <i class="fas fa-chart-bar text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">Belum ada data keahlian yang tersedia</p>
+                        </div>
                     @endif
                 </div>
             </div>

@@ -132,7 +132,7 @@ class AdvancedSkillAnalyticsService
             $skills = $this->getTalentSkills($talent);
             foreach ($skills as $skill) {
                 if (is_array($skill)) {
-                    $month = Carbon::parse($skill['acquired_at'] ?? now())->format('Y-m');
+                    $month = Carbon::parse($skill['completed_date'] ?? $skill['acquired_at'] ?? now())->format('Y-m');
                     $progressionData[$month] = ($progressionData[$month] ?? 0) + 1;
                 }
             }
@@ -315,7 +315,7 @@ class AdvancedSkillAnalyticsService
             if (count($skills) >= 2) {
                 $dates = array_map(function($skill) {
                     if (is_array($skill)) {
-                        return Carbon::parse($skill['acquired_at'] ?? now());
+                        return Carbon::parse($skill['completed_date'] ?? $skill['acquired_at'] ?? now());
                     }
                     return Carbon::now();
                 }, $skills);
@@ -346,7 +346,7 @@ class AdvancedSkillAnalyticsService
             $skills = $this->getTalentSkills($talent);
             foreach ($skills as $skill) {
                 if (is_array($skill)) {
-                    $date = Carbon::parse($skill['acquired_at'] ?? now());
+                    $date = Carbon::parse($skill['completed_date'] ?? $skill['acquired_at'] ?? now());
                     if ($date->isWeekend()) {
                         $patterns['weekend_learning']++;
                     } else {
@@ -403,7 +403,7 @@ class AdvancedSkillAnalyticsService
         foreach ($talents as $talent) {
             foreach ($this->getTalentSkills($talent) as $skill) {
                 if (is_array($skill)) {
-                    $acquiredDate = Carbon::parse($skill['acquired_at'] ?? now());
+                    $acquiredDate = Carbon::parse($skill['completed_date'] ?? $skill['acquired_at'] ?? now());
                     if ($acquiredDate->gte($cutoffDate)) {
                         $skillName = $skill['name'] ?? 'Unknown Skill';
                         $recentSkills[$skillName] = ($recentSkills[$skillName] ?? 0) + 1;
@@ -474,18 +474,16 @@ class AdvancedSkillAnalyticsService
             // If skill is a string, convert to basic array format
             if (is_string($skill)) {
                 $normalized[] = [
-                    'name' => $skill,
-                    'category' => 'General Technology',
-                    'market_demand' => 'Medium',
-                    'acquired_at' => now()->toDateString()
+                    'skill_name' => $skill,
+                    'proficiency' => 'intermediate',
+                    'completed_date' => now()->toDateString()
                 ];
             } elseif (is_array($skill)) {
                 // Ensure required keys exist with defaults
                 $normalized[] = [
-                    'name' => $skill['name'] ?? 'Unknown Skill',
-                    'category' => $skill['category'] ?? 'General Technology',
-                    'market_demand' => $skill['market_demand'] ?? 'Medium',
-                    'acquired_at' => $skill['acquired_at'] ?? now()->toDateString()
+                    'skill_name' => $skill['skill_name'] ?? $skill['name'] ?? 'Unknown Skill',
+                    'proficiency' => $skill['proficiency'] ?? $skill['level'] ?? 'intermediate',
+                    'completed_date' => $skill['completed_date'] ?? $skill['acquired_at'] ?? now()->toDateString()
                 ];
             }
             // Skip non-string, non-array items

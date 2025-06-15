@@ -117,7 +117,7 @@ class TalentAdminController extends Controller
                     'latestRequests' => TalentRequest::select([
                             'id', 'project_title', 'status', 'created_at', 'updated_at',
                             'recruiter_id', 'talent_user_id', 'talent_accepted', 'admin_accepted',
-                            'both_parties_accepted', 'urgency_level'
+                            'both_parties_accepted'
                         ])
                         ->with([
                             'recruiter:id,user_id',
@@ -301,8 +301,7 @@ class TalentAdminController extends Controller
     public function updateRequestStatus(Request $request, TalentRequest $talentRequest)
     {
         $request->validate([
-            'status' => 'required|in:pending,approved,rejected,meeting_arranged,agreement_reached,onboarded,completed',
-            'admin_notes' => 'nullable|string|max:1000'
+            'status' => 'required|in:pending,approved,rejected,meeting_arranged,agreement_reached,onboarded,completed'
         ]);
 
         // Additional validation for meeting arrangement
@@ -320,7 +319,6 @@ class TalentAdminController extends Controller
 
         $updateData = [
             'status' => $request->status,
-            'admin_notes' => $request->admin_notes,
         ];
 
         // Set timestamp based on status
@@ -330,7 +328,6 @@ class TalentAdminController extends Controller
                 // Mark admin as accepted when approving
                 $updateData['admin_accepted'] = true;
                 $updateData['admin_accepted_at'] = now();
-                $updateData['admin_acceptance_notes'] = $request->admin_notes;
 
                 // Check if talent has already accepted and mark both accepted if so
                 if ($talentRequest->talent_accepted) {
@@ -431,10 +428,6 @@ class TalentAdminController extends Controller
      */
     public function adminAcceptRequest(Request $request, TalentRequest $talentRequest)
     {
-        $request->validate([
-            'admin_acceptance_notes' => 'nullable|string|max:1000'
-        ]);
-
         // Check if already accepted
         if ($talentRequest->admin_accepted) {
             return response()->json([
@@ -453,7 +446,7 @@ class TalentAdminController extends Controller
 
         // Mark admin as accepted
         $oldStatus = $talentRequest->status;
-        $talentRequest->markAdminAccepted($request->admin_acceptance_notes);
+        $talentRequest->markAdminAccepted();
 
         // Refresh to get updated data
         $talentRequest->refresh();
@@ -540,22 +533,20 @@ class TalentAdminController extends Controller
         $stats = [
             'completed_courses' => $talent->user->courseProgress()->where('progress', '>=', 100)->count(),
             'certificates' => $talent->user->certificates()->count(),
-            'skill_level' => !empty($talentSkills) ? round(collect($talentSkills)->avg(function($skill) {
-                return is_array($skill) && isset($skill['level']) ? (int)$skill['level'] : 0;
-            }), 1) : 0,
+            'skill_count' => count($talentSkills),
             'experience_years' => $talent->experience_years ?? 0
         ];
 
-        // Format skills for display
+        // Format skills for display - simplified structure
         $formattedSkills = collect($talentSkills)->map(function($skill) {
             if (is_array($skill)) {
                 return [
-                    'name' => $skill['name'] ?? 'Unknown',
-                    'level' => $skill['level'] ?? null,
-                    'category' => $skill['category'] ?? 'General'
+                    'name' => $skill['skill_name'] ?? ($skill['name'] ?? 'Unknown'),
+                    'proficiency' => $skill['proficiency'] ?? ($skill['level'] ?? 'intermediate'),
+                    'completed_date' => $skill['completed_date'] ?? ($skill['acquired_at'] ?? null)
                 ];
             }
-            return ['name' => (string)$skill, 'level' => null, 'category' => 'General'];
+            return ['name' => (string)$skill, 'proficiency' => 'intermediate', 'completed_date' => null];
         })->toArray();
 
         // Get portfolio/projects if available
