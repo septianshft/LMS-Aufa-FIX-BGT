@@ -28,7 +28,7 @@
                 @forelse($courses as $course)
                     <div class="item-card flex flex-col md:flex-row gap-y-10 justify-between md:items-center">
                         <div class="flex flex-row items-center gap-x-3">
-                            <img src="{{ Storage::url($course->thumbnail) }}" alt="{{ $course->name }}"
+                            <img src="{{ Storage::disk('public')->url($course->thumbnail) }}" alt="{{ $course->name }}"
                                 class="rounded-2xl object-cover w-[120px] h-[90px]">
                             <div class="flex flex-col">
                                 <h3 class="text-indigo-950 text-xl font-bold">{{ $course->name }}</h3>
