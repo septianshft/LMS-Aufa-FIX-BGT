@@ -18,6 +18,7 @@ use App\Http\Controllers\{
     SubscribeTransactionController,
     TrainerController,
     FinalQuizController,
+    CourseMeetingController,
     QuizAttemptController, // Pastikan ini sudah ada
     CertificateController,
     TalentAdminController,
@@ -103,6 +104,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('courses', CourseController::class);
             Route::resource('course_videos', CourseVideoController::class);
             Route::resource('course_modules', CourseModuleController::class);
+            Route::resource('courses.meetings', CourseMeetingController::class)->except('show');
 
             Route::get('/add/video/{course:id}', [CourseVideoController::class, 'create'])->name('course.add_video');
             Route::post('/add/video/save/{course:id}', [CourseVideoController::class, 'store'])->name('course.add_video.save');

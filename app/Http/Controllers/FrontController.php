@@ -85,6 +85,7 @@ class FrontController extends Controller
             "course_videos", "course_keypoints",
             "modules.videos", "modules.materials", "modules.tasks",
             "finalQuiz",
+            "meetings",
         ]);
 
         $user = Auth::user();
