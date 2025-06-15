@@ -117,6 +117,14 @@ class CourseController extends Controller
             return redirect()->route('front.pricing', $course->slug);
         }
 
+        if ($course->mode && $course->mode->name === 'onsite') {
+            $today = now()->toDateString();
+            if (($course->enrollment_start && $today < $course->enrollment_start) ||
+                ($course->enrollment_end && $today > $course->enrollment_end)) {
+                return redirect()->back()->with('error', 'Enrollment period is closed.');
+            }
+        }
+
         $existing = SubscribeTransaction::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->where('is_paid', true)

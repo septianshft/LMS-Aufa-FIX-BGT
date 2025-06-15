@@ -21,6 +21,8 @@ class CourseFactory extends Factory
             'price' => 0,
             'course_mode_id' => null,
             'course_level_id' => null,
+            'enrollment_start' => null,
+            'enrollment_end' => null,
         ];
     }
 }
