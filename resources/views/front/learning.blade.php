@@ -167,6 +167,32 @@
                                     </div>
                                     @endforeach
                                 </div>
+
+                                @if($course->mode && strtolower($course->mode->name) === 'onsite')
+                                    <div class="mt-6">
+                                        <h4 class="font-semibold text-xl mb-2">Schedule</h4>
+                                        <table class="w-full text-left border">
+                                            <thead>
+                                                <tr>
+                                                    <th class="p-2 border">Title</th>
+                                                    <th class="p-2 border">Start</th>
+                                                    <th class="p-2 border">End</th>
+                                                    <th class="p-2 border">Location</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach($course->meetings as $meeting)
+                                                <tr>
+                                                    <td class="p-2 border">{{ $meeting->title }}</td>
+                                                    <td class="p-2 border">{{ $meeting->start_datetime->format('d M Y H:i') }}</td>
+                                                    <td class="p-2 border">{{ $meeting->end_datetime->format('d M Y H:i') }}</td>
+                                                    <td class="p-2 border">{{ $meeting->location ?? '-' }}</td>
+                                                </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
                             </div>
                         </div>
 
