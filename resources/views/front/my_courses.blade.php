@@ -59,15 +59,20 @@
         <div class="px-[50px]" id="courseContent">
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($courses as $course)
+@php $firstVideo = $course->course_videos->first(); @endphp
                 <div class="flex flex-col rounded-xl bg-white overflow-hidden transition-all hover:ring-2 hover:ring-[#FF6129]">
-                    <a href="{{ route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
+                    <a href="{{ $firstVideo ? route('front.learning', ['course' => $course->id, 'courseVideoId' => optional($firstVideo)->id]) : route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
                         <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
                     </a>
                     <div class="p-4 flex flex-col gap-2">
-                        <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
+                        <a href="{{ $firstVideo ? route('front.learning', ['course' => $course->id, 'courseVideoId' => optional($firstVideo)->id]) : route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
                         <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
                         <p class="text-sm text-gray-600">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
-                        <a href="{{ route('front.details', $course->slug) }}" class="mt-2 inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">Mulai Belajar</a>
+                        @if($firstVideo)
+                        <a href="{{ route('front.learning', ['course' => $course->id, 'courseVideoId' => $firstVideo->id]) }}" class="mt-2 inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">Mulai Belajar</a>
+                        @else
+                        <a href="{{ route('front.details', $course->slug) }}" class="mt-2 inline-block bg-gray-400 text-white text-sm font-semibold px-4 py-2 rounded-lg cursor-not-allowed opacity-50">Lihat Detail</a>
+                        @endif
                     </div>
                 </div>
                 @endforeach
