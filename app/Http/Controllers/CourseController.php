@@ -180,6 +180,9 @@ public function store(StoreCourseRequest $request)
 {
     $data = $request->validated();
 
+    $data['enrollment_start'] = $request->input('enrollment_start');
+    $data['enrollment_end'] = $request->input('enrollment_end');
+
     // Upload thumbnail
     if ($request->hasFile('thumbnail')) {
         $path = $request->file('thumbnail')->store('thumbnails', 'public');
@@ -271,6 +274,9 @@ public function store(StoreCourseRequest $request)
     {
         DB::transaction(function () use ($request, $course) {
             $validated = $request->validated();
+
+            $validated['enrollment_start'] = $request->input('enrollment_start');
+            $validated['enrollment_end'] = $request->input('enrollment_end');
 
             if (Auth::user()->hasRole('admin') && $request->filled('trainer_id')) {
                 $course->trainer_id = $request->input('trainer_id');
