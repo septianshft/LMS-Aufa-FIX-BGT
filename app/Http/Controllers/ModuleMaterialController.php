@@ -39,4 +39,10 @@ class ModuleMaterialController extends Controller
         });
         return response()->json(['status' => 'ok']);
     }
+
+    public function destroy(CourseMaterial $courseMaterial)
+    {
+        $courseMaterial->delete();
+        return back();
+    }
 }

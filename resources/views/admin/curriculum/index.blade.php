@@ -25,7 +25,7 @@
                                 <input type="text" name="name" value="{{ $module->name }}" class="border rounded w-full">
                                 <button class="px-3 py-1 bg-indigo-700 text-white rounded">Save</button>
                             </form>
-                            <form method="POST" action="{{ route('admin.curriculum.destroy', $module) }}">
+                            <form method="POST" action="{{ route('admin.curriculum.destroy', $module) }}" onsubmit="return confirm('Are you sure?')">
                                 @csrf
                                 @method('DELETE')
                                 <button class="px-3 py-1 bg-red-700 text-white rounded">Delete</button>
@@ -43,19 +43,46 @@
                                 <h4 class="font-semibold">Videos</h4>
                                 <ul class="list-disc list-inside sortable-videos" data-module="{{ $module->id }}">
                                     @foreach($module->videos as $v)
-                                        <li class="video-item" data-id="{{ $v->id }}">{{ $v->name }}</li>
+                                        <li class="video-item" data-id="{{ $v->id }}">
+                                            <div class="flex justify-between items-center">
+                                                <span>{{ $v->name }}</span>
+                                                <form action="{{ route('admin.curriculum.videos.destroy', $v) }}" method="POST" onsubmit="return confirm('Are you sure?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600">Delete</button>
+                                                </form>
+                                            </div>
+                                        </li>
                                     @endforeach
                                 </ul>
                                 <h4 class="font-semibold mt-2">Materials</h4>
                                 <ul class="list-disc list-inside sortable-materials" data-module="{{ $module->id }}">
                                     @foreach($module->materials as $m)
-                                        <li class="material-item" data-id="{{ $m->id }}">{{ $m->name }}</li>
+                                        <li class="material-item" data-id="{{ $m->id }}">
+                                            <div class="flex justify-between items-center">
+                                                <span>{{ $m->name }}</span>
+                                                <form action="{{ route('admin.curriculum.materials.destroy', $m) }}" method="POST" onsubmit="return confirm('Are you sure?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600">Delete</button>
+                                                </form>
+                                            </div>
+                                        </li>
                                     @endforeach
                                 </ul>
                                 <h4 class="font-semibold mt-2">Tasks</h4>
                                 <ul class="list-disc list-inside sortable-tasks" data-module="{{ $module->id }}">
                                     @foreach($module->tasks as $t)
-                                        <li class="task-item" data-id="{{ $t->id }}">{{ $t->name }}</li>
+                                        <li class="task-item" data-id="{{ $t->id }}">
+                                            <div class="flex justify-between items-center">
+                                                <span>{{ $t->name }}</span>
+                                                <form action="{{ route('admin.curriculum.tasks.destroy', $t) }}" method="POST" onsubmit="return confirm('Are you sure?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-600">Delete</button>
+                                                </form>
+                                            </div>
+                                        </li>
                                     @endforeach
                                 </ul>
                             </div>

@@ -29,7 +29,7 @@
                         <h3 class="text-indigo-950 text-xl font-bold">{{ $trainer->created_at }}</h3>
                     </div>
                     <div class="hidden md:flex flex-row items-center gap-x-3">
-                        <form action="{{ route('admin.trainers.destroy', $trainer) }}" method="POST">
+                        <form action="{{ route('admin.trainers.destroy', $trainer) }}" method="POST" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-bold py-4 px-6 bg-red-700 text-white rounded-full">

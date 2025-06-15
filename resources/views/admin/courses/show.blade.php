@@ -25,7 +25,7 @@
                         <a href="{{ route('admin.courses.edit', $course) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
                             Edit Course
                         </a>
-                        <form action="{{ route('admin.courses.destroy', $course) }}" method="POST">
+                        <form action="{{ route('admin.courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-bold py-4 px-6 bg-red-700 text-white rounded-full">
@@ -62,7 +62,7 @@
                         <a href="{{ route('admin.course_videos.edit', $video) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
                             Edit Video
                         </a>
-                        <form action="{{ route('admin.course_videos.destroy', $video) }}" method="POST">
+                        <form action="{{ route('admin.course_videos.destroy', $video) }}" method="POST" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-bold py-4 px-6 bg-red-700 text-white rounded-full">
