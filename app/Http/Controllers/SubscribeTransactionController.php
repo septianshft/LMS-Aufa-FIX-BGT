@@ -43,6 +43,14 @@ class SubscribeTransactionController extends Controller
         return redirect()->back()->with('error', 'Selected course not found.');
     }
 
+    if ($course->mode && $course->mode->name === 'onsite') {
+        $today = now()->toDateString();
+        if (($course->enrollment_start && $today < $course->enrollment_start) ||
+            ($course->enrollment_end && $today > $course->enrollment_end)) {
+            return redirect()->back()->with('error', 'Enrollment period is closed.');
+        }
+    }
+
     // Cek apakah user sudah pernah beli course ini dan sudah lunas
     $alreadyExists = SubscribeTransaction::where('user_id', $user->id)
                     ->where('course_id', $courseId)

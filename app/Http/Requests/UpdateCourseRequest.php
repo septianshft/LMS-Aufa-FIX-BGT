@@ -33,6 +33,8 @@ class UpdateCourseRequest extends FormRequest
             'price' => 'required|numeric|min:0',
             'trainer_id' => 'nullable|exists:trainers,id',
             'course_keypoints.*' => 'nullable|string|max:255',
+            'enrollment_start' => 'nullable|date',
+            'enrollment_end' => 'nullable|date|after_or_equal:enrollment_start',
         ];
     }
 }

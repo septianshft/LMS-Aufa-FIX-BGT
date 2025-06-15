@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Certificate;
 use App\Models\CourseModule;
+use App\Models\CourseMeeting;
 use Illuminate\Support\Facades\Storage;
 
 class Course extends Model
@@ -23,7 +24,9 @@ class Course extends Model
         'category_id',
         'trainer_id',
         'course_mode_id',
-        'course_level_id'
+        'course_level_id',
+        'enrollment_start',
+        'enrollment_end'
     ];
 
     public function category(){
@@ -94,6 +97,11 @@ public function finalQuizzes()
     public function certificates()
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    public function meetings()
+    {
+        return $this->hasMany(CourseMeeting::class);
     }
 
 

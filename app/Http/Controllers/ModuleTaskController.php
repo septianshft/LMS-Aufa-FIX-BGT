@@ -36,4 +36,10 @@ class ModuleTaskController extends Controller
         });
         return response()->json(['status' => 'ok']);
     }
+
+    public function destroy(ModuleTask $moduleTask)
+    {
+        $moduleTask->delete();
+        return back();
+    }
 }
