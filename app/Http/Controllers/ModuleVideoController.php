@@ -37,4 +37,10 @@ class ModuleVideoController extends Controller
         });
         return response()->json(['status' => 'ok']);
     }
+
+    public function destroy(CourseVideo $courseVideo)
+    {
+        $courseVideo->delete();
+        return back();
+    }
 }

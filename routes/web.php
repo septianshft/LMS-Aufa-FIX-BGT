@@ -123,6 +123,9 @@ Route::middleware('auth')->group(function () {
                 Route::post('module/{courseModule}/videos', [ModuleVideoController::class, 'store'])->name('videos.store');
                 Route::post('module/{courseModule}/materials', [ModuleMaterialController::class, 'store'])->name('materials.store');
                 Route::post('module/{courseModule}/tasks', [ModuleTaskController::class, 'store'])->name('tasks.store');
+                Route::delete('videos/{courseVideo}', [ModuleVideoController::class, 'destroy'])->name('videos.destroy');
+                Route::delete('materials/{courseMaterial}', [ModuleMaterialController::class, 'destroy'])->name('materials.destroy');
+                Route::delete('tasks/{moduleTask}', [ModuleTaskController::class, 'destroy'])->name('tasks.destroy');
             });
 
           // Final Quiz Management Routes
