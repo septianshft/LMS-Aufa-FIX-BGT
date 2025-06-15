@@ -3,11 +3,32 @@
 @section('title', 'Recruiter Dashboard')
 @section('container')
 
+{{-- Dashboard Container with Flexbox Layout --}}
+<div class="space-y-8">
 
-<!-- Premium Statistics Dashboard -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-16 mt-8 relative z-20 max-w-7xl mx-auto">
-    <!-- Available Talents Card - Enhanced -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+    {{-- Hero welcome greeting card - Full Width --}}
+    <div class="w-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl mt-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Welcome back, {{ $user->name }}! 👋</h1>
+                <p class="text-blue-100 text-lg">Ready to discover exceptional talent and build your dream team?</p>
+            </div>
+            <div class="hidden md:block">
+                <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
+                    <i class="fas fa-star text-4xl text-yellow-300 mb-2"></i>
+                    <div class="text-sm font-medium">Recruiter Status</div>
+                    <div class="text-xs opacity-90">
+                        {{ $user->is_active_talent ? 'Active' : 'Inactive' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Stats Cards Row - 32% Width Each --}}
+    <div class="flex flex-wrap gap-[2%]">
+        {{-- Available Talents Card - 32% Width --}}
+        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-users text-xl text-white"></i>
@@ -34,11 +55,10 @@
                 <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
                 Live
             </div>
-        </div>
-    </div>
+        </div>        </div>
 
-    <!-- Account Status Card - Enhanced -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        {{-- Account Status Card - 32% Width --}}
+        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-{{ $user->recruiter && $user->recruiter->is_active ? 'shield-check' : 'shield-exclamation' }} text-xl text-white"></i>
@@ -65,11 +85,10 @@
                 <div class="w-2 h-2 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-full mr-2"></div>
                 {{ $user->recruiter && $user->recruiter->is_active ? 'Live' : 'Offline' }}
             </div>
-        </div>
-    </div>
+        </div>        </div>
 
-    <!-- My Requests Card - Enhanced -->
-    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+        {{-- My Requests Card - 32% Width --}}
+        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-paper-plane text-xl text-white"></i>
@@ -96,14 +115,12 @@
                 <div class="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
                 Active
             </div>
-        </div>
+        </div>        </div>
     </div>
-</div>
-</div>
 
-    <!-- Recent Requests Section -->
+    {{-- Recent Requests Section - Full Width --}}
     @if(isset($myRequests) && (method_exists($myRequests, 'count') ? $myRequests->count() > 0 : (is_countable($myRequests) ? count($myRequests) > 0 : false)))
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-7xl mx-auto mb-12">
+    <div class="w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <!-- Header with gradient background -->
         <div class="bg-blue-600 text-white p-6">
             <div class="flex items-center justify-between">
@@ -151,12 +168,12 @@
                                 <div class="bg-gray-50 py-2 rounded">
                                     <div class="text-xs text-gray-600">Status</div>
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                                        @if($request->getStatusBadgeColor() == 'success') bg-green-100 text-green-800
-                                        @elseif($request->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
-                                        @elseif($request->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
-                                        @elseif($request->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800
+                                        @if($request->getRecruiterStatusBadgeColor() == 'success') bg-green-100 text-green-800
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
+                                        @elseif($request->getRecruiterStatusBadgeColor() == 'danger') bg-red-100 text-red-800
                                         @else bg-gray-100 text-gray-800 @endif">
-                                        {{ $request->getFormattedStatus() }}
+                                        {{ $request->getRecruiterDisplayStatus() }}
                                     </span>
                                 </div>
                                 <div class="bg-gray-50 py-2 rounded">
@@ -194,8 +211,8 @@
     </div>
     @endif
 
-    <!-- Premium Talent Discovery Section -->
-    <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden max-w-7xl mx-auto">
+    {{-- Premium Talent Discovery Section - Full Width --}}
+    <div class="w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
         <!-- Simple Header -->
         <div class="bg-emerald-600 text-white p-6">
             <div class="flex items-center justify-between">
@@ -344,33 +361,23 @@
 
                             <!-- Status -->
                             @php $existingRequest = $talent->talentRequests->first(); @endphp
-                            @if($existingRequest)
+                            @if($existingRequest && !in_array($existingRequest->status, ['rejected', 'completed']))
                                 <div class="mb-4 text-center">
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                        @if($existingRequest->getStatusBadgeColor() == 'success') bg-green-100 text-green-800
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
-                                        @elseif($existingRequest->getStatusBadgeColor() == 'danger') bg-red-100 text-red-800
+                                        @if($existingRequest->getRecruiterStatusBadgeColor() == 'success') bg-green-100 text-green-800
+                                        @elseif($existingRequest->getRecruiterStatusBadgeColor() == 'warning') bg-yellow-100 text-yellow-800
+                                        @elseif($existingRequest->getRecruiterStatusBadgeColor() == 'info') bg-blue-100 text-blue-800
+                                        @elseif($existingRequest->getRecruiterStatusBadgeColor() == 'danger') bg-red-100 text-red-800
                                         @else bg-gray-100 text-gray-800 @endif">
-                                        {{ $existingRequest->getFormattedStatus() }}
+                                        {{ $existingRequest->getRecruiterDisplayStatus() }}
                                     </span>
                                 </div>
                             @endif
 
                             <!-- Actions -->
                             <div class="space-y-2">
-                                @if(!$existingRequest || $existingRequest->status == 'rejected')
+                                @if(!$existingRequest || in_array($existingRequest->status, ['rejected', 'completed']))
                                     @if(isset($talent->availability_status) && $talent->availability_status['available'])
-                                        <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
-                                                class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
-                                            <i class="fas fa-handshake mr-2"></i>Request Talent
-                                        </button>
-                                    @elseif(isset($talent->availability_status) && !$talent->availability_status['available'])
-                                        <button onclick="showAvailabilityInfo('{{ $talent->user->name }}', @json($talent->availability_status))"
-                                                class="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors">
-                                            <i class="fas fa-clock mr-2"></i>Check Availability
-                                        </button>
-                                    @else
                                         <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
                                                 class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
                                             <i class="fas fa-handshake mr-2"></i>Request Talent
@@ -378,7 +385,7 @@
                                     @endif
                                 @endif
                                 <div class="grid grid-cols-2 gap-2">
-                                    <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                    <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}', {{ json_encode($metrics) }})"
                                             class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                                         <i class="fas fa-chart-line mr-1"></i>Report
                                     </button>
@@ -624,65 +631,6 @@ function openRequestModal(talentId, talentName) {
     $('#talentRequestModal').modal('show');
 }
 
-function showAvailabilityInfo(talentName, availabilityStatus) {
-    let blockingProjectsHtml = '';
-    if (availabilityStatus.blocking_projects && availabilityStatus.blocking_projects.length > 0) {
-        blockingProjectsHtml = '<div class="mt-4"><h6 class="font-semibold text-gray-900 mb-2">Current Projects:</h6><ul class="space-y-2">';
-        availabilityStatus.blocking_projects.forEach(project => {
-            blockingProjectsHtml += `
-                <li class="bg-gray-50 p-3 rounded-lg">
-                    <div class="font-medium text-gray-900">${project.title}</div>
-                    <div class="text-sm text-gray-600">Company: ${project.company}</div>
-                    <div class="text-sm text-gray-600">Until: ${project.end_date}</div>
-                </li>`;
-        });
-        blockingProjectsHtml += '</ul></div>';
-    }
-
-    const availabilityDate = availabilityStatus.next_available_date ?
-        new Date(availabilityStatus.next_available_date).toLocaleDateString('en-US', {
-            year: 'numeric', month: 'long', day: 'numeric'
-        }) : 'Unknown';
-
-    const modalHtml = `
-        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl">
-                    <div class="text-center mb-4">
-                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i class="fas fa-clock text-orange-600 text-2xl"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900">${talentName} is Currently Busy</h3>
-                        <p class="text-gray-600 mt-2">${availabilityStatus.status}</p>
-                    </div>
-
-                    <div class="text-center mb-4">
-                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                            <div class="text-sm font-medium text-blue-800">Next Available:</div>
-                            <div class="text-lg font-bold text-blue-900">${availabilityDate}</div>
-                        </div>
-                    </div>
-
-                    ${blockingProjectsHtml}
-
-                    <div class="mt-6 space-y-3">
-                        <button onclick="openRequestModal('${currentRequestTalentId}', '${talentName}')"
-                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                            <i class="fas fa-calendar-plus mr-2"></i>Schedule Future Request
-                        </button>
-                        <button onclick="this.closest('.fixed').remove()"
-                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
-                            Close
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
-
 function showTimeBlockingConflict(errorData) {
     // Close the request modal first
     $('#talentRequestModal').modal('hide');
@@ -747,6 +695,133 @@ function showTimeBlockingConflict(errorData) {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
+function showTalentAlreadyOnboardedModal(errorData) {
+    // Close the request modal first
+    $('#talentRequestModal').modal('hide');
+
+    const onboardedDate = errorData.existing_project?.onboarded_date || 'Unknown';
+    const projectTitle = errorData.existing_project?.title || 'Current Project';
+
+    const modalHtml = `
+        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-check text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Talent Already Onboarded</h3>
+                        <p class="text-gray-600 mt-2">${errorData.message}</p>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                        <h6 class="font-semibold text-blue-900 mb-2">Current Project Details:</h6>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Project:</span>
+                                <span class="font-medium text-blue-900">${projectTitle}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Onboarded:</span>
+                                <span class="font-medium text-blue-900">${onboardedDate}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-blue-700">Status:</span>
+                                <span class="font-medium text-blue-900">${errorData.existing_project?.status || 'Onboarded'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-lightbulb text-yellow-600 mr-2 mt-0.5"></i>
+                            <div class="text-sm text-yellow-800">
+                                <p class="font-medium mb-1">Suggestion:</p>
+                                <p>Since this talent is already part of your team, consider reaching out directly or using your internal project management tools for new assignments.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button onclick="this.closest('.fixed').remove()"
+                                class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>Got It
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+function showActiveRequestExistsModal(errorData) {
+    // Close the request modal first
+    $('#talentRequestModal').modal('hide');
+
+    const submittedDate = errorData.existing_request?.submitted_date || 'Unknown';
+    const projectTitle = errorData.existing_request?.project_title || 'Previous Request';
+    const requestStatus = errorData.existing_request?.status || 'In Progress';
+
+    const modalHtml = `
+        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-hourglass-half text-orange-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Active Request Pending</h3>
+                        <p class="text-gray-600 mt-2">${errorData.message}</p>
+                    </div>
+
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                        <h6 class="font-semibold text-orange-900 mb-2">Your Current Request:</h6>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-orange-700">Project:</span>
+                                <span class="font-medium text-orange-900">${projectTitle}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-orange-700">Submitted:</span>
+                                <span class="font-medium text-orange-900">${submittedDate}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-orange-700">Status:</span>
+                                <span class="font-medium text-orange-900">${requestStatus}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-600 mr-2 mt-0.5"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium mb-1">What's Next:</p>
+                                <p>Your request is being processed. You can track its progress in the "My Requests" section of your dashboard.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <button onclick="window.location.href='{{ route('recruiter.my_requests') }}'"
+                                class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-list mr-2"></i>View My Requests
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()"
+                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
 function contactTalent() {
     if (currentTalentEmail) {
         window.location.href = 'mailto:' + currentTalentEmail;
@@ -792,7 +867,7 @@ function toggleViewMode() {
     }
 }
 
-function viewScoutingReport(talentId, talentName) {
+function viewScoutingReport(talentId, talentName, metrics) {
     // Create a detailed scouting report modal
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
@@ -819,34 +894,65 @@ function viewScoutingReport(talentId, talentName) {
     `;
     document.body.appendChild(modal);
 
-    // Here you would make an AJAX call to get detailed metrics
-    // For now, we'll show a placeholder
+    // Display real metrics data
     setTimeout(() => {
         const content = modal.querySelector('.p-6:last-child');
+
+        // Extract metric values with safe defaults
+        const completedCourses = metrics?.progress_tracking?.completed_courses || 0;
+        const totalCertificates = metrics?.certifications?.total_certificates || 0;
+        const quizAverage = metrics?.quiz_performance?.average_score || 0;
+        const completionRate = metrics?.progress_tracking?.completion_rate || 0;
+        const learningVelocity = metrics?.learning_velocity?.score || 0;
+        const consistency = metrics?.consistency?.score || 0;
+        const adaptability = metrics?.adaptability?.score || 0;
+
+        // Helper function to get performance level and color
+        const getPerformanceLevel = (score) => {
+            if (score >= 80) return { level: 'Excellent', color: 'text-green-600' };
+            if (score >= 60) return { level: 'Good', color: 'text-blue-600' };
+            if (score >= 40) return { level: 'Average', color: 'text-orange-600' };
+            return { level: 'Needs Improvement', color: 'text-red-600' };
+        };
+
+        const velocityLevel = getPerformanceLevel(learningVelocity);
+        const consistencyLevel = getPerformanceLevel(consistency);
+        const adaptabilityLevel = getPerformanceLevel(adaptability);
+
         content.innerHTML = `
             <div class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-blue-50 p-4 rounded-xl">
                         <h3 class="font-semibold text-blue-900 mb-3">Learning Performance</h3>
                         <div class="space-y-2">
-                            <div class="flex justify-between"><span>Learning Velocity:</span><span class="font-semibold text-blue-600">High (87%)</span></div>
-                            <div class="flex justify-between"><span>Performance Consistency:</span><span class="font-semibold text-green-600">Excellent (94%)</span></div>
-                            <div class="flex justify-between"><span>Skill Adaptability:</span><span class="font-semibold text-orange-600">Good (78%)</span></div>
+                            <div class="flex justify-between"><span>Learning Velocity:</span><span class="font-semibold ${velocityLevel.color}">${velocityLevel.level} (${Math.round(learningVelocity)}%)</span></div>
+                            <div class="flex justify-between"><span>Performance Consistency:</span><span class="font-semibold ${consistencyLevel.color}">${consistencyLevel.level} (${Math.round(consistency)}%)</span></div>
+                            <div class="flex justify-between"><span>Skill Adaptability:</span><span class="font-semibold ${adaptabilityLevel.color}">${adaptabilityLevel.level} (${Math.round(adaptability)}%)</span></div>
                         </div>
                     </div>
                     <div class="bg-green-50 p-4 rounded-xl">
                         <h3 class="font-semibold text-green-900 mb-3">Achievement Metrics</h3>
                         <div class="space-y-2">
-                            <div class="flex justify-between"><span>Certifications:</span><span class="font-semibold">5 earned</span></div>
-                            <div class="flex justify-between"><span>Quiz Performance:</span><span class="font-semibold">87% avg</span></div>
-                            <div class="flex justify-between"><span>Completion Rate:</span><span class="font-semibold">92%</span></div>
+                            <div class="flex justify-between"><span>Courses Completed:</span><span class="font-semibold">${completedCourses} completed</span></div>
+                            <div class="flex justify-between"><span>Certifications:</span><span class="font-semibold">${totalCertificates} earned</span></div>
+                            <div class="flex justify-between"><span>Quiz Performance:</span><span class="font-semibold">${Math.round(quizAverage)}% avg</span></div>
+                            <div class="flex justify-between"><span>Completion Rate:</span><span class="font-semibold">${Math.round(completionRate)}%</span></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-gray-50 p-4 rounded-xl">
                     <h3 class="font-semibold text-gray-900 mb-3">Recommendation</h3>
-                    <p class="text-gray-700">This talent shows excellent learning consistency and strong performance across multiple skill areas. Recommended for projects requiring adaptable and dedicated team members.</p>
+                    <p class="text-gray-700">
+                        ${completedCourses > 0 || totalCertificates > 0 ?
+                            `This talent has completed ${completedCourses} courses and earned ${totalCertificates} certificates with an average quiz performance of ${Math.round(quizAverage)}%. ${
+                                consistency >= 70 ? 'Shows excellent learning consistency and' : 'Has potential for growth with'
+                            } ${
+                                learningVelocity >= 70 ? 'strong learning velocity.' : 'room for improvement in learning pace.'
+                            }` :
+                            'This talent is new to the platform. Consider their background and potential for growth.'
+                        }
+                    </p>
                 </div>
 
                 <div class="flex gap-4 pt-4">
@@ -859,7 +965,7 @@ function viewScoutingReport(talentId, talentName) {
                 </div>
             </div>
         `;
-    }, 1000);
+    }, 300);
 }
 
 function viewRequestDetails(requestId) {
@@ -1225,7 +1331,15 @@ function generateComparisonTable() {
                                             class="px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm">
                                         <i class="fas fa-handshake mr-1"></i>Request
                                     </button>
-                                    <button onclick="viewScoutingReport('${talent.id}', '${talent.name}')"
+                                    <button onclick="viewScoutingReport('${talent.id}', '${talent.name}', {
+                                        progress_tracking: { completed_courses: ${talent.courses} },
+                                        certifications: { total_certificates: ${talent.certificates} },
+                                        quiz_performance: { average_score: ${talent.quizAvg} },
+                                        completion_rate: { rate: 0 },
+                                        learning_velocity: { score: 0 },
+                                        consistency: { score: 0 },
+                                        adaptability: { score: 0 }
+                                    })"
                                             class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                                         <i class="fas fa-chart-line mr-1"></i>Report
                                     </button>
@@ -1329,6 +1443,12 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
         if (error.status === 409 && error.data) {
             // Time-blocking conflict - show detailed availability info
             showTimeBlockingConflict(error.data);
+        } else if (error.status === 400 && error.data?.error === 'talent_already_onboarded') {
+            // Talent already onboarded with this recruiter - show specific modal
+            showTalentAlreadyOnboardedModal(error.data);
+        } else if (error.status === 400 && error.data?.error === 'active_request_exists') {
+            // Active request exists - show detailed info
+            showActiveRequestExistsModal(error.data);
         } else {
             // Regular error message
             const errorAlert = document.createElement('div');
@@ -1637,6 +1757,29 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
     .grid-responsive {
         grid-template-columns: 1fr;
         gap: 1.5rem;
+    }
+
+    /* Mobile responsive flex layout */
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\] {
+        width: 100% !important;
+        margin-bottom: 1rem;
+    }
+
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\]:last-child {
+        margin-bottom: 0;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+    /* Tablet responsive flex layout */
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\] {
+        width: 48% !important;
+        margin-bottom: 1rem;
+    }
+
+    .flex.flex-wrap.gap-\[2\%\] > .w-\[32\%\]:nth-child(3) {
+        width: 100% !important;
+        margin-bottom: 0;
     }
 }
 

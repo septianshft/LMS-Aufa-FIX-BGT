@@ -36,19 +36,10 @@
                             <div class="form-group">
                                 <label class="font-weight-bold">Status:</label>
                                 <p>
-                                    @php
-                                        $statusColors = [
-                                            'pending' => 'bg-warning text-dark',
-                                            'approved' => 'bg-success',
-                                            'meeting_arranged' => 'bg-info',
-                                            'agreement_reached' => 'bg-primary',
-                                            'onboarded' => 'bg-success',
-                                            'rejected' => 'bg-danger',
-                                            'completed' => 'bg-success'
-                                        ];
-                                    @endphp                                    <span class="badge status-badge {{ $statusColors[$talentRequest->status] ?? 'bg-secondary' }}"
+                                    <span class="badge status-badge {{ $talentRequest->getBootstrapBadgeClasses() }}"
                                           style="font-size: 14px; padding: 8px 12px;">
-                                        {{ ucfirst(str_replace('_', ' ', $talentRequest->status)) }}
+                                        <i class="{{ $talentRequest->getStatusIcon() }} me-1"></i>
+                                        {{ $talentRequest->getUnifiedDisplayStatus() }}
                                     </span>
                                 </p>
                             </div>
@@ -179,10 +170,72 @@
                             <button type="button" class="btn btn-danger btn-sm" onclick="updateStatus({{ $talentRequest->id }}, 'rejected')">
                                 <i class="fas fa-times me-1"></i>Reject Request
                             </button>
-                            @elseif($talentRequest->status == 'approved')
-                            <button type="button" class="btn btn-primary btn-sm" onclick="updateStatus({{ $talentRequest->id }}, 'meeting_arranged')">
-                                <i class="fas fa-calendar me-1"></i>Arrange Meeting
-                            </button>
+                            @elseif($talentRequest->status == 'approved' && !$talentRequest->both_parties_accepted)
+                                {{-- Admin approved but waiting for dual acceptance --}}
+                                <div class="alert alert-info mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <div>
+                                            <strong>Dual Acceptance Required:</strong><br>
+                                            @if($talentRequest->talent_accepted && $talentRequest->admin_accepted)
+                                                <span class="text-primary">✓ Both parties accepted - Processing...</span>
+                                            @elseif($talentRequest->talent_accepted)
+                                                <span class="text-warning">✓ Talent accepted - Waiting for admin acceptance</span>
+                                            @elseif($talentRequest->admin_accepted)
+                                                <span class="text-warning">✓ Admin approved - Waiting for talent acceptance</span>
+                                            @else
+                                                <span class="text-muted">Waiting for both talent and admin acceptance</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Show current acceptance status --}}
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            @if($talentRequest->talent_accepted)
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                                <span class="text-success">Talent Accepted</span>
+                                            @else
+                                                <i class="fas fa-clock text-warning me-2"></i>
+                                                <span class="text-warning">Talent Pending</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="d-flex align-items-center">
+                                            @if($talentRequest->admin_accepted)
+                                                <i class="fas fa-check-circle text-success me-2"></i>
+                                                <span class="text-success">Admin Accepted</span>
+                                            @else
+                                                <i class="fas fa-clock text-warning me-2"></i>
+                                                <span class="text-warning">Admin Pending</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {{-- Admin acceptance button if not yet accepted --}}
+                                @if(!$talentRequest->admin_accepted)
+                                    <button type="button" class="btn btn-primary btn-sm mb-2" onclick="acceptAsAdmin({{ $talentRequest->id }})">
+                                        <i class="fas fa-thumbs-up me-1"></i>Accept as Admin
+                                    </button>
+                                @endif
+
+                                {{-- Disabled meeting button with explanation --}}
+                                <button type="button" class="btn btn-secondary btn-sm" disabled title="Both parties must accept before arranging meeting">
+                                    <i class="fas fa-calendar me-1"></i>Arrange Meeting (Waiting for Acceptance)
+                                </button>
+                            @elseif($talentRequest->status == 'approved' && $talentRequest->canAdminArrangeMeeting())
+                                {{-- Both parties accepted, can proceed to meeting --}}
+                                <div class="alert alert-success mb-3">
+                                    <i class="fas fa-check-circle me-2"></i>
+                                    <strong>Both parties have accepted!</strong> Ready to arrange meeting.
+                                </div>
+                                <button type="button" class="btn btn-primary btn-sm" onclick="updateStatus({{ $talentRequest->id }}, 'meeting_arranged')">
+                                    <i class="fas fa-calendar me-1"></i>Arrange Meeting
+                                </button>
                             @elseif($talentRequest->status == 'meeting_arranged')
                             <button type="button" class="btn btn-warning btn-sm" onclick="updateStatus({{ $talentRequest->id }}, 'agreement_reached')">
                                 <i class="fas fa-handshake me-1"></i>Mark Agreement Reached
@@ -325,8 +378,37 @@
 @section('scripts')
 <script>
 function updateStatus(requestId, status) {
+    // Prevent unauthorized meeting arrangement
+    if (status === 'meeting_arranged') {
+        // First check if both parties have accepted via AJAX
+        fetch(`/talent-admin/request/${requestId}/can-arrange-meeting`, {
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (!data.canArrangeMeeting) {
+                showAlert('Cannot arrange meeting: ' + data.reason, 'warning');
+                return;
+            }
+            // Proceed with meeting arrangement
+            performStatusUpdate(requestId, status);
+        })
+        .catch(error => {
+            console.error('Error checking meeting eligibility:', error);
+            showAlert('Error validating meeting arrangement eligibility.', 'danger');
+        });
+    } else {
+        // For other status updates, proceed normally
+        performStatusUpdate(requestId, status);
+    }
+}
+
+function performStatusUpdate(requestId, status) {
     // Show loading state on all action buttons
-    const actionButtons = document.querySelectorAll('[onclick^="updateStatus"]');
+    const actionButtons = document.querySelectorAll('[onclick^="updateStatus"], [onclick^="acceptAsAdmin"]');
     const originalButtonStates = [];
 
     actionButtons.forEach((btn, index) => {
@@ -361,8 +443,12 @@ function updateStatus(requestId, status) {
                 statusBadge.textContent = getStatusText(status);
             }
 
-            // Show success message
-            showAlert('Status updated successfully!', 'success');
+            // Show success message with additional info
+            let message = 'Status updated successfully!';
+            if (data.acceptance_status) {
+                message += `\nAcceptance Status: ${data.acceptance_status}`;
+            }
+            showAlert(message, 'success');
 
             // Reload page after short delay to refresh button visibility
             setTimeout(() => {
@@ -386,26 +472,72 @@ function updateStatus(requestId, status) {
     });
 }
 
-function getStatusClass(status) {
-    switch(status) {
-        case 'pending': return 'bg-warning text-dark';
-        case 'in_review': return 'bg-info';
-        case 'approved': return 'bg-success';
-        case 'rejected': return 'bg-danger';
-        case 'meeting_scheduled': return 'bg-primary';
-        default: return 'bg-secondary';
+function acceptAsAdmin(requestId) {
+    if (!confirm('Are you sure you want to accept this request as an admin?')) {
+        return;
     }
+
+    const notes = prompt('Optional: Add admin acceptance notes:') || '';
+
+    fetch(`/talent-admin/request/${requestId}/admin-accept`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            admin_acceptance_notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Admin acceptance recorded successfully!', 'success');
+
+            // Show updated acceptance status
+            if (data.both_parties_accepted) {
+                showAlert('Both parties have now accepted! Meeting can be arranged.', 'info');
+            }
+
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        } else {
+            showAlert('Error: ' + (data.message || 'Failed to record admin acceptance'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error accepting as admin:', error);
+        showAlert('Network error occurred. Please try again.', 'danger');
+    });
+}
+
+function getStatusClass(status) {
+    // Use backend status configuration mapping
+    const statusClasses = {
+        'pending': 'bg-warning text-dark',
+        'approved': 'bg-info',
+        'meeting_arranged': 'bg-primary',
+        'agreement_reached': 'bg-success',
+        'onboarded': 'bg-success',
+        'rejected': 'bg-danger',
+        'completed': 'bg-secondary'
+    };
+    return statusClasses[status] || 'bg-secondary';
 }
 
 function getStatusText(status) {
-    switch(status) {
-        case 'pending': return 'Pending';
-        case 'in_review': return 'In Review';
-        case 'approved': return 'Approved';
-        case 'rejected': return 'Rejected';
-        case 'meeting_scheduled': return 'Meeting Scheduled';
-        default: return status.charAt(0).toUpperCase() + status.slice(1);
-    }
+    // Use backend status configuration mapping
+    const statusTexts = {
+        'pending': 'Pending Review',
+        'approved': 'Approved by Admin',
+        'meeting_arranged': 'Meeting Arranged',
+        'agreement_reached': 'Agreement Reached',
+        'onboarded': 'Talent Onboarded',
+        'rejected': 'Request Rejected',
+        'completed': 'Project Completed'
+    };
+    return statusTexts[status] || status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function showAlert(message, type) {
@@ -413,7 +545,7 @@ function showAlert(message, type) {
     alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
     alertDiv.innerHTML = `
         <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
-        ${message}
+        ${message.replace(/\n/g, '<br>')}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;
 

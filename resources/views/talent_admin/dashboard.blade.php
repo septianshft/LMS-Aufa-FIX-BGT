@@ -8,6 +8,13 @@
 
 @section('container')
 
+@php
+    // Add debugging to catch null issues
+    $latestRequests = $latestRequests ?? collect([]);
+    $latestTalents = $latestTalents ?? collect([]);
+    $latestRecruiters = $latestRecruiters ?? collect([]);
+@endphp
+
 {{-- Include Talent Request Notifications --}}
 @include('components.talent-request-notifications')
 
@@ -20,6 +27,17 @@
                 Dashboard Pencarian Talent
             </h1>
             <p class="text-gray-600">Selamat datang kembali! Berikut adalah yang terjadi dengan platform pencarian talent Anda.</p>
+        </div>
+        <div class="mt-4 sm:mt-0 flex gap-3">
+            <button onclick="refreshDashboard()" id="refreshBtn"
+                    class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-all duration-200 font-medium shadow-lg">
+                <i class="fas fa-sync-alt mr-2"></i>
+                Refresh Data
+            </button>
+            <span class="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                <i class="fas fa-shield-alt mr-2"></i>
+                Administrator Talent
+            </span>
         </div>
     </div>
 
@@ -213,8 +231,8 @@
             <div class="flex items-center justify-between">
                 <div class="flex items-center">
                     <div>
-                        <h3 class="text-lg font-semibold text-white">Permintaan Talent Terbaru</h3>
-                        <p class="text-green-100 text-sm">Permintaan terbaru dari perekrut yang memerlukan perhatian Anda</p>
+                        <h3 class="text-lg font-semibold text-white">Permintaan yang Perlu Perhatian</h3>
+                        <p class="text-green-100 text-sm">Permintaan baru dan yang sudah diterima talent, menunggu persetujuan admin</p>
                     </div>
                 </div>
                 <a href="{{ route('talent_admin.manage_requests') }}" class="px-4 py-2 bg-white text-green-600 rounded-xl hover:bg-green-50 transition-all duration-200 font-medium text-sm shadow-sm border border-white border-opacity-30">
@@ -224,9 +242,10 @@
         </div>
         <div class="p-6">
             @forelse($latestRequests as $request)
+                @if($request && is_object($request))
                 <div class="flex items-center p-4 mb-4 bg-gray-50 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-200 border border-gray-100">
                     <div class="mr-4">
-                        @if($request->recruiter->user->avatar)
+                        @if($request->recruiter && $request->recruiter->user && $request->recruiter->user->avatar)
                             <img class="w-12 h-12 rounded-xl object-cover shadow-md" src="{{ asset('storage/' . $request->recruiter->user->avatar) }}"
                                  alt="{{ $request->recruiter->user->name }}">
                         @else
@@ -237,60 +256,50 @@
                     </div>
                     <div class="flex-1">
                         <div class="flex items-center justify-between mb-2">
-                            <h4 class="font-semibold text-gray-900">{{ $request->recruiter->user->name }}</h4>
-                            <span class="text-gray-500 text-sm">{{ $request->created_at->diffForHumans() }}</span>
+                            <h4 class="font-semibold text-gray-900">
+                                {{ $request->recruiter && $request->recruiter->user ? $request->recruiter->user->name : 'Unknown Recruiter' }}
+                            </h4>
+                            <span class="text-gray-500 text-sm">{{ $request->created_at ? $request->created_at->diffForHumans() : 'Unknown time' }}</span>
                         </div>
-                        <p class="text-gray-600 text-sm mb-2">{{ Str::limit($request->project_title, 60) }}</p>
+                        <p class="text-gray-600 text-sm mb-2">{{ Str::limit($request->project_title ?? 'No title', 60) }}</p>
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-3">
-                                <span class="text-gray-500 text-xs">Untuk: {{ $request->talent->user->name }}</span>
-                                @php
-                                    $statusColors = [
-                                        'pending' => 'bg-yellow-100 text-yellow-800',
-                                        'approved' => 'bg-green-100 text-green-800',
-                                        'meeting_arranged' => 'bg-blue-100 text-blue-800',
-                                        'agreement_reached' => 'bg-purple-100 text-purple-800',
-                                        'onboarded' => 'bg-green-100 text-green-800',
-                                        'rejected' => 'bg-red-100 text-red-800',
-                                        'completed' => 'bg-green-100 text-green-800'
-                                    ];
-                                    $statusIcons = [
-                                        'pending' => 'fas fa-clock',
-                                        'approved' => 'fas fa-check',
-                                        'meeting_arranged' => 'fas fa-calendar',
-                                        'agreement_reached' => 'fas fa-handshake',
-                                        'onboarded' => 'fas fa-user-plus',
-                                        'rejected' => 'fas fa-times',
-                                        'completed' => 'fas fa-flag-checkered'
-                                    ];
-                                    $statusTranslations = [
-                                        'pending' => 'Tertunda',
-                                        'approved' => 'Disetujui',
-                                        'meeting_arranged' => 'Pertemuan Diatur',
-                                        'agreement_reached' => 'Kesepakatan Tercapai',
-                                        'onboarded' => 'Bergabung',
-                                        'rejected' => 'Ditolak',
-                                        'completed' => 'Selesai'
-                                    ];
-                                @endphp
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $statusColors[$request->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                    <i class="{{ $statusIcons[$request->status] ?? 'fas fa-question' }} mr-1"></i>
-                                    {{ $statusTranslations[$request->status] ?? ucfirst(str_replace('_', ' ', $request->status)) }}
+                                <span class="text-gray-500 text-xs">
+                                    Untuk: {{ $request->talentUser ? $request->talentUser->name : 'Unknown Talent' }}
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $request->getStatusBadgeColorClasses() }}">
+                                    <i class="{{ $request->getStatusIcon() }} mr-1"></i>
+                                    {{ $request->getUnifiedDisplayStatus() }}
                                 </span>
                             </div>
-                            <a href="{{ route('talent_admin.show_request', $request) }}" class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm">
-                                <i class="fas fa-eye mr-1"></i>Lihat
-                            </a>
+                            <div class="flex space-x-2">
+                                @if($request->talent_accepted && !$request->admin_accepted)
+                                    <form action="{{ route('talent_admin.update_request_status', $request) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="action" value="admin_approve">
+                                        <button type="submit" class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all duration-200 text-sm"
+                                                onclick="return confirm('Setujui permintaan talent ini?')">
+                                            <i class="fas fa-check mr-1"></i>Setujui
+                                        </button>
+                                    </form>
+                                @endif
+                                <a href="{{ route('talent_admin.show_request', $request) }}" 
+                                   class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm">
+                                    <i class="fas fa-eye mr-1"></i>Detail
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
+                @endif
             @empty
                 <div class="text-center py-12">
                     <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+                        <i class="fas fa-tasks text-gray-400 text-2xl"></i>
                     </div>
-                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Belum ada permintaan talent</h4>
-                    <p class="text-gray-500">Permintaan baru akan muncul di sini saat perekrut mengirimkannya.</p>
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Tidak ada permintaan yang perlu perhatian</h4>
+                    <p class="text-gray-500">Semua permintaan sudah diproses atau belum ada permintaan baru dari perekrut.</p>
                 </div>
             @endforelse
         </div>
@@ -310,6 +319,7 @@
             </div>
             <div class="p-6">
                 @forelse($latestTalents as $talent)
+                    @if($talent && is_object($talent))
                     <div class="flex items-center p-3 mb-3 rounded-xl hover:bg-gray-50 transition-all duration-200">
                         <div class="mr-3">
                             @if($talent->avatar)
@@ -322,19 +332,20 @@
                             @endif
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-semibold text-gray-900">{{ $talent->name }}</h4>
+                            <h4 class="font-semibold text-gray-900">{{ $talent->name ?? 'Unknown User' }}</h4>
                             <p class="text-gray-500 text-sm">
                                 <i class="fas fa-briefcase mr-1"></i>
                                 {{ $talent->pekerjaan ?? 'Posisi tidak ditentukan' }}
                             </p>
                         </div>
                         <div>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $talent->is_active_talent ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                <i class="fas fa-{{ $talent->is_active_talent ? 'check-circle' : 'pause-circle' }} mr-1"></i>
-                                {{ $talent->is_active_talent ? 'Aktif' : 'Tidak Aktif' }}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ ($talent->is_active_talent ?? false) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                <i class="fas fa-{{ ($talent->is_active_talent ?? false) ? 'check-circle' : 'pause-circle' }} mr-1"></i>
+                                {{ ($talent->is_active_talent ?? false) ? 'Aktif' : 'Tidak Aktif' }}
                             </span>
                         </div>
                     </div>
+                    @endif
                 @empty
                     <div class="text-center py-8">
                         <i class="fas fa-user-plus text-gray-400 text-3xl mb-3"></i>
@@ -356,6 +367,7 @@
             </div>
             <div class="p-6">
                 @forelse($latestRecruiters as $recruiter)
+                    @if($recruiter && is_object($recruiter))
                     <div class="flex items-center p-3 mb-3 rounded-xl hover:bg-gray-50 transition-all duration-200">
                         <div class="mr-3">
                             @if($recruiter->avatar)
@@ -368,7 +380,7 @@
                             @endif
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-semibold text-gray-900">{{ $recruiter->name }}</h4>
+                            <h4 class="font-semibold text-gray-900">{{ $recruiter->name ?? 'Unknown User' }}</h4>
                             <p class="text-gray-500 text-sm">
                                 <i class="fas fa-building mr-1"></i>
                                 {{ $recruiter->company_name ?? $recruiter->pekerjaan ?? 'Perusahaan tidak ditentukan' }}
@@ -376,8 +388,12 @@
                         </div>
                         <div>
                             @php
-                                // Check if user has recruiter role since we don't have a separate is_active field
-                                $isActiveRecruiter = $recruiter->hasRole('recruiter');
+                                // Check if user has recruiter role safely
+                                try {
+                                    $isActiveRecruiter = method_exists($recruiter, 'hasRole') ? $recruiter->hasRole('recruiter') : true;
+                                } catch (Exception $e) {
+                                    $isActiveRecruiter = true; // Default to active if we can't check
+                                }
                             @endphp
                             <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $isActiveRecruiter ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
                                 <i class="fas fa-{{ $isActiveRecruiter ? 'check-circle' : 'pause-circle' }} mr-1"></i>
@@ -385,6 +401,7 @@
                             </span>
                         </div>
                     </div>
+                    @endif
                 @empty
                     <div class="text-center py-8">
                         <i class="fas fa-user-plus text-gray-400 text-3xl mb-3"></i>
@@ -964,4 +981,100 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     </script>
 @endif
+
+<script>
+// Dashboard refresh functionality
+function refreshDashboard() {
+    const refreshBtn = document.getElementById('refreshBtn');
+    const originalContent = refreshBtn.innerHTML;
+
+    // Show loading state
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Refreshing...';
+    refreshBtn.disabled = true;
+
+    // Clear cache and reload
+    fetch('/talent-admin/clear-dashboard-cache', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message briefly, then reload
+            refreshBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Refreshed!';
+            setTimeout(() => {
+                window.location.reload();
+            }, 500);
+        } else {
+            throw new Error('Failed to clear cache');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        refreshBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Error';
+        setTimeout(() => {
+            refreshBtn.innerHTML = originalContent;
+            refreshBtn.disabled = false;
+        }, 2000);
+    });
+}
+
+// Show notification when page loads if there are pending requests
+document.addEventListener('DOMContentLoaded', function() {
+    const pendingRequests = {{ $pendingRequests ?? 0 }};
+    if (pendingRequests > 0) {
+        // Show a small notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-orange-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+        notification.innerHTML = `<i class="fas fa-bell mr-2"></i>${pendingRequests} permintaan pending`;
+        document.body.appendChild(notification);
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            notification.remove();
+        }, 5000);
+    }
+
+    // Auto-refresh dashboard data every 30 seconds if there are pending requests
+    if (pendingRequests > 0) {
+        setInterval(function() {
+            checkForNewRequests();
+        }, 30000); // 30 seconds
+    }
+});
+
+// Function to check for new requests without full page reload
+function checkForNewRequests() {
+    fetch('/talent-admin/dashboard-data', {
+        method: 'GET',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.newRequestsCount > 0) {
+            // Show notification for new requests
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50';
+            notification.innerHTML = `<i class="fas fa-plus mr-2"></i>${data.newRequestsCount} permintaan baru`;
+            document.body.appendChild(notification);
+
+            // Auto-hide and refresh after 3 seconds
+            setTimeout(() => {
+                notification.remove();
+                window.location.reload();
+            }, 3000);
+        }
+    })
+    .catch(error => {
+        console.log('Auto-refresh check failed:', error);
+    });
+}
+</script>
+
 @endsection

@@ -20,7 +20,9 @@
                     <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
                         <i class="fas fa-star text-4xl text-yellow-300 mb-2"></i>
                         <div class="text-sm font-medium">Talent Status</div>
-                        <div class="text-xs opacity-90">Active</div>
+                        <div class="text-xs opacity-90">
+                            {{ $user->is_active_talent ? 'Active' : 'Inactive' }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -106,17 +108,26 @@
                     <div class="p-6 border-b border-gray-100">
                         <div class="flex items-center justify-between">
                             <h2 class="text-xl font-bold text-gray-800">🚀 Latest Opportunities</h2>
-                            <a href="#" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All</a>
+                            <a href="{{ route('talent.my_requests') }}" data-testid="view-all-link" class="text-blue-600 hover:text-blue-700 text-sm font-medium">View All</a>
                         </div>
                     </div>
                     <div class="p-6 space-y-4">
                         @forelse($jobOpportunities->take(3) as $opportunity)
-                            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all">
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all
+                                @if(isset($opportunity['is_pre_approved']) && $opportunity['is_pre_approved'])
+                                    ring-2 ring-emerald-200 bg-gradient-to-br from-emerald-50 to-white border-emerald-300
+                                @endif">
                                 <div class="flex items-start justify-between">
                                     <div class="flex-1">
                                         <div class="flex items-center space-x-2 mb-2">
                                             <h3 class="font-semibold text-gray-800">{{ $opportunity['title'] }}</h3>
-                                            @if($opportunity['posted_date']->diffInDays() <= 3)
+
+                                            {{-- Pre-approved Badge --}}
+                                            @if(isset($opportunity['is_pre_approved']) && $opportunity['is_pre_approved'])
+                                                <span class="px-2 py-1 bg-emerald-500 text-white text-xs rounded-full font-bold">
+                                                    <i class="fas fa-star mr-1"></i>PRE-APPROVED
+                                                </span>
+                                            @elseif($opportunity['posted_date']->diffInDays() <= 3)
                                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full font-medium">New</span>
                                             @elseif($opportunity['urgency'] === 'high')
                                                 <span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-medium">Urgent</span>
@@ -290,7 +301,7 @@
                         <h2 class="text-lg font-bold text-gray-800">⚡ Quick Actions</h2>
                     </div>
                     <div class="p-6 space-y-3">
-                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group">
+                        <a href="{{ route('profile.edit') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group">
                             <div class="bg-blue-100 p-2 rounded-lg group-hover:bg-blue-200 transition-colors">
                                 <i class="fas fa-user-edit text-blue-600"></i>
                             </div>
@@ -299,7 +310,7 @@
                                 <div class="text-xs text-gray-500">Update your information</div>
                             </div>
                         </a>
-                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-green-50 transition-colors group">
+                        <a href="#" onclick="document.getElementById('resumeUpload').click()" class="flex items-center p-3 rounded-lg hover:bg-green-50 transition-colors group">
                             <div class="bg-green-100 p-2 rounded-lg group-hover:bg-green-200 transition-colors">
                                 <i class="fas fa-upload text-green-600"></i>
                             </div>
@@ -308,7 +319,7 @@
                                 <div class="text-xs text-gray-500">Keep it updated</div>
                             </div>
                         </a>
-                        <a href="#" class="flex items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
+                        <a href="#" onclick="showAlert('Skill Assessment feature coming soon!', 'info')" class="flex items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
                             <div class="bg-purple-100 p-2 rounded-lg group-hover:bg-purple-200 transition-colors">
                                 <i class="fas fa-cogs text-purple-600"></i>
                             </div>
@@ -317,6 +328,8 @@
                                 <div class="text-xs text-gray-500">Test your abilities</div>
                             </div>
                         </a>
+                        <!-- Hidden file input for resume upload -->
+                        <input type="file" id="resumeUpload" accept=".pdf,.doc,.docx" style="display: none;" onchange="handleResumeUpload(this)">
                     </div>
                 </div>
 
@@ -382,7 +395,7 @@
 </div>
 
 {{-- Request Details Modal --}}
-<div id="requestDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div id="talentRequestDetailsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <!-- Background overlay -->
         <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeRequestModal()"></div>
@@ -411,10 +424,111 @@
 </div>
 
 <script>
-// Accept Request Function
+// Global variables for modal management (simplified - no auto-close)
+let isModalOpen = false;
+let modalInitialized = false;
+let processingAction = false; // Flag to prevent modal close during action processing
+
+// Initialize everything when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content Loaded - Initializing modal system');
+    // Reset states
+    isModalOpen = false;
+    modalInitialized = false;
+    processingAction = false;
+
+    initializeModal();
+
+    // Setup escape key handler
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && isModalOpen && !processingAction) {
+            closeRequestModal();
+        }
+    });
+});
+
+// Initialize modal and set up event listeners
+// Initialize modal and set up event listeners (simplified - no auto-close)
+function initializeModal() {
+    if (modalInitialized && document.getElementById('talentRequestDetailsModal')) {
+        console.log('Modal already initialized and element exists.');
+        return;
+    }
+
+    const modal = document.getElementById('talentRequestDetailsModal');
+    const modalContent = document.getElementById('modalContent');
+
+    console.log('Attempting modal initialization. Found modal:', !!modal, 'Found modalContent:', !!modalContent);
+
+    if (!modal || !modalContent) {
+        console.error('Modal elements not found during initialization.');
+        modalInitialized = false;
+        return;
+    }
+
+    modalInitialized = true;
+    console.log('Modal initialized successfully.');
+
+    // Click outside to close
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal && !processingAction) {
+            closeRequestModal();
+        }
+    });
+
+    // Prevent closing when clicking inside modal content
+    const modalPanel = modal.querySelector('.bg-white.rounded-2xl');
+    if (modalPanel) {
+        modalPanel.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    }
+}
+
+// Handle modal state changes (simplified - no auto-reload)
+function handleModalStateChange(modalIsOpen) {
+    if (modalIsOpen) {
+        console.log('Modal is now OPEN.');
+        document.body.style.overflow = 'hidden';
+        document.body.classList.add('modal-is-active');
+    } else {
+        console.log('Modal is now CLOSED.');
+        document.body.style.overflow = '';
+        document.body.classList.remove('modal-is-active');
+
+        if (processingAction) {
+            console.log('Resetting processingAction because modal closed.');
+            processingAction = false;
+        }
+    }
+}
+
+// Modified accept request function
 function acceptRequest(requestId) {
+    if (processingAction) {
+        console.log('Already processing an action, ignoring...');
+        return;
+    }
+
     if (!confirm('Are you sure you want to accept this collaboration request?')) {
         return;
+    }
+
+    processingAction = true;
+    console.log('Starting accept request process for ID:', requestId);
+
+    // Show loading state in modal
+    const modalContent = document.getElementById('modalContent');
+    const originalContent = modalContent ? modalContent.innerHTML : '';
+
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-4xl text-green-600 mb-4"></i>
+                <p class="text-gray-600">Processing your acceptance...</p>
+                <p class="text-gray-500 text-sm mt-2">Please wait while we update the request status.</p>
+            </div>
+        `;
     }
 
     const notes = prompt('Optional: Add a note about your acceptance:') || '';
@@ -431,23 +545,62 @@ function acceptRequest(requestId) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Accept request response:', data);
+        processingAction = false;
+
         if (data.success) {
             showAlert('Request accepted successfully! ' + data.message, 'success');
-            setTimeout(() => location.reload(), 2000);
+
+            // Simple reload after success
+            setTimeout(() => {
+                console.log('Reloading page after successful acceptance...');
+                location.reload();
+            }, 2000);
         } else {
             showAlert('Error: ' + (data.message || 'Failed to accept request'), 'error');
+            // Restore original modal content on error
+            if (modalContent && originalContent) {
+                modalContent.innerHTML = originalContent;
+            }
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error accepting request:', error);
+        processingAction = false;
         showAlert('Network error occurred. Please try again.', 'error');
+        // Restore original modal content on error
+        if (modalContent && originalContent) {
+            modalContent.innerHTML = originalContent;
+        }
     });
 }
 
-// Reject Request Function
+// Modified reject request function
 function rejectRequest(requestId) {
+    if (processingAction) {
+        console.log('Already processing an action, ignoring...');
+        return;
+    }
+
     if (!confirm('Are you sure you want to decline this collaboration request?')) {
         return;
+    }
+
+    processingAction = true;
+    console.log('Starting reject request process for ID:', requestId);
+
+    // Show loading state in modal
+    const modalContent = document.getElementById('modalContent');
+    const originalContent = modalContent ? modalContent.innerHTML : '';
+
+    if (modalContent) {
+        modalContent.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-4xl text-red-600 mb-4"></i>
+                <p class="text-gray-600">Processing your decline...</p>
+                <p class="text-gray-500 text-sm mt-2">Please wait while we update the request status.</p>
+            </div>
+        `;
     }
 
     const notes = prompt('Please provide a reason for declining (optional):') || '';
@@ -464,25 +617,82 @@ function rejectRequest(requestId) {
     })
     .then(response => response.json())
     .then(data => {
+        console.log('Reject request response:', data);
+        processingAction = false;
+
         if (data.success) {
             showAlert('Request declined successfully.', 'success');
-            setTimeout(() => location.reload(), 2000);
+
+            // Simple reload after success
+            setTimeout(() => {
+                console.log('Reloading page after successful rejection...');
+                location.reload();
+            }, 2000);
         } else {
             showAlert('Error: ' + (data.message || 'Failed to decline request'), 'error');
+            // Restore original modal content on error
+            if (modalContent && originalContent) {
+                modalContent.innerHTML = originalContent;
+            }
         }
     })
     .catch(error => {
-        console.error('Error:', error);
+        console.error('Error rejecting request:', error);
+        processingAction = false;
         showAlert('Network error occurred. Please try again.', 'error');
+        // Restore original modal content on error
+        if (modalContent && originalContent) {
+            modalContent.innerHTML = originalContent;
+        }
     });
+}
+
+// Simplified modal opening function (no auto-close timeouts)
+function openModal() {
+    console.log('Attempting to open modal. modalInitialized:', modalInitialized);
+
+    let modal = document.getElementById('talentRequestDetailsModal');
+
+    if (!modal) {
+        console.error('Modal element not found in the DOM.');
+        if (modalInitialized) {
+            console.warn('Modal was marked initialized, but element is missing. Forcing re-init.');
+            modalInitialized = false;
+        }
+    }
+
+    if (!modalInitialized) {
+        console.log('Modal not initialized. Attempting to initialize.');
+        initializeModal();
+
+        if (!modalInitialized) {
+            console.error('Modal initialization failed. Cannot open modal.');
+            showAlert('Error: Modal system not ready. Please refresh the page and try again.', 'error');
+            return false;
+        }
+
+        modal = document.getElementById('talentRequestDetailsModal');
+        if (!modal) {
+            console.error('Modal initialized, but element still not found.');
+            showAlert('Error: Modal component issue. Please refresh.', 'error');
+            return false;
+        }
+    }
+
+    processingAction = false; // Reset processing flag
+    modal.classList.remove('hidden');
+    isModalOpen = true;
+    handleModalStateChange(true);
+
+    console.log('Modal opened successfully.');
+    return true;
 }
 
 // View Job Details Function (for history)
 function viewJobDetails(jobId) {
-    const modal = document.getElementById('requestDetailsModal');
-    const modalContent = document.getElementById('modalContent');
+    if (!openModal()) return;
 
-    modal.classList.remove('hidden');
+    const modalContent = document.getElementById('modalContent');
 
     // Show loading state
     modalContent.innerHTML = `
@@ -492,7 +702,7 @@ function viewJobDetails(jobId) {
         </div>
     `;
 
-    fetch(`/talent/my-requests`)
+    fetch(`/talent/api/my-requests`)
     .then(response => response.json())
     .then(data => {
         if (data.success && data.requests) {
@@ -521,8 +731,9 @@ function viewJobDetails(jobId) {
                                 <h4 class="font-semibold text-blue-900 mb-3">📊 Progress & Timeline</h4>
                                 <div class="space-y-2">
                                     <div><span class="font-medium">Status:</span>
-                                        <span class="px-2 py-1 text-xs rounded-full ${job.both_parties_accepted ? 'bg-green-100 text-green-800' : (job.talent_accepted ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">
-                                            ${job.acceptance_status || 'In Progress'}
+                                        <span class="px-2 py-1 text-xs rounded-full ${getStatusBadgeClasses(job.status_badge_color)}">
+                                            <i class="${job.status_icon} mr-1"></i>
+                                            ${job.formatted_status}
                                         </span>
                                     </div>
                                     <div><span class="font-medium">Progress:</span> ${job.workflow_progress || 0}%</div>
@@ -593,10 +804,9 @@ function viewJobDetails(jobId) {
 
 // View Request Details Function
 function viewRequestDetails(requestId) {
-    const modal = document.getElementById('requestDetailsModal');
-    const modalContent = document.getElementById('modalContent');
+    if (!openModal()) return;
 
-    modal.classList.remove('hidden');
+    const modalContent = document.getElementById('modalContent');
 
     // Show loading state
     modalContent.innerHTML = `
@@ -608,15 +818,32 @@ function viewRequestDetails(requestId) {
 
     console.log('Fetching details for request ID:', requestId);
 
-    fetch(`/talent/my-requests`)
+    // Add timeout to prevent infinite loading
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+    fetch(`/talent/api/my-requests`, {
+        signal: controller.signal,
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
     .then(response => {
+        clearTimeout(timeoutId);
         console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         return response.json();
     })
     .then(data => {
         console.log('API Response:', data);
 
-        if (data.success && data.requests) {
+        if (data.success && data.requests && Array.isArray(data.requests)) {
             const request = data.requests.find(r => r.id == requestId);
             console.log('Found request:', request);
 
@@ -625,17 +852,17 @@ function viewRequestDetails(requestId) {
                     <div class="space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div class="bg-blue-50 p-4 rounded-xl">
-                                <h4 class="font-semibold text-blue-900 mb-3">Project Information</h4>
+                                <h4 class="font-semibold text-blue-900 mb-3">📋 Project Information</h4>
                                 <div class="space-y-2">
                                     <div><span class="font-medium">Title:</span> ${request.project_title || 'Not specified'}</div>
-                                    <div><span class="font-medium">Description:</span> <div class="text-sm text-gray-700 mt-1">${request.project_description || 'No description provided'}</div></div>
+                                    <div><span class="font-medium">Description:</span> <div class="text-sm text-gray-700 mt-1 max-h-20 overflow-y-auto">${request.project_description || 'No description provided'}</div></div>
                                     <div><span class="font-medium">Budget:</span> ${request.budget_range || 'Budget TBD'}</div>
                                     <div><span class="font-medium">Duration:</span> ${request.project_duration || 'Duration TBD'}</div>
                                     <div><span class="font-medium">Urgency:</span> <span class="capitalize">${request.urgency_level || 'Medium'}</span></div>
                                 </div>
                             </div>
                             <div class="bg-green-50 p-4 rounded-xl">
-                                <h4 class="font-semibold text-green-900 mb-3">Recruiter Information</h4>
+                                <h4 class="font-semibold text-green-900 mb-3">🏢 Recruiter Information</h4>
                                 <div class="space-y-2">
                                     <div><span class="font-medium">Name:</span> ${request.recruiter_name || 'Unknown'}</div>
                                     <div><span class="font-medium">Company:</span> ${request.recruiter_company || 'Not specified'}</div>
@@ -646,36 +873,49 @@ function viewRequestDetails(requestId) {
                         </div>
 
                         <div class="bg-gray-50 p-4 rounded-xl">
-                            <h4 class="font-semibold text-gray-900 mb-3">Status & Progress</h4>
-                            <div class="space-y-2">
+                            <h4 class="font-semibold text-gray-900 mb-3">📊 Status & Progress</h4>
+                            <div class="space-y-3">
                                 <div><span class="font-medium">Current Status:</span>
-                                    <span class="px-2 py-1 text-xs rounded-full ${request.both_parties_accepted ? 'bg-green-100 text-green-800' : (request.talent_accepted ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800')}">
-                                        ${request.acceptance_status || 'Pending review'}
+                                    <span class="px-2 py-1 text-xs rounded-full ${getStatusBadgeClasses(request.status_badge_color)}">
+                                        <i class="${request.status_icon || 'fas fa-clock'} mr-1"></i>
+                                        ${request.formatted_status}
                                     </span>
                                 </div>
-                                <div class="w-full bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: ${request.workflow_progress || 0}%"></div>
+                                <div>
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-medium">Progress:</span>
+                                        <span class="text-sm text-gray-600">${request.workflow_progress || 0}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-3">
+                                        <div class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: ${request.workflow_progress || 0}%"></div>
+                                    </div>
                                 </div>
-                                <div class="text-sm text-gray-600">Progress: ${request.workflow_progress || 0}%</div>
+                                ${request.acceptance_status ? `
+                                    <div><span class="font-medium">Acceptance Status:</span> 
+                                        <span class="text-sm text-gray-700">${request.acceptance_status}</span>
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
 
                         <div class="flex space-x-4">
                             ${request.can_accept ? `
-                                <button onclick="acceptRequest(${request.id}); closeRequestModal();"
+                                <button onclick="acceptRequest(${request.id})"
                                         class="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold">
                                     <i class="fas fa-check mr-2"></i>Accept Request
                                 </button>
                             ` : ''}
                             ${request.can_reject ? `
-                                <button onclick="rejectRequest(${request.id}); closeRequestModal();"
+                                <button onclick="rejectRequest(${request.id})"
                                         class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-semibold">
                                     <i class="fas fa-times mr-2"></i>Decline Request
                                 </button>
                             ` : ''}
                             ${!request.can_accept && !request.can_reject ? `
                                 <div class="flex-1 text-center py-3 bg-gray-100 text-gray-600 rounded-xl">
-                                    ${request.both_parties_accepted ? 'Request accepted by both parties' : 'No actions available'}
+                                    ${request.both_parties_accepted ? 
+                                        '<i class="fas fa-check-circle text-green-600 mr-2"></i>Request accepted by both parties' : 
+                                        '<i class="fas fa-clock text-gray-500 mr-2"></i>No actions available'}
                                 </div>
                             ` : ''}
                         </div>
@@ -695,18 +935,31 @@ function viewRequestDetails(requestId) {
                 <div class="text-center py-8">
                     <i class="fas fa-exclamation-circle text-4xl text-red-600 mb-4"></i>
                     <p class="text-gray-600">Error loading request details.</p>
-                    <p class="text-gray-500 text-sm mt-2">${data.message || 'Unknown error occurred'}</p>
+                    <p class="text-gray-500 text-sm mt-2">${data.message || 'Invalid response format'}</p>
                 </div>
             `;
         }
     })
     .catch(error => {
+        clearTimeout(timeoutId);
         console.error('Error fetching request details:', error);
+        
+        let errorMessage = 'Network error occurred.';
+        let errorDetail = 'Please check your internet connection and try again.';
+        
+        if (error.name === 'AbortError') {
+            errorMessage = 'Request timed out.';
+            errorDetail = 'The server took too long to respond. Please try again.';
+        } else if (error.message.includes('HTTP')) {
+            errorMessage = 'Server error occurred.';
+            errorDetail = error.message;
+        }
+        
         modalContent.innerHTML = `
             <div class="text-center py-8">
                 <i class="fas fa-wifi text-4xl text-red-600 mb-4"></i>
-                <p class="text-gray-600">Network error occurred.</p>
-                <p class="text-gray-500 text-sm mt-2">Please check your internet connection and try again.</p>
+                <p class="text-gray-600">${errorMessage}</p>
+                <p class="text-gray-500 text-sm mt-2">${errorDetail}</p>
                 <button onclick="viewRequestDetails(${requestId})" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-refresh mr-2"></i>Retry
                 </button>
@@ -715,20 +968,69 @@ function viewRequestDetails(requestId) {
     });
 }
 
-// Close Request Modal
+// Close Request Modal (simplified)
 function closeRequestModal() {
-    document.getElementById('requestDetailsModal').classList.add('hidden');
+    const modal = document.getElementById('talentRequestDetailsModal');
+    if (modal) {
+        // Don't close if we're processing an action
+        if (processingAction) {
+            console.log('Cannot close modal while processing action');
+            return;
+        }
+
+        if (modal.classList.contains('hidden')) {
+            console.log('Modal already hidden.');
+            if (isModalOpen) {
+                isModalOpen = false;
+                handleModalStateChange(false);
+            }
+            return;
+        }
+
+        modal.classList.add('hidden');
+        isModalOpen = false;
+        handleModalStateChange(false);
+        console.log('Modal closed successfully.');
+    } else {
+        console.warn('Modal element not found during close.');
+        if (isModalOpen) {
+            isModalOpen = false;
+            handleModalStateChange(false);
+        }
+    }
+}
+
+// Helper function to process status badge classes
+function getStatusBadgeClasses(statusBadgeColor) {
+    // If statusBadgeColor is already a complete class string, return it
+    if (typeof statusBadgeColor === 'string' && statusBadgeColor.includes('bg-')) {
+        return statusBadgeColor;
+    }
+    
+    // Map status types to Tailwind classes
+    const colorMapping = {
+        'success': 'bg-green-100 text-green-800',
+        'warning': 'bg-yellow-100 text-yellow-800',
+        'info': 'bg-blue-100 text-blue-800',
+        'primary': 'bg-indigo-100 text-indigo-800',
+        'danger': 'bg-red-100 text-red-800',
+        'secondary': 'bg-gray-100 text-gray-800'
+    };
+    
+    return colorMapping[statusBadgeColor] || 'bg-gray-100 text-gray-800';
 }
 
 // Show Alert Function
 function showAlert(message, type) {
     const alertDiv = document.createElement('div');
     alertDiv.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg transition-all duration-300 ${
-        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'
+        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
+        type === 'info' ? 'bg-blue-100 border border-blue-400 text-blue-700' :
+        'bg-red-100 border border-red-400 text-red-700'
     }`;
     alertDiv.innerHTML = `
         <div class="flex items-center">
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} mr-2"></i>
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'info' ? 'info-circle' : 'exclamation-circle'} mr-2"></i>
             ${message}
         </div>
     `;
@@ -740,6 +1042,22 @@ function showAlert(message, type) {
         alertDiv.style.opacity = '0';
         setTimeout(() => alertDiv.remove(), 300);
     }, 5000);
+}
+
+// Handle resume upload
+function handleResumeUpload(input) {
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxSize = 5 * 1024 * 1024; // 5MB
+
+        if (file.size > maxSize) {
+            showAlert('File size must be less than 5MB', 'error');
+            return;
+        }
+
+        // Here you would typically upload the file to your server
+        showAlert('Resume upload feature will be implemented soon!', 'info');
+    }
 }
 </script>
 @endsection

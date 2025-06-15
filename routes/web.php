@@ -163,6 +163,8 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/manage-requests', [TalentAdminController::class, 'manageRequests'])->name('talent_admin.manage_requests');
         Route::get('talent-admin/request/{talentRequest}', [TalentAdminController::class, 'showRequest'])->name('talent_admin.show_request');
         Route::patch('talent-admin/request/{talentRequest}/status', [TalentAdminController::class, 'updateRequestStatus'])->name('talent_admin.update_request_status');
+        Route::post('talent-admin/request/{talentRequest}/admin-accept', [TalentAdminController::class, 'adminAcceptRequest'])->name('talent_admin.admin_accept_request');
+        Route::get('talent-admin/request/{talentRequest}/can-arrange-meeting', [TalentAdminController::class, 'canArrangeMeeting'])->name('talent_admin.can_arrange_meeting');
         Route::patch('talent-admin/talent/{talent}/toggle-status', [TalentAdminController::class, 'toggleTalentStatus'])->name('talent_admin.toggle_talent_status');
         Route::patch('talent-admin/recruiter/{recruiter}/toggle-status', [TalentAdminController::class, 'toggleRecruiterStatus'])->name('talent_admin.toggle_recruiter_status');
 
@@ -172,6 +174,10 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/api/conversion-candidates', [TalentAdminController::class, 'getConversionCandidates'])->name('talent_admin.api.conversion_candidates');
         Route::get('talent-admin/api/skill-analytics', [TalentAdminController::class, 'getSkillAnalytics'])->name('talent_admin.api.skill_analytics');
         Route::get('talent-admin/api/market-demand', [TalentAdminController::class, 'getMarketDemand'])->name('talent_admin.api.market_demand');
+
+        // Cache Management Routes
+        Route::post('talent-admin/clear-dashboard-cache', [TalentAdminController::class, 'clearDashboardCache'])->name('talent_admin.clear_dashboard_cache');
+        Route::get('talent-admin/dashboard-data', [TalentAdminController::class, 'getDashboardData'])->name('talent_admin.dashboard_data');
 
         // Talent Admin Management Routes
         Route::get('talent-admin/manage-admins', [TalentAdminController::class, 'manageTalentAdmins'])->name('talent_admin.manage_talent_admins');
@@ -201,7 +207,9 @@ Route::middleware('auth')->group(function () {
         // Talent Request Management
         Route::post('talent/request/{talentRequest}/accept', [TalentController::class, 'acceptRequest'])->name('talent.accept_request');
         Route::post('talent/request/{talentRequest}/reject', [TalentController::class, 'rejectRequest'])->name('talent.reject_request');
-        Route::get('talent/my-requests', [TalentController::class, 'getMyRequests'])->name('talent.my_requests');
+        Route::get('talent/my-requests', [TalentController::class, 'myRequests'])->name('talent.my_requests');
+        Route::get('talent/api/my-requests', [TalentController::class, 'getMyRequests'])->name('talent.api.my_requests');
+        Route::get('talent/api/request/{talentRequest}', [TalentController::class, 'getRequestDetails'])->name('talent.api.request_details');
     });
 
     // Recruiter Routes

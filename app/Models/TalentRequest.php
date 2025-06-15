@@ -91,6 +91,108 @@ class TalentRequest extends Model
         return $this->talentUser ?? $this->talent?->user;
     }
 
+    // ===================================================
+    // CENTRALIZED STATUS CONFIGURATION
+    // ===================================================
+
+    /**
+     * Get centralized status configuration for consistent handling across views
+     */
+    public static function getStatusConfig()
+    {
+        return [
+            'pending' => [
+                'label' => 'Pending Review',
+                'color' => 'warning',
+                'bootstrap_class' => 'bg-warning text-dark',
+                'tailwind_class' => 'bg-yellow-100 text-yellow-800',
+                'icon' => 'fas fa-clock',
+                'translation' => 'Tertunda'
+            ],
+            'approved' => [
+                'label' => 'Approved by Admin',
+                'color' => 'info', 
+                'bootstrap_class' => 'bg-info',
+                'tailwind_class' => 'bg-blue-100 text-blue-800',
+                'icon' => 'fas fa-check',
+                'translation' => 'Disetujui'
+            ],
+            'meeting_arranged' => [
+                'label' => 'Meeting Arranged',
+                'color' => 'primary',
+                'bootstrap_class' => 'bg-primary',
+                'tailwind_class' => 'bg-indigo-100 text-indigo-800',
+                'icon' => 'fas fa-calendar',
+                'translation' => 'Pertemuan Diatur'
+            ],
+            'agreement_reached' => [
+                'label' => 'Agreement Reached',
+                'color' => 'success',
+                'bootstrap_class' => 'bg-success',
+                'tailwind_class' => 'bg-green-100 text-green-800',
+                'icon' => 'fas fa-handshake',
+                'translation' => 'Kesepakatan Tercapai'
+            ],
+            'onboarded' => [
+                'label' => 'Talent Onboarded',
+                'color' => 'success',
+                'bootstrap_class' => 'bg-success',
+                'tailwind_class' => 'bg-green-100 text-green-800',
+                'icon' => 'fas fa-user-plus',
+                'translation' => 'Bergabung'
+            ],
+            'rejected' => [
+                'label' => 'Request Rejected',
+                'color' => 'danger',
+                'bootstrap_class' => 'bg-danger',
+                'tailwind_class' => 'bg-red-100 text-red-800',
+                'icon' => 'fas fa-times',
+                'translation' => 'Ditolak'
+            ],
+            'completed' => [
+                'label' => 'Project Completed',
+                'color' => 'secondary',
+                'bootstrap_class' => 'bg-secondary',
+                'tailwind_class' => 'bg-gray-100 text-gray-800',
+                'icon' => 'fas fa-flag-checkered',
+                'translation' => 'Selesai'
+            ]
+        ];
+    }
+
+    /**
+     * Get status configuration for current status
+     */
+    public function getStatusConfiguration()
+    {
+        $config = self::getStatusConfig();
+        return $config[$this->status] ?? $config['pending'];
+    }
+
+    /**
+     * Get unified Tailwind CSS classes for status badges
+     */
+    public function getStatusBadgeClasses()
+    {
+        return $this->getStatusConfiguration()['tailwind_class'];
+    }
+
+    /**
+     * Get status icon
+     */
+    public function getStatusIcon()
+    {
+        return $this->getStatusConfiguration()['icon'];
+    }
+
+    /**
+     * Get status translation (Indonesian)
+     */
+    public function getStatusTranslation()
+    {
+        return $this->getStatusConfiguration()['translation'];
+    }
+
     // Status helper methods
     public function isPending()
     {
@@ -117,34 +219,22 @@ class TalentRequest extends Model
         return $this->status === 'rejected';
     }
 
-    // Status badge color
+    // Status badge color (Bootstrap classes)
     public function getStatusBadgeColor()
     {
-        return match($this->status) {
-            'pending' => 'warning',
-            'approved' => 'info',
-            'meeting_arranged' => 'primary',
-            'agreement_reached' => 'success',
-            'onboarded' => 'success',
-            'rejected' => 'danger',
-            'completed' => 'secondary',
-            default => 'secondary'
-        };
+        return $this->getStatusConfiguration()['color'];
+    }
+
+    // Bootstrap badge classes
+    public function getBootstrapBadgeClasses()
+    {
+        return $this->getStatusConfiguration()['bootstrap_class'];
     }
 
     // Formatted status
     public function getFormattedStatus()
     {
-        return match($this->status) {
-            'pending' => 'Pending Review',
-            'approved' => 'Approved by Admin',
-            'meeting_arranged' => 'Meeting Arranged',
-            'agreement_reached' => 'Agreement Reached',
-            'onboarded' => 'Talent Onboarded',
-            'rejected' => 'Rejected',
-            'completed' => 'Project Completed',
-            default => ucfirst($this->status)
-        };
+        return $this->getStatusConfiguration()['label'];
     }
 
     // Dual acceptance workflow methods
@@ -179,46 +269,82 @@ class TalentRequest extends Model
 
     public function markTalentAccepted($notes = null)
     {
-        $this->update([
+        $updateData = [
             'talent_accepted' => true,
             'talent_accepted_at' => now(),
-            'talent_acceptance_notes' => $notes
-        ]);
+            'talent_acceptance_notes' => $notes,
+            // Update status to approved if still pending
+            'status' => $this->status === 'pending' ? 'approved' : $this->status
+        ];
 
-        $this->checkAndMarkBothAccepted();
+        // If admin has already accepted, mark both accepted and auto-transition
+        if ($this->admin_accepted) {
+            $updateData['both_parties_accepted'] = true;
+            $updateData['workflow_completed_at'] = now();
+            // AUTO-TRANSITION: When both parties accept, move to meeting_arranged
+            $updateData['status'] = 'meeting_arranged';
+            $updateData['meeting_arranged_at'] = now();
+        }
+
+        $this->update($updateData);
+
+        // Start time-blocking if both parties now accepted
+        if ($this->admin_accepted) {
+            $this->startTimeBlocking();
+        }
+        
         return $this;
     }
 
     public function markAdminAccepted($notes = null)
     {
-        $this->update([
+        $updateData = [
             'admin_accepted' => true,
             'admin_accepted_at' => now(),
             'admin_acceptance_notes' => $notes
-        ]);
+        ];
 
-        $this->checkAndMarkBothAccepted();
+        // If talent has already accepted, mark both accepted and auto-transition
+        if ($this->talent_accepted) {
+            $updateData['both_parties_accepted'] = true;
+            $updateData['workflow_completed_at'] = now();
+            // AUTO-TRANSITION: When both parties accept, move to meeting_arranged
+            $updateData['status'] = 'meeting_arranged';
+            $updateData['meeting_arranged_at'] = now();
+        }
+
+        $this->update($updateData);
+
+        // Start time-blocking if both parties now accepted
+        if ($this->talent_accepted) {
+            $this->startTimeBlocking();
+        }
+        
         return $this;
     }
 
     public function checkAndMarkBothAccepted()
     {
+        // STRICT VALIDATION: Both talent AND admin must explicitly accept
         if ($this->talent_accepted && $this->admin_accepted && !$this->both_parties_accepted) {
-            $this->update([
-                'both_parties_accepted' => true,
-                'workflow_completed_at' => now(),
-                'status' => 'approved' // Move to approved status when both accept
-            ]);
+            // Double-check to prevent accidental approvals
+            if ($this->talent_accepted_at && $this->admin_accepted_at) {
+                $this->update([
+                    'both_parties_accepted' => true,
+                    'workflow_completed_at' => now(),
+                    'status' => 'meeting_arranged' // Both parties accepted - ready for meeting
+                ]);
 
-            // Start time-blocking when both parties accept
-            $this->startTimeBlocking();
+                // Start time-blocking when both parties accept
+                $this->startTimeBlocking();
+            }
         }
     }
 
     public function getAcceptanceStatus()
     {
         if ($this->both_parties_accepted) {
-            return 'Both parties accepted - Ready for meeting';
+            return 'Both parties accepted - Meeting can be arranged';
         } elseif ($this->talent_accepted && $this->admin_accepted) {
             return 'Both accepted - Processing';
         } elseif ($this->talent_accepted) {
@@ -228,6 +354,33 @@ class TalentRequest extends Model
         } else {
             return 'Pending acceptance from both parties';
         }
+    }
+
+    /**
+     * Get talent-friendly acceptance status for better UX
+     */
+    public function getTalentFriendlyAcceptanceStatus()
+    {
+        if ($this->both_parties_accepted) {
+            return 'Both parties accepted - Meeting can be arranged';
+        } elseif ($this->talent_accepted && $this->admin_accepted) {
+            return 'Both accepted - Processing';
+        } elseif ($this->talent_accepted) {
+            return 'You accepted - Waiting for admin approval';
+        } elseif ($this->admin_accepted) {
+            return 'Request pre-approved by admin - Click to accept';
+        } else {
+            return 'Pending your response';
+        }
+    }
+
+    /**
+     * Check if this request is pre-approved (admin accepted but talent hasn't)
+     */
+    public function isPreApproved()
+    {
+        return $this->admin_accepted && !$this->talent_accepted &&
+               ($this->status === 'pending' || $this->status === 'approved');
     }
 
     public function getWorkflowProgress()
@@ -332,6 +485,11 @@ class TalentRequest extends Model
     {
         $startDate = $startDate ?: now();
         $endDate = $this->calculateProjectEndDate($startDate);
+        
+        // If end date calculation fails, use default 3 months
+        if (!$endDate) {
+            $endDate = $startDate->copy()->addMonths(3);
+        }
 
         $this->update([
             'project_start_date' => $startDate,
@@ -528,8 +686,16 @@ class TalentRequest extends Model
                 self::clearTalentAvailabilityCache($request->talent_user_id);
 
                 // Clear discovery and recommendation caches
-                \Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
-                \Cache::flush(); // Clear all discovery caches (they have complex keys)
+                Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
+
+                // Clear dashboard cache to show new requests immediately
+                Cache::forget('talent_admin_dashboard_stats');
+                Cache::forget('talent_admin_recent_activity');
+
+                // Clear user-specific dashboard caches for all talent admins
+                self::clearAllTalentAdminDashboardCaches();
+
+                Cache::flush(); // Clear all discovery caches (they have complex keys)
             }
         });
 
@@ -539,9 +705,299 @@ class TalentRequest extends Model
                 self::clearTalentAvailabilityCache($request->talent_user_id);
 
                 // Clear discovery and recommendation caches
-                \Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
-                \Cache::flush(); // Clear all discovery caches
+                Cache::forget("talent_recommendations_{$request->recruiter_id}_10");
+
+                // Clear dashboard caches
+                Cache::forget('talent_admin_dashboard_stats');
+                Cache::forget('talent_admin_recent_activity');
+
+                // Clear user-specific dashboard caches for all talent admins
+                self::clearAllTalentAdminDashboardCaches();
+
+                Cache::flush(); // Clear all discovery caches
             }
         });
+    }
+
+    /**
+     * Clear dashboard caches for all talent admin users
+     */
+    public static function clearAllTalentAdminDashboardCaches(): void
+    {
+        try {
+            // Get all talent admin users
+            $talentAdmins = \App\Models\User::whereHas('roles', function($query) {
+                $query->where('name', 'talent_admin');
+            })->get();
+
+            // Clear user-specific cache for each admin
+            foreach ($talentAdmins as $admin) {
+                Cache::forget('talent_admin_recent_activity_' . $admin->id);
+            }
+
+            \Illuminate\Support\Facades\Log::info('Cleared dashboard caches for ' . $talentAdmins->count() . ' talent admins');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to clear talent admin dashboard caches: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get comprehensive workflow status that considers both formal status and acceptance states
+     */
+    public function getCurrentWorkflowStatus()
+    {
+        // If request is rejected, that's final
+        if ($this->status === 'rejected') {
+            return 'Request Rejected';
+        }
+
+        // If both parties have accepted, check formal status progression
+        if ($this->both_parties_accepted) {
+            switch ($this->status) {
+                case 'meeting_arranged':
+                    return 'Meeting Arranged - Both parties accepted';
+                case 'agreement_reached':
+                    return 'Agreement Reached';
+                case 'onboarded':
+                    return 'Talent Onboarded';
+                case 'completed':
+                    return 'Project Completed';
+                default:
+                    return 'Both parties accepted - Ready for meeting';
+            }
+        }
+
+        // Check individual acceptance states
+        if ($this->talent_accepted && $this->admin_accepted) {
+            return 'Both parties accepted - Processing';
+        } elseif ($this->talent_accepted && !$this->admin_accepted) {
+            return 'Talent accepted - Waiting for admin approval';
+        } elseif (!$this->talent_accepted && $this->admin_accepted) {
+            return 'Admin approved - Waiting for talent acceptance';
+        }
+
+        // Default states based on formal status
+        switch ($this->status) {
+            case 'pending':
+                return 'Pending Review';
+            case 'approved':
+                return 'Approved - Waiting for talent and admin acceptance';
+            default:
+                return $this->getFormattedStatus();
+        }
+    }
+
+    /**
+     * Get status for recruiter dashboard display - FIXED VERSION
+     * This provides accurate, acceptance-aware status for recruiters
+     */
+    public function getRecruiterDisplayStatus()
+    {
+        // Show the most relevant status for recruiters
+        if ($this->status === 'rejected') {
+            return 'Request Rejected';
+        }
+
+        // Handle completed workflow states
+        if ($this->both_parties_accepted) {
+            switch ($this->status) {
+                case 'meeting_arranged':
+                    return 'Meeting Arranged';
+                case 'agreement_reached':
+                    return 'Agreement Reached';
+                case 'onboarded':
+                    return 'Talent Onboarded';
+                case 'completed':
+                    return 'Project Completed';
+                default:
+                    return 'Both Parties Accepted - Ready for Meeting';
+            }
+        }
+
+        // Handle acceptance states - this is the key fix
+        if ($this->talent_accepted && $this->admin_accepted) {
+            return 'Both Parties Accepted - Processing';
+        } elseif ($this->talent_accepted && !$this->admin_accepted) {
+            return 'Talent Accepted - Awaiting Admin Review';
+        } elseif (!$this->talent_accepted && $this->admin_accepted) {
+            return 'Admin Pre-Approved - Awaiting Talent Response';
+        } else {
+            return 'Pending Review';
+        }
+    }
+
+    /**
+     * Get display status for frontend views
+     * Normalizes internal status to user-friendly display status
+     */
+    public function getDisplayStatus()
+    {
+        // Handle specific cases first
+        if ($this->status === 'rejected') {
+            return 'rejected';
+        }
+
+        if ($this->both_parties_accepted) {
+            return 'completed';
+        }
+
+        if ($this->talent_accepted && !$this->admin_accepted) {
+            return 'accepted'; // Talent accepted, waiting for admin
+        }
+
+        if (!$this->talent_accepted && $this->admin_accepted) {
+            return 'pending'; // Admin approved, waiting for talent
+        }
+
+        // Map internal statuses to display statuses
+        $statusMap = [
+            'pending' => 'pending',
+            'approved' => 'accepted',
+            'meeting_arranged' => 'accepted',
+            'onboarded' => 'completed',
+            'rejected' => 'rejected',
+        ];
+
+        return $statusMap[$this->status] ?? 'pending';
+    }
+
+    /**
+     * Check if admin can proceed to arrange meeting
+     * Both talent and admin must have explicitly accepted
+     */
+    public function canAdminArrangeMeeting()
+    {
+        // More flexible logic that handles different approval pathways
+        $bothAccepted = $this->talent_accepted && $this->admin_accepted;
+        $statusAllowsMeeting = in_array($this->status, ['approved']);
+        $notRejected = $this->status !== 'rejected';
+        
+        return $bothAccepted && $statusAllowsMeeting && $notRejected;
+    }
+
+    /**
+     * Get a unified, authoritative status display for consistent UX
+     * This should be used across all frontend views
+     */
+    public function getUnifiedDisplayStatus()
+    {
+        // Handle rejected status first (terminal state)
+        if ($this->status === 'rejected') {
+            return 'Request Rejected';
+        }
+
+        // Handle completed workflow states
+        switch ($this->status) {
+            case 'meeting_arranged':
+                return 'Meeting Arranged';
+            case 'agreement_reached':
+                return 'Agreement Reached';
+            case 'onboarded':
+                return 'Talent Onboarded';
+            case 'completed':
+                return 'Project Completed';
+        }
+
+        // Handle pending/approval states with acceptance logic
+        if ($this->status === 'pending' || $this->status === 'approved') {
+            if ($this->talent_accepted && $this->admin_accepted) {
+                return 'Both Parties Accepted - Ready for Meeting';
+            } elseif ($this->talent_accepted && !$this->admin_accepted) {
+                return 'Talent Accepted - Awaiting Admin Approval';
+            } elseif (!$this->talent_accepted && $this->admin_accepted) {
+                return 'Admin Approved - Awaiting Talent Acceptance';
+            } else {
+                return 'Pending Review';
+            }
+        }
+
+        // Fallback to formatted status
+        return $this->getFormattedStatus();
+    }
+
+    /**
+     * Get status badge color for recruiter displays - FIXED VERSION
+     * This provides accurate, acceptance-aware badge colors for recruiters
+     */
+    public function getRecruiterStatusBadgeColor()
+    {
+        if ($this->status === 'rejected') {
+            return 'danger';
+        }
+
+        // Handle completed workflow states
+        if ($this->both_parties_accepted) {
+            switch ($this->status) {
+                case 'meeting_arranged':
+                    return 'primary';
+                case 'agreement_reached':
+                case 'onboarded':
+                case 'completed':
+                    return 'success';
+                default:
+                    return 'info'; // Both accepted, ready for next step
+            }
+        }
+
+        // Handle acceptance states with appropriate colors
+        if ($this->talent_accepted && $this->admin_accepted) {
+            return 'info'; // Both accepted, processing
+        } elseif ($this->talent_accepted && !$this->admin_accepted) {
+            return 'warning'; // Talent accepted, waiting for admin
+        } elseif (!$this->talent_accepted && $this->admin_accepted) {
+            return 'warning'; // Admin pre-approved, waiting for talent
+        } else {
+            return 'secondary'; // Pending review
+        }
+    }
+
+    /**
+     * Get status badge color for the unified display status
+     */
+    public function getUnifiedStatusBadgeColor()
+    {
+        if ($this->status === 'rejected') {
+            return 'danger';
+        }
+
+        switch ($this->status) {
+            case 'meeting_arranged':
+                return 'primary';
+            case 'agreement_reached':
+            case 'onboarded':
+            case 'completed':
+                return 'success';
+        }
+
+        // For pending/approval states, use acceptance logic
+        if ($this->status === 'pending' || $this->status === 'approved') {
+            if ($this->talent_accepted && $this->admin_accepted) {
+                return 'info'; // Ready for next step
+            } elseif ($this->talent_accepted || $this->admin_accepted) {
+                return 'warning'; // Partially accepted
+            } else {
+                return 'secondary'; // Pending
+            }
+        }
+
+        return 'secondary';
+    }
+    
+    /**
+     * Get Tailwind CSS classes for status badges (for JavaScript usage)
+     */
+    public function getStatusBadgeColorClasses()
+    {
+        $colorMapping = [
+            'success' => 'bg-green-100 text-green-800',
+            'warning' => 'bg-yellow-100 text-yellow-800',
+            'info' => 'bg-blue-100 text-blue-800',
+            'primary' => 'bg-indigo-100 text-indigo-800',
+            'danger' => 'bg-red-100 text-red-800',
+            'secondary' => 'bg-gray-100 text-gray-800'
+        ];
+        
+        $colorType = $this->getUnifiedStatusBadgeColor();
+        return $colorMapping[$colorType] ?? 'bg-gray-100 text-gray-800';
     }
 }
