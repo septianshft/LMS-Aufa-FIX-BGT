@@ -36,6 +36,17 @@
                     </div>
                 </div>
 
+                @if($course->enrollment_start || $course->enrollment_end)
+                    <div>
+                        <p class="text-slate-500 text-sm">Enrollment Period</p>
+                        <p class="text-indigo-950 text-md font-semibold">
+                            {{ $course->enrollment_start ? $course->enrollment_start->format('d M Y H:i') : '-' }}
+                            -
+                            {{ $course->enrollment_end ? $course->enrollment_end->format('d M Y H:i') : '-' }}
+                        </p>
+                    </div>
+                @endif
+
                 <hr class="my-5">
 
                 <div class="flex flex-row justify-between items-center">

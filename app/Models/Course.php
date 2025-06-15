@@ -29,6 +29,11 @@ class Course extends Model
         'enrollment_end'
     ];
 
+    protected $casts = [
+        'enrollment_start' => 'datetime',
+        'enrollment_end' => 'datetime',
+    ];
+
     public function category(){
         return $this->belongsTo(Category::class);
 

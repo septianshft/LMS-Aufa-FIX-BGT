@@ -10,6 +10,9 @@ class CourseFactory extends Factory
 
     public function definition(): array
     {
+        $start = $this->faker->dateTimeBetween('-1 month', '+1 month');
+        $end = (clone $start)->modify('+'.$this->faker->numberBetween(5, 30).' days');
+
         return [
             'name' => $this->faker->sentence(3),
             'slug' => $this->faker->unique()->slug(),
@@ -21,8 +24,8 @@ class CourseFactory extends Factory
             'price' => 0,
             'course_mode_id' => null,
             'course_level_id' => null,
-            'enrollment_start' => null,
-            'enrollment_end' => null,
+            'enrollment_start' => $start,
+            'enrollment_end' => $end,
         ];
     }
 }
