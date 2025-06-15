@@ -23,7 +23,9 @@ class Course extends Model
         'category_id',
         'trainer_id',
         'course_mode_id',
-        'course_level_id'
+        'course_level_id',
+        'enrollment_start',
+        'enrollment_end'
     ];
 
     public function category(){

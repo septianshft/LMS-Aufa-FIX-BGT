@@ -254,9 +254,17 @@ class FrontController extends Controller
      * Proses penyimpanan data saat checkout
      */
 
-      public function checkout_store(StoreSubscribeTransactionRequest $request, Course $course)
+     public function checkout_store(StoreSubscribeTransactionRequest $request, Course $course)
      {
          $user = Auth::user();
+
+         if ($course->mode && $course->mode->name === 'onsite') {
+             $today = now()->toDateString();
+             if (($course->enrollment_start && $today < $course->enrollment_start) ||
+                 ($course->enrollment_end && $today > $course->enrollment_end)) {
+                 return redirect()->back()->with('error', 'Enrollment period is closed.');
+             }
+         }
      
          // Check if the user is already actively subscribed to THIS specific course
          if ($user->hasActiveSubscription($course)) {
