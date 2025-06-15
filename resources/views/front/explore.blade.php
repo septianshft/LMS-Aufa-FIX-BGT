@@ -81,12 +81,12 @@
 
             <!-- Course List -->
             <div class="flex-1">
-                <div id="courseContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div id="courseContent" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     @foreach($courses as $course)
                     <div class="flex flex-col rounded-xl bg-white overflow-hidden transition-all hover:ring-2 hover:ring-[#FF6129]">
                         <a href="{{ route('front.details', $course->slug) }}" class="w-full h-48 overflow-hidden">
-                            <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
-                        </a>
+                        <img src="{{ asset(path: 'storage/' . $course->thumbnail) }}" class="w-40 h-full object-cover" alt="thumbnail">
+                    </a>
                         <div class="p-4 flex flex-col gap-2">
                             <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
                             <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>

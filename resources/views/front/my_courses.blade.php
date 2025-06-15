@@ -61,7 +61,7 @@
                 @foreach($courses as $course)
                 <div class="flex flex-col rounded-xl bg-white overflow-hidden transition-all hover:ring-2 hover:ring-[#FF6129]">
                     <a href="{{ route('front.details', $course->slug) }}" class="w-full h-48 overflow-hidden">
-                        <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
+                    <img src="{{ asset('storage/' . $course->thumbnail) }}" alt="thumbnail" class="w-full h-full object-cover">
                     </a>
                     <div class="p-4 flex flex-col gap-2">
                         <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
