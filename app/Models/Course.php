@@ -63,7 +63,7 @@ class Course extends Model
     public function getThumbnailUrlAttribute(): string
     {
         if ($this->thumbnail && Storage::disk('public')->exists($this->thumbnail)) {
-            return Storage::url($this->thumbnail);
+            return Storage::disk('public')->url($this->thumbnail);
         }
 
         return asset('assets/default-course.jpg');
