@@ -2,7 +2,7 @@
     <x-slot name="header">
         <div class="flex flex-row justify-between items-center">
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ Auth::user()->hasRole('owner') ? __('Owner Dashboard') : __('Dashboard') }}
+                {{ Auth::user()->hasRole('admin') ? __('admin Dashboard') : __('Dashboard') }}
             </h2>
         </div>
     </x-slot>
@@ -10,7 +10,7 @@
     <div class="py-12">
         <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-10 flex flex-col gap-y-5">
-                @role('owner')
+                @role('admin')
                 <div class="item-card flex flex-col gap-y-10 md:flex-row justify-between items-center">
                     <div class="flex flex-col gap-y-3">
                         <svg width="46" height="46" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -79,7 +79,7 @@
                     </div>
                 </div>
                 @endrole
-                @role('teacher')
+                @role('trainer')
                 <div class="item-card flex flex-col gap-y-10 md:flex-row justify-between items-center">
                     <div class="flex flex-col gap-y-3">
                         <svg width="46" height="46" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -110,7 +110,7 @@
                     </a>
                 </div>
                 @endrole
-                @role('student')
+                @role('trainee')
                 <h3 class="text-indigo-950 font-bold text-2xl">Upgrade Skills Today</h3>
                 <p class="text-slate-500 text-base">
                     Grow your career with experienced teachers in Alqowy Class.

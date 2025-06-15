@@ -17,7 +17,7 @@
                         <x-input-error :messages="$errors->get('name')" class="mt-2" />
                     </div>
                     <div class="mt-4">
-                        <x-input-label for="path_video" :value="__('YouTube ID')" />
+                        <x-input-label for="path_video" :value="__('YouTube Unique URL')" />
                         <x-text-input id="path_video" class="block mt-1 w-full" type="text" name="path_video" required />
                         <x-input-error :messages="$errors->get('path_video')" class="mt-2" />
                     </div>

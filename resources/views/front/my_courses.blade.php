@@ -67,7 +67,7 @@
                         <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
                         <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
                         <p class="text-sm text-gray-600">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
-                        <a href="{{ route('front.details', $course->slug) }}" class="mt-2 inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">Mulai Belajar</a>
+                        <a href="{{ route('front.learning', ['course' => $course->id, 'courseVideoId' => $courseVideo->id]) }}" class="mt-2 inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">Mulai Belajar</a>
                     </div>
                 </div>
                 @endforeach
