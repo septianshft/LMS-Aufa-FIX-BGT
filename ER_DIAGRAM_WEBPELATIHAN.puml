@@ -1,0 +1,360 @@
+@startuml WebPelatihan_ERD_Simplified
+!define ENTITY(x) class x << (E,#FFAAAA) >>
+!define LOOKUP(x) class x << (L,#AAFFAA) >>
+!define BRIDGE(x) class x << (B,#AAAAFF) >>
+
+title WebPelatihan - LMS & Talent Scouting Platform (Simplified ERD)
+
+' Core User Management
+ENTITY(users) {
+  +id: BIGINT PK
+  --
+  name: VARCHAR
+  email: VARCHAR UNIQUE
+  password: VARCHAR
+  avatar: VARCHAR NULLABLE
+  pekerjaan: VARCHAR NULLABLE
+  phone: VARCHAR NULLABLE
+  location: VARCHAR NULLABLE
+  --
+  ' Talent Fields
+  available_for_scouting: BOOLEAN
+  talent_skills: JSON NULLABLE
+  hourly_rate: DECIMAL(8,2) NULLABLE
+  talent_bio: TEXT NULLABLE
+  portfolio_url: VARCHAR NULLABLE
+  experience_level: ENUM NULLABLE
+  is_active_talent: BOOLEAN
+  --
+  timestamps
+}
+
+' LMS Core Entities
+LOOKUP(categories) {
+  +id: BIGINT PK
+  --
+  name: VARCHAR
+  slug: VARCHAR
+  icon: VARCHAR
+  soft_deletes, timestamps
+}
+
+LOOKUP(course_levels) {
+  +id: BIGINT PK
+  --
+  name: VARCHAR
+  timestamps
+}
+
+LOOKUP(course_modes) {
+  +id: BIGINT PK
+  --
+  name: VARCHAR
+  timestamps
+}
+
+ENTITY(trainers) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  is_active: BOOLEAN
+  soft_deletes, timestamps
+}
+
+ENTITY(courses) {
+  +id: BIGINT PK
+  --
+  name: VARCHAR
+  slug: VARCHAR
+  path_trailer: VARCHAR
+  about: TEXT
+  thumbnail: VARCHAR
+  price: DECIMAL(10,2)
+  is_free: BOOLEAN
+  --
+  category_id: BIGINT FK
+  course_level_id: BIGINT FK
+  course_mode_id: BIGINT FK
+  trainer_id: BIGINT FK
+  --
+  soft_deletes, timestamps
+}
+
+ENTITY(course_modules) {
+  +id: BIGINT PK
+  --
+  course_id: BIGINT FK
+  name: VARCHAR
+  order: INTEGER
+  timestamps
+}
+
+ENTITY(course_videos) {
+  +id: BIGINT PK
+  --
+  name: VARCHAR
+  path_video: VARCHAR
+  course_id: BIGINT FK
+  course_module_id: BIGINT FK
+  order: INTEGER
+  soft_deletes, timestamps
+}
+
+ENTITY(course_materials) {
+  +id: BIGINT PK
+  --
+  course_module_id: BIGINT FK
+  name: VARCHAR
+  file_path: VARCHAR
+  file_type: VARCHAR(20)
+  order: INTEGER
+  timestamps
+}
+
+ENTITY(module_tasks) {
+  +id: BIGINT PK
+  --
+  course_module_id: BIGINT FK
+  name: VARCHAR
+  description: TEXT NULLABLE
+  order: INTEGER
+  deadline: TIMESTAMP NULLABLE
+  timestamps
+}
+
+' Student Progress & Assessment
+BRIDGE(course_trainees) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  course_id: BIGINT FK
+  soft_deletes, timestamps
+}
+
+ENTITY(course_progresses) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  course_id: BIGINT FK
+  completed_videos: JSON
+  completed_materials: JSON
+  completed_tasks: JSON
+  progress: INTEGER
+  quiz_passed: BOOLEAN
+  timestamps
+}
+
+ENTITY(task_submissions) {
+  +id: BIGINT PK
+  --
+  module_task_id: BIGINT FK
+  user_id: BIGINT FK
+  file_path: VARCHAR NULLABLE
+  answer: TEXT NULLABLE
+  grade: INTEGER NULLABLE
+  timestamps
+}
+
+ENTITY(certificates) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  course_id: BIGINT FK
+  path: VARCHAR
+  generated_at: TIMESTAMP
+  timestamps
+}
+
+' Quiz System
+ENTITY(final_quizzes) {
+  +id: BIGINT PK
+  --
+  course_id: BIGINT FK
+  title: VARCHAR
+  description: TEXT NULLABLE
+  passing_score: INTEGER
+  is_hidden_from_trainee: BOOLEAN
+  timestamps
+}
+
+ENTITY(quiz_questions) {
+  +id: BIGINT PK
+  --
+  final_quiz_id: BIGINT FK
+  question: TEXT
+  timestamps
+}
+
+ENTITY(quiz_options) {
+  +id: BIGINT PK
+  --
+  quiz_question_id: BIGINT FK
+  option_text: VARCHAR
+  is_correct: BOOLEAN
+  timestamps
+}
+
+ENTITY(quiz_attempts) {
+  +id: BIGINT PK
+  --
+  final_quiz_id: BIGINT FK
+  user_id: BIGINT FK
+  score: INTEGER
+  is_passed: BOOLEAN
+  timestamps
+}
+
+' E-commerce
+ENTITY(cart_items) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  course_id: BIGINT FK
+  quantity: INTEGER
+  timestamps
+  --
+  UNIQUE(user_id, course_id)
+}
+
+ENTITY(subscribe_transactions) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  course_id: BIGINT FK NULLABLE
+  total_amount: BIGINT
+  is_paid: BOOLEAN
+  subscription_start_date: DATE NULLABLE
+  proof: VARCHAR
+  soft_deletes, timestamps
+}
+
+' Talent Scouting System
+ENTITY(talent_admins) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  is_active: BOOLEAN
+  soft_deletes, timestamps
+}
+
+ENTITY(talents) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  is_active: BOOLEAN
+  soft_deletes, timestamps
+}
+
+ENTITY(recruiters) {
+  +id: BIGINT PK
+  --
+  user_id: BIGINT FK
+  company_name: VARCHAR NULLABLE
+  industry: VARCHAR NULLABLE
+  company_size: VARCHAR NULLABLE
+  website: VARCHAR NULLABLE
+  company_description: TEXT NULLABLE
+  phone: VARCHAR NULLABLE
+  address: TEXT NULLABLE
+  is_active: BOOLEAN
+  soft_deletes, timestamps
+}
+
+ENTITY(talent_requests) {
+  +id: BIGINT PK
+  --
+  recruiter_id: BIGINT FK
+  talent_id: BIGINT FK
+  talent_user_id: BIGINT FK
+  --
+  project_title: VARCHAR
+  project_description: TEXT
+  requirements: TEXT NULLABLE
+  budget_range: VARCHAR NULLABLE
+  project_duration: VARCHAR NULLABLE
+  --
+  status: ENUM(pending,approved,meeting_arranged,rejected,completed)
+  talent_accepted: BOOLEAN
+  admin_accepted: BOOLEAN
+  both_parties_accepted: BOOLEAN
+  --
+  ' Time blocking
+  project_start_date: DATETIME NULLABLE
+  project_end_date: DATETIME NULLABLE
+  is_blocking_talent: BOOLEAN
+  --
+  ' Workflow timestamps
+  talent_accepted_at: TIMESTAMP NULLABLE
+  admin_accepted_at: TIMESTAMP NULLABLE
+  meeting_arranged_at: TIMESTAMP NULLABLE
+  onboarded_at: TIMESTAMP NULLABLE
+  workflow_completed_at: TIMESTAMP NULLABLE
+  --
+  soft_deletes, timestamps
+}
+
+' ===== RELATIONSHIPS =====
+
+' LMS Core Relationships
+users ||--o{ trainers : "user_id"
+categories ||--o{ courses : "category_id"
+course_levels ||--o{ courses : "course_level_id"
+course_modes ||--o{ courses : "course_mode_id"
+trainers ||--o{ courses : "trainer_id"
+
+' Course Structure
+courses ||--o{ course_modules : "course_id"
+courses ||--o{ course_videos : "course_id"
+course_modules ||--o{ course_videos : "course_module_id"
+course_modules ||--o{ course_materials : "course_module_id"
+course_modules ||--o{ module_tasks : "course_module_id"
+
+' Student Progress & Assessment
+users ||--o{ course_trainees : "user_id"
+courses ||--o{ course_trainees : "course_id"
+users ||--o{ course_progresses : "user_id"
+courses ||--o{ course_progresses : "course_id"
+users ||--o{ task_submissions : "user_id"
+module_tasks ||--o{ task_submissions : "module_task_id"
+users ||--o{ certificates : "user_id"
+courses ||--o{ certificates : "course_id"
+
+' Quiz System
+courses ||--o{ final_quizzes : "course_id"
+final_quizzes ||--o{ quiz_questions : "final_quiz_id"
+quiz_questions ||--o{ quiz_options : "quiz_question_id"
+final_quizzes ||--o{ quiz_attempts : "final_quiz_id"
+users ||--o{ quiz_attempts : "user_id"
+
+' E-commerce
+users ||--o{ cart_items : "user_id"
+courses ||--o{ cart_items : "course_id"
+users ||--o{ subscribe_transactions : "user_id"
+courses ||--o{ subscribe_transactions : "course_id"
+
+' Talent Scouting System
+users ||--|| talent_admins : "user_id"
+users ||--|| talents : "user_id"
+users ||--|| recruiters : "user_id"
+recruiters ||--o{ talent_requests : "recruiter_id"
+talents ||--o{ talent_requests : "talent_id"
+users ||--o{ talent_requests : "talent_user_id"
+
+note right of users
+  **Multi-Role User System**:
+  Trainees → LMS Learning → Skills → Talent Conversion
+
+  **Key Features**:
+  • Course completion tracking
+  • Automatic skill generation
+  • Talent scouting integration
+  • Certificate management
+end note
+
+note bottom of talent_requests
+  **Workflow**: pending → approved → meeting_arranged → completed
+  **Dual Acceptance**: talent + admin approval required
+  **Time Blocking**: prevents scheduling conflicts
+end note
+
+@enduml

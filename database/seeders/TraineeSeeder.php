@@ -48,7 +48,7 @@ class TraineeSeeder extends Seeder
                 ]
             ],
             [
-                'email' => 'ttrainee2@test.com',
+                'email' => 'trainee2@test.com',
                 'name' => 'Ahmad Backend Dev',
                 'pekerjaan' => 'Junior Backend Developer',
                 'location' => 'Bandung, Indonesia',
