@@ -141,6 +141,14 @@
                                     {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}
                                 </div>
                                 <p class="text-sm text-[#6D7786]">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
+                                @if($course->enrollment_start || $course->enrollment_end)
+                                <p class="text-xs text-gray-500">
+                                    Enrollment:
+                                    {{ $course->enrollment_start ? $course->enrollment_start->format('d M Y') : '-' }}
+                                    -
+                                    {{ $course->enrollment_end ? $course->enrollment_end->format('d M Y') : '-' }}
+                                </p>
+                                @endif
 
                                 <form action="{{ route('cart.store', $course->slug) }}" method="POST">
                                     @csrf
