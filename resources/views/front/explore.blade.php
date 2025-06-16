@@ -90,6 +90,14 @@
                             <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
                             <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
                             <p class="text-sm text-gray-600">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
+                            @if($course->enrollment_start || $course->enrollment_end)
+                                <p class="text-xs text-gray-500">
+                                    Enrollment:
+                                    {{ $course->enrollment_start ? $course->enrollment_start->format('d M Y') : '-' }}
+                                    -
+                                    {{ $course->enrollment_end ? $course->enrollment_end->format('d M Y') : '-' }}
+                                </p>
+                            @endif
                             <p class="font-semibold">{{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}</p>
                             <a href="{{ route('front.details', $course->slug) }}" class="mt-2 inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">Lihat Detail</a>
                         </div>
