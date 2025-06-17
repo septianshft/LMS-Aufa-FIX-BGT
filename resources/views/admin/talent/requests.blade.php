@@ -56,7 +56,7 @@
     <!-- Main Content -->
     <div class="max-w-7xl mx-auto px-6 pb-12">
         <!-- Filter and Sort Controls -->
-        <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-6 mb-8">
+        <div class="bg-white/80 backdrop-blur-lg rounded-2xl shadow-xl border border-white/20 p-6 mb-8 relative z-20">
             <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <!-- Search and Filters -->
                 <div class="flex flex-col sm:flex-row gap-3 flex-1">
@@ -109,21 +109,21 @@
                             <span id="sortText">Latest First</span>
                             <i class="fas fa-chevron-down text-gray-400 text-sm"></i>
                         </button>
-                        <div id="sortDropdown" class="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 min-w-[200px] z-50 hidden">
-                            <div class="p-2">
-                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-sort="latest">
+                        <div id="sortDropdown" class="absolute top-full right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 min-w-[200px] max-h-[300px] overflow-visible z-[999] hidden">
+                            <div class="p-2 space-y-1">
+                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors block" data-sort="latest">
                                     <i class="fas fa-clock mr-3 text-gray-400"></i>
                                     Latest First
                                 </button>
-                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-sort="oldest">
+                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors block" data-sort="oldest">
                                     <i class="fas fa-history mr-3 text-gray-400"></i>
                                     Oldest First
                                 </button>
-                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-sort="title">
+                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors block" data-sort="title">
                                     <i class="fas fa-sort-alpha-down mr-3 text-gray-400"></i>
                                     Project Title A-Z
                                 </button>
-                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" data-sort="recruiter">
+                                <button class="sort-option w-full text-left px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors block" data-sort="recruiter">
                                     <i class="fas fa-user-tie mr-3 text-gray-400"></i>
                                     Recruiter A-Z
                                 </button>
@@ -135,7 +135,7 @@
         </div>
 
         <!-- Requests Grid -->
-        <div id="requestsContainer" class="space-y-6">
+        <div id="requestsContainer" class="space-y-6 relative z-10">
             @if($requests->count() > 0)
                 @foreach($requests as $request)
                     @php $displayStatus = $request->getDisplayStatus(); @endphp
@@ -286,84 +286,86 @@
 @section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, initializing components...');
-
-    // Initialize filters and search
+    // Initialize all functionality
     initializeSearch();
     initializeFilters();
     initializeSorting();
     initializeModals();
-
-    console.log('All components initialized successfully');
 });
 
 function initializeSearch() {
     const searchInput = document.getElementById('searchInput');
     const requestCards = document.querySelectorAll('.request-card');
 
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
 
-        requestCards.forEach(card => {
-            const searchContent = card.dataset.searchContent;
-            if (searchContent.includes(searchTerm)) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
+            requestCards.forEach(card => {
+                const searchContent = card.dataset.searchContent || '';
+                if (searchContent.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         });
-    });
+    }
 }
 
 function initializeFilters() {
-    console.log('Initializing filters...');
-
-    // Status Filter
     const statusBtn = document.getElementById('statusFilterBtn');
     const statusDropdown = document.getElementById('statusFilterDropdown');
     const statusOptions = document.querySelectorAll('.status-filter-option');
+    const statusText = document.getElementById('statusFilterText');
 
-    console.log('Status elements found:', {
-        button: !!statusBtn,
-        dropdown: !!statusDropdown,
-        optionsCount: statusOptions.length
-    });
-
-    if (statusBtn && statusDropdown) {
+    if (statusBtn && statusDropdown && statusOptions.length > 0) {
+        // Status button click handler
         statusBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             e.stopPropagation();
-            console.log('Status button clicked, toggling dropdown');
+
+            // Toggle status dropdown
             statusDropdown.classList.toggle('hidden');
-            // Close other dropdowns
-            document.getElementById('urgencyFilterDropdown')?.classList.add('hidden');
-            document.getElementById('sortDropdown')?.classList.add('hidden');
+
+            // Close sort dropdown if open
+            const sortDropdown = document.getElementById('sortDropdown');
+            if (sortDropdown) {
+                sortDropdown.classList.add('hidden');
+            }
         });
 
-        statusOptions.forEach((option, index) => {
-            option.addEventListener('click', function() {
-                const status = this.dataset.status;
-                console.log('Status option clicked:', status, 'Index:', index);
-                document.getElementById('statusFilterText').textContent = this.textContent.trim();
+        // Status option click handlers
+        statusOptions.forEach(function(option) {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const status = this.dataset.status || '';
+                const text = this.textContent.trim();
+
+                // Update button text
+                if (statusText) {
+                    statusText.textContent = text;
+                }
+
+                // Hide dropdown
                 statusDropdown.classList.add('hidden');
+
+                // Apply filter
                 filterByStatus(status);
             });
         });
     }
-
-    // Close dropdowns when clicking outside
-    document.addEventListener('click', function() {
-        document.getElementById('statusFilterDropdown')?.classList.add('hidden');
-        document.getElementById('sortDropdown')?.classList.add('hidden');
-    });
-
-    console.log('Filters initialization complete');
 }
 
 function filterByStatus(status) {
     const requestCards = document.querySelectorAll('.request-card');
 
     requestCards.forEach(card => {
-        if (!status || card.dataset.status === status) {
+        const cardStatus = card.dataset.status || '';
+
+        if (!status || cardStatus === status) {
             card.style.display = 'block';
         } else {
             card.style.display = 'none';
@@ -372,67 +374,104 @@ function filterByStatus(status) {
 }
 
 function initializeSorting() {
-    console.log('Initializing sorting...');
-
     const sortBtn = document.getElementById('sortBtn');
     const sortDropdown = document.getElementById('sortDropdown');
     const sortOptions = document.querySelectorAll('.sort-option');
+    const sortText = document.getElementById('sortText');
 
-    console.log('Sort elements found:', {
-        button: !!sortBtn,
-        dropdown: !!sortDropdown,
-        optionsCount: sortOptions.length
-    });
-
-    if (sortBtn && sortDropdown) {
+    if (sortBtn && sortDropdown && sortOptions.length > 0) {
+        // Sort button click handler
         sortBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             e.stopPropagation();
-            console.log('Sort button clicked, toggling dropdown');
+
+            // Toggle sort dropdown
             sortDropdown.classList.toggle('hidden');
-            // Close other dropdowns
-            document.getElementById('statusFilterDropdown')?.classList.add('hidden');
-            document.getElementById('urgencyFilterDropdown')?.classList.add('hidden');
+
+            // Close status dropdown if open
+            const statusDropdown = document.getElementById('statusFilterDropdown');
+            if (statusDropdown) {
+                statusDropdown.classList.add('hidden');
+            }
         });
 
-        sortOptions.forEach((option, index) => {
-            option.addEventListener('click', function() {
-                const sortType = this.dataset.sort;
-                console.log('Sort option clicked:', sortType, 'Index:', index);
-                document.getElementById('sortText').textContent = this.textContent.trim();
+        // Sort option click handlers
+        sortOptions.forEach(function(option) {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const sortType = this.dataset.sort || '';
+                const text = this.textContent.trim();
+
+                // Update button text
+                if (sortText) {
+                    sortText.textContent = text;
+                }
+
+                // Hide dropdown
                 sortDropdown.classList.add('hidden');
+
+                // Apply sorting
                 sortRequests(sortType);
             });
         });
     }
-
-    console.log('Sorting initialization complete');
 }
 
 function sortRequests(sortType) {
     const container = document.getElementById('requestsContainer');
+
+    if (!container) return;
+
     const cards = Array.from(container.querySelectorAll('.request-card'));
 
     cards.sort((a, b) => {
         switch(sortType) {
             case 'latest':
-                return parseInt(b.dataset.created) - parseInt(a.dataset.created);
+                return parseInt(b.dataset.created || '0') - parseInt(a.dataset.created || '0');
             case 'oldest':
-                return parseInt(a.dataset.created) - parseInt(b.dataset.created);
+                return parseInt(a.dataset.created || '0') - parseInt(b.dataset.created || '0');
             case 'title':
-                const titleA = a.querySelector('h3').textContent.toLowerCase();
-                const titleB = b.querySelector('h3').textContent.toLowerCase();
+                const titleA = (a.querySelector('h3')?.textContent || '').toLowerCase();
+                const titleB = (b.querySelector('h3')?.textContent || '').toLowerCase();
                 return titleA.localeCompare(titleB);
             case 'recruiter':
-                const recruiterA = a.dataset.searchContent.split(' ')[1] || '';
-                const recruiterB = b.dataset.searchContent.split(' ')[1] || '';
+                const contentA = a.dataset.searchContent || '';
+                const contentB = b.dataset.searchContent || '';
+                const recruiterA = contentA.split(' ')[1] || '';
+                const recruiterB = contentB.split(' ')[1] || '';
                 return recruiterA.localeCompare(recruiterB);
             default:
                 return 0;
         }
     });
 
+    // Re-append sorted cards
     cards.forEach(card => container.appendChild(card));
 }
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    const statusDropdown = document.getElementById('statusFilterDropdown');
+    const statusBtn = document.getElementById('statusFilterBtn');
+    const sortDropdown = document.getElementById('sortDropdown');
+    const sortBtn = document.getElementById('sortBtn');
+
+    // Close status dropdown if clicking outside
+    if (statusDropdown && statusBtn) {
+        if (!statusDropdown.contains(e.target) && !statusBtn.contains(e.target)) {
+            statusDropdown.classList.add('hidden');
+        }
+    }
+
+    // Close sort dropdown if clicking outside
+    if (sortDropdown && sortBtn) {
+        if (!sortDropdown.contains(e.target) && !sortBtn.contains(e.target)) {
+            sortDropdown.classList.add('hidden');
+        }
+    }
+});
 
 function initializeModals() {
     const modal = document.getElementById('requestModal');

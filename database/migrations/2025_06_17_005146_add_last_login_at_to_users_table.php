@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // This migration is a duplicate and should not run
-        // The actual removal was handled by 2025_06_14_205956_remove_urgency_level_from_talent_requests_table.php
+        Schema::table('users', function (Blueprint $table) {
+            $table->timestamp('last_login_at')->nullable()->after('remember_token');
+        });
     }
 
     /**
@@ -20,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // No action needed
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('last_login_at');
+        });
     }
 };

@@ -57,45 +57,6 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-users-cog text-red-600 text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <div class="text-2xl font-bold text-gray-900">{{ $talentAdmins->total() }}</div>
-                    <div class="text-gray-600 text-sm">Total Admin</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <div class="text-2xl font-bold text-gray-900">{{ $talentAdmins->where('created_at', '>=', now()->subDays(30))->count() }}</div>
-                    <div class="text-gray-600 text-sm">Admin Baru (30 hari)</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
-            <div class="flex items-center">
-                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-clock text-blue-600 text-xl"></i>
-                </div>
-                <div class="ml-4">
-                    <div class="text-2xl font-bold text-gray-900">{{ $talentAdmins->where('last_login_at', '>=', now()->subDays(7))->count() }}</div>
-                    <div class="text-gray-600 text-sm">Aktif (7 hari)</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Admin List -->
     <div class="bg-white rounded-2xl shadow-xl border border-gray-100">
         <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-t-2xl p-6">

@@ -18,11 +18,18 @@ class RegistrationTest extends TestCase
 
     public function test_new_users_can_register(): void
     {
+        // Ensure roles exist for testing
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'trainee']);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'talent']);
+        \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'recruiter']);
+
         $response = $this->post('/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'pekerjaan' => 'Software Developer',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'role' => 'trainee',
         ]);
 
         $this->assertAuthenticated();

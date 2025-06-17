@@ -1,0 +1,120 @@
+@startuml Talent_Opt_In_Flow
+!theme plain
+skinparam monochrome true
+skinparam shadowing false
+
+title Talent Scouting Opt-In Flow - WebPelatihan Platform\n(Laravel MVC Architecture)
+
+actor User
+participant "Profile View\n(edit.blade.php)" as ProfileView << View >>
+participant "ProfileController" as ProfileController << Controller >>
+participant "User Model" as UserModel << Model >>
+participant "Talent Model" as TalentModel << Model >>
+participant "Role Assignment\nService" as RoleService << Service >>
+participant "TalentScouting\nService" as ScoutingService << Service >>
+database "MySQL Database" as Database << Database >>
+
+== User Profile Access ==
+User -> ProfileView: 1. Navigate to Profile Settings
+activate ProfileView
+ProfileView -> ProfileController: 2. edit()
+activate ProfileController
+ProfileController -> UserModel: 3. Load user profile data
+activate UserModel
+UserModel -> Database: 4. SELECT * FROM users WHERE id = ?
+activate Database
+Database --> UserModel: 5. User profile data
+deactivate Database
+UserModel --> ProfileController: 6. User object with talent fields
+deactivate UserModel
+ProfileController --> ProfileView: 7. Return view with user data
+deactivate ProfileController
+ProfileView --> User: 8. Display profile form with talent settings
+deactivate ProfileView
+
+== Smart Suggestion System (Optional) ==
+note over ScoutingService
+  Triggered when user completes courses
+  or meets talent readiness criteria
+end note
+
+User -> ProfileView: 9. View talent conversion suggestion
+ProfileView -> ScoutingService: 10. checkTalentReadiness(user)
+activate ScoutingService
+ScoutingService -> Database: 11. Query course completions and skills
+activate Database
+Database --> ScoutingService: 12. Course completion data
+deactivate Database
+ScoutingService -> ScoutingService: 13. Calculate talent readiness score
+ScoutingService --> ProfileView: 14. Talent conversion suggestion
+deactivate ScoutingService
+ProfileView --> User: 15. Display smart conversion notification
+
+== Talent Opt-In Process ==
+User -> ProfileView: 16. Submit talent opt-in form\n(available_for_scouting=true, talent_bio, rates)
+ProfileView -> ProfileController: 17. updateTalent(Request)
+activate ProfileController
+ProfileController -> ProfileController: 18. Validate talent settings data
+
+alt Validation Success
+    ProfileController -> UserModel: 19. enableTalentScouting(data)
+    activate UserModel
+
+    == Update User Fields ==
+    UserModel -> Database: 20. UPDATE users SET\navailable_for_scouting=true,\nis_active_talent=true,\ntalent_bio=?, hourly_rate=?,\nmonthly_salary_expectation=?\nWHERE id=?
+    activate Database
+    Database --> UserModel: 21. Update confirmation
+    deactivate Database
+
+    == Role Assignment ==
+    UserModel -> RoleService: 22. assignRole('talent')
+    activate RoleService
+    RoleService -> Database: 23. INSERT INTO model_has_roles\n(role_id, model_id, model_type)
+    activate Database
+    Database --> RoleService: 24. Role assignment confirmation
+    deactivate Database
+    RoleService --> UserModel: 25. Role assigned successfully
+    deactivate RoleService
+
+    == Talent Record Creation ==
+    UserModel -> TalentModel: 26. Create or update talent record
+    activate TalentModel
+    TalentModel -> Database: 27. INSERT INTO talents\n(user_id, is_active)\nON DUPLICATE KEY UPDATE\nis_active=true
+    activate Database
+    Database --> TalentModel: 28. Talent record created/updated
+    deactivate Database
+    TalentModel --> UserModel: 29. Talent enrollment complete
+    deactivate TalentModel
+
+    == Clear Suggestions & Cache ==
+    UserModel -> ScoutingService: 30. clearConversionSuggestions(user_id)
+    activate ScoutingService
+    ScoutingService -> Database: 31. Clear cached suggestions
+    activate Database
+    Database --> ScoutingService: 32. Cache cleared
+    deactivate Database
+    ScoutingService --> UserModel: 33. Suggestions cleared
+    deactivate ScoutingService
+
+    UserModel --> ProfileController: 34. Opt-in successful
+    deactivate UserModel
+    ProfileController --> ProfileView: 35. Success response with redirect
+    deactivate ProfileController
+    ProfileView --> User: 36. Show success message\n"You are now discoverable by recruiters"
+
+else Validation Failed
+    ProfileController --> ProfileView: 37. Validation errors
+    ProfileView --> User: 38. Display validation errors
+end
+
+== Post Opt-In State ==
+note over User, Database
+  User is now:
+  - Available for talent scouting
+  - Has 'talent' role assigned
+  - Discoverable in talent search
+  - Can receive talent requests
+  - Has talent record in database
+end note
+
+@enduml

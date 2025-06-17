@@ -30,6 +30,7 @@ class User extends Authenticatable
         'pekerjaan',
         'email',
         'password',
+        'last_login_at',
         // Talent scouting fields
         'available_for_scouting',
         'talent_skills',
@@ -60,6 +61,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'last_login_at' => 'datetime',
             'password' => 'hashed',
             'talent_skills' => 'array',
             'available_for_scouting' => 'boolean',

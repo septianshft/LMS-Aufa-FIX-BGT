@@ -311,7 +311,7 @@
         </div>
 
         <!-- Learning to Earning Correlation -->
-        @if(isset($skillAnalytics['learning_to_earning']))
+        {{-- @if(isset($skillAnalytics['learning_to_earning']))
             <div class="bg-white rounded-2xl shadow-xl border border-gray-100 hover-lift">
                 <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-t-2xl p-6">
                     <h2 class="text-xl font-bold text-white flex items-center">
@@ -356,7 +356,7 @@
                     @endif
                 </div>
             </div>
-        @endif
+        @endif --}}
     </div>
 </div>
 

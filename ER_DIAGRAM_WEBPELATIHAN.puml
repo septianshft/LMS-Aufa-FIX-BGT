@@ -7,248 +7,309 @@ title WebPelatihan - LMS & Talent Scouting Platform (Simplified ERD)
 
 ' Core User Management
 ENTITY(users) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  name: VARCHAR
-  email: VARCHAR UNIQUE
-  password: VARCHAR
+  == BASIC USER DATA ==
+  name: VARCHAR NOT NULL
+  email: VARCHAR UNIQUE NOT NULL
+  password: VARCHAR NOT NULL
   avatar: VARCHAR NULLABLE
   pekerjaan: VARCHAR NULLABLE
   phone: VARCHAR NULLABLE
   location: VARCHAR NULLABLE
-  --
-  ' Talent Fields
-  available_for_scouting: BOOLEAN
+  == TALENT SCOUTING FIELDS ==
+  available_for_scouting: BOOLEAN NOT NULL
   talent_skills: JSON NULLABLE
+  monthly_salary_expectation: DECIMAL(10,2) NULLABLE
   hourly_rate: DECIMAL(8,2) NULLABLE
   talent_bio: TEXT NULLABLE
   portfolio_url: VARCHAR NULLABLE
   experience_level: ENUM NULLABLE
-  is_active_talent: BOOLEAN
-  --
+  is_active_talent: BOOLEAN NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ' LMS Core Entities
 LOOKUP(categories) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  name: VARCHAR
-  slug: VARCHAR
-  icon: VARCHAR
+  == DATA FIELDS ==
+  name: VARCHAR NOT NULL
+  slug: VARCHAR NOT NULL
+  icon: VARCHAR NOT NULL
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 LOOKUP(course_levels) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  name: VARCHAR
+  == DATA FIELDS ==
+  name: VARCHAR NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 LOOKUP(course_modes) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  name: VARCHAR
+  == DATA FIELDS ==
+  name: VARCHAR NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(trainers) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  is_active: BOOLEAN
+  == DATA FIELDS ==
+  is_active: BOOLEAN NOT NULL
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ENTITY(courses) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  name: VARCHAR
-  slug: VARCHAR
-  path_trailer: VARCHAR
-  about: TEXT
-  thumbnail: VARCHAR
-  price: DECIMAL(10,2)
-  is_free: BOOLEAN
-  --
-  category_id: BIGINT FK
-  course_level_id: BIGINT FK
-  course_mode_id: BIGINT FK
-  trainer_id: BIGINT FK
-  --
+  == COURSE DATA ==
+  name: VARCHAR NOT NULL
+  slug: VARCHAR NOT NULL
+  path_trailer: VARCHAR NOT NULL
+  about: TEXT NOT NULL
+  thumbnail: VARCHAR NOT NULL
+  price: DECIMAL(10,2) NOT NULL
+  is_free: BOOLEAN NOT NULL
+  == FOREIGN KEYS ==
+  category_id: BIGINT FK NOT NULL
+  course_level_id: BIGINT FK NOT NULL
+  course_mode_id: BIGINT FK NOT NULL
+  trainer_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ENTITY(course_modules) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  course_id: BIGINT FK
-  name: VARCHAR
-  order: INTEGER
+  == MODULE DATA ==
+  name: VARCHAR NOT NULL
+  order: INTEGER NOT NULL
+  == FOREIGN KEYS ==
+  course_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(course_videos) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  name: VARCHAR
-  path_video: VARCHAR
-  course_id: BIGINT FK
-  course_module_id: BIGINT FK
-  order: INTEGER
+  == VIDEO DATA ==
+  name: VARCHAR NOT NULL
+  path_video: VARCHAR NOT NULL
+  order: INTEGER NOT NULL
+  == FOREIGN KEYS ==
+  course_id: BIGINT FK NOT NULL
+  course_module_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ENTITY(course_materials) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  course_module_id: BIGINT FK
-  name: VARCHAR
-  file_path: VARCHAR
-  file_type: VARCHAR(20)
-  order: INTEGER
+  == MATERIAL DATA ==
+  name: VARCHAR NOT NULL
+  file_path: VARCHAR NOT NULL
+  file_type: VARCHAR(20) NOT NULL
+  order: INTEGER NOT NULL
+  == FOREIGN KEYS ==
+  course_module_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(module_tasks) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  course_module_id: BIGINT FK
-  name: VARCHAR
+  == TASK DATA ==
+  name: VARCHAR NOT NULL
   description: TEXT NULLABLE
-  order: INTEGER
+  order: INTEGER NOT NULL
   deadline: TIMESTAMP NULLABLE
+  == FOREIGN KEYS ==
+  course_module_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ' Student Progress & Assessment
 BRIDGE(course_trainees) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  course_id: BIGINT FK
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  course_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ENTITY(course_progresses) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  course_id: BIGINT FK
-  completed_videos: JSON
-  completed_materials: JSON
-  completed_tasks: JSON
-  progress: INTEGER
-  quiz_passed: BOOLEAN
+  == PROGRESS DATA ==
+  completed_videos: JSON NOT NULL
+  completed_materials: JSON NOT NULL
+  completed_tasks: JSON NOT NULL
+  progress: INTEGER NOT NULL
+  quiz_passed: BOOLEAN NOT NULL
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  course_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(task_submissions) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  module_task_id: BIGINT FK
-  user_id: BIGINT FK
+  == SUBMISSION DATA ==
   file_path: VARCHAR NULLABLE
   answer: TEXT NULLABLE
   grade: INTEGER NULLABLE
+  == FOREIGN KEYS ==
+  module_task_id: BIGINT FK NOT NULL
+  user_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(certificates) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  course_id: BIGINT FK
-  path: VARCHAR
-  generated_at: TIMESTAMP
+  == CERTIFICATE DATA ==
+  path: VARCHAR NOT NULL
+  generated_at: TIMESTAMP NOT NULL
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  course_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ' Quiz System
 ENTITY(final_quizzes) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  course_id: BIGINT FK
-  title: VARCHAR
+  == QUIZ DATA ==
+  title: VARCHAR NOT NULL
   description: TEXT NULLABLE
-  passing_score: INTEGER
-  is_hidden_from_trainee: BOOLEAN
+  passing_score: INTEGER NOT NULL
+  is_hidden_from_trainee: BOOLEAN NOT NULL
+  == FOREIGN KEYS ==
+  course_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(quiz_questions) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  final_quiz_id: BIGINT FK
-  question: TEXT
+  == QUESTION DATA ==
+  question: TEXT NOT NULL
+  == FOREIGN KEYS ==
+  final_quiz_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(quiz_options) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  quiz_question_id: BIGINT FK
-  option_text: VARCHAR
-  is_correct: BOOLEAN
+  == OPTION DATA ==
+  option_text: VARCHAR NOT NULL
+  is_correct: BOOLEAN NOT NULL
+  == FOREIGN KEYS ==
+  quiz_question_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ENTITY(quiz_attempts) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  final_quiz_id: BIGINT FK
-  user_id: BIGINT FK
-  score: INTEGER
-  is_passed: BOOLEAN
+  == ATTEMPT DATA ==
+  score: INTEGER NOT NULL
+  is_passed: BOOLEAN NOT NULL
+  == FOREIGN KEYS ==
+  final_quiz_id: BIGINT FK NOT NULL
+  user_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
 }
 
 ' E-commerce
 ENTITY(cart_items) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  course_id: BIGINT FK
-  quantity: INTEGER
+  == CART DATA ==
+  quantity: INTEGER NOT NULL
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  course_id: BIGINT FK NOT NULL
+  == SYSTEM FIELDS ==
   timestamps
-  --
+  == CONSTRAINTS ==
   UNIQUE(user_id, course_id)
 }
 
 ENTITY(subscribe_transactions) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  course_id: BIGINT FK NULLABLE
-  total_amount: BIGINT
-  is_paid: BOOLEAN
+  == TRANSACTION DATA ==
+  total_amount: BIGINT NOT NULL
+  is_paid: BOOLEAN NOT NULL
   subscription_start_date: DATE NULLABLE
-  proof: VARCHAR
+  proof: VARCHAR NOT NULL
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  course_id: BIGINT FK NULLABLE
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ' Talent Scouting System
 ENTITY(talent_admins) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  is_active: BOOLEAN
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  == DATA FIELDS ==
+  is_active: BOOLEAN NOT NULL
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ENTITY(talents) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
-  is_active: BOOLEAN
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  == DATA FIELDS ==
+  is_active: BOOLEAN NOT NULL
+  scouting_metrics: JSON NULLABLE
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ENTITY(recruiters) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  user_id: BIGINT FK
+  == FOREIGN KEYS ==
+  user_id: BIGINT FK NOT NULL
+  == COMPANY DATA ==
   company_name: VARCHAR NULLABLE
   industry: VARCHAR NULLABLE
   company_size: VARCHAR NULLABLE
@@ -256,40 +317,43 @@ ENTITY(recruiters) {
   company_description: TEXT NULLABLE
   phone: VARCHAR NULLABLE
   address: TEXT NULLABLE
-  is_active: BOOLEAN
+  == DATA FIELDS ==
+  is_active: BOOLEAN NOT NULL
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
 ENTITY(talent_requests) {
+  == PRIMARY KEY ==
   +id: BIGINT PK
-  --
-  recruiter_id: BIGINT FK
-  talent_id: BIGINT FK
-  talent_user_id: BIGINT FK
-  --
-  project_title: VARCHAR
-  project_description: TEXT
+  == FOREIGN KEYS ==
+  recruiter_id: BIGINT FK NOT NULL
+  talent_id: BIGINT FK NOT NULL
+  talent_user_id: BIGINT FK NOT NULL
+  == PROJECT DATA ==
+  project_title: VARCHAR NOT NULL
+  project_description: TEXT NOT NULL
   requirements: TEXT NULLABLE
   budget_range: VARCHAR NULLABLE
   project_duration: VARCHAR NULLABLE
-  --
-  status: ENUM(pending,approved,meeting_arranged,rejected,completed)
-  talent_accepted: BOOLEAN
-  admin_accepted: BOOLEAN
-  both_parties_accepted: BOOLEAN
-  --
-  ' Time blocking
+  employment_type: ENUM(freelance,contract,full-time) NULLABLE
+  salary_type: ENUM(hourly,monthly,project-based) NULLABLE
+  == STATUS TRACKING ==
+  status: ENUM(pending,approved,meeting_arranged,rejected,completed) NOT NULL
+  talent_accepted: BOOLEAN NOT NULL
+  admin_accepted: BOOLEAN NOT NULL
+  both_parties_accepted: BOOLEAN NOT NULL
+  == TIME BLOCKING ==
   project_start_date: DATETIME NULLABLE
   project_end_date: DATETIME NULLABLE
-  is_blocking_talent: BOOLEAN
-  --
-  ' Workflow timestamps
+  is_blocking_talent: BOOLEAN NOT NULL
+  == WORKFLOW TIMESTAMPS ==
   talent_accepted_at: TIMESTAMP NULLABLE
   admin_accepted_at: TIMESTAMP NULLABLE
   meeting_arranged_at: TIMESTAMP NULLABLE
   onboarded_at: TIMESTAMP NULLABLE
   workflow_completed_at: TIMESTAMP NULLABLE
-  --
+  == SYSTEM FIELDS ==
   soft_deletes, timestamps
 }
 
@@ -344,6 +408,12 @@ note right of users
   **Multi-Role User System**:
   Trainees → LMS Learning → Skills → Talent Conversion
 
+  **Indonesian Employment Context**:
+  • Monthly salary expectations for full-time roles
+  • Hourly rates for freelance/project work
+  • Mixed employment types support
+  • Local currency (IDR) considerations
+
   **Key Features**:
   • Course completion tracking
   • Automatic skill generation
@@ -355,6 +425,12 @@ note bottom of talent_requests
   **Workflow**: pending → approved → meeting_arranged → completed
   **Dual Acceptance**: talent + admin approval required
   **Time Blocking**: prevents scheduling conflicts
+
+  **Indonesian Employment Models**:
+  • **Full-time**: Monthly salary negotiations
+  • **Contract**: Project-based or monthly terms
+  • **Freelance**: Hourly or project rates
+  • **Flexible**: Mixed compensation structures
 end note
 
 @enduml

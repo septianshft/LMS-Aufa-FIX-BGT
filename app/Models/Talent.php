@@ -14,7 +14,13 @@ class Talent extends Model
 
     protected $fillable = [
         'user_id',
-        'is_active'
+        'is_active',
+        'scouting_metrics'
+    ];
+
+    protected $casts = [
+        'scouting_metrics' => 'array',
+        'is_active' => 'boolean',
     ];
 
     public function user(){

@@ -116,6 +116,11 @@
                                                 <i class="fas fa-eye mr-2"></i>
                                                 View Details
                                             </button>
+                                            <button onclick="editRecruiter({{ $recruiter->id }})"
+                                                    class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl">
+                                                <i class="fas fa-edit mr-2"></i>
+                                                Edit
+                                            </button>
                                             <form action="{{ route('talent_admin.toggle_recruiter_status', $recruiter) }}" method="POST" class="inline-block">
                                                 @csrf
                                                 @method('PATCH')
@@ -192,6 +197,11 @@
                                     <i class="fas fa-eye mr-2"></i>
                                     View Details
                                 </button>
+                                <button onclick="editRecruiter({{ $recruiter->id }})"
+                                        class="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-all duration-200 font-medium shadow-lg hover:shadow-xl">
+                                    <i class="fas fa-edit mr-2"></i>
+                                    Edit
+                                </button>
                                 <form action="{{ route('talent_admin.toggle_recruiter_status', $recruiter) }}" method="POST" class="flex-shrink-0">
                                     @csrf
                                     @method('PATCH')
@@ -256,7 +266,255 @@
     </div>
 </div>
 
+<!-- Edit Recruiter Modal -->
+<div id="editRecruiterModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-lg rounded-2xl bg-white">
+        <div class="mt-3">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                <h3 class="text-2xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-edit text-blue-600 mr-3"></i>
+                    Edit Recruiter
+                </h3>
+                <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Edit Form -->
+            <form id="editRecruiterForm" class="space-y-6">
+                @csrf
+                @method('PUT')
+                <input type="hidden" id="editRecruiterId" name="recruiter_id">
+
+                <!-- Basic Information -->
+                <div class="bg-gray-50 rounded-xl p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-user text-indigo-600 mr-2"></i>
+                        Basic Information
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="editName" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                            <input type="text" id="editName" name="name" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editEmail" class="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                            <input type="email" id="editEmail" name="email" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="text" id="editPhone" name="phone"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <!-- Empty space for grid alignment -->
+                        </div>
+                        <div>
+                            <label for="editPassword" class="block text-sm font-medium text-gray-700 mb-1">New Password (leave blank to keep current)</label>
+                            <input type="password" id="editPassword" name="password"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editPasswordConfirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                            <input type="password" id="editPasswordConfirmation" name="password_confirmation"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Company Information -->
+                <div class="bg-blue-50 rounded-xl p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-building text-blue-600 mr-2"></i>
+                        Company Information
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="editCompanyName" class="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
+                            <input type="text" id="editCompanyName" name="company_name" required
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="editIndustry" class="block text-sm font-medium text-gray-700 mb-1">Industry *</label>
+                            <select id="editIndustry" name="industry" required
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Industry</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Education">Education</option>
+                                <option value="Retail">Retail</option>
+                                <option value="Manufacturing">Manufacturing</option>
+                                <option value="Consulting">Consulting</option>
+                                <option value="Media">Media</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="editCompanySize" class="block text-sm font-medium text-gray-700 mb-1">Company Size</label>
+                            <select id="editCompanySize" name="company_size"
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select Size</option>
+                                <option value="1-10">1-10 employees</option>
+                                <option value="11-50">11-50 employees</option>
+                                <option value="51-200">51-200 employees</option>
+                                <option value="201-500">201-500 employees</option>
+                                <option value="501-1000">501-1000 employees</option>
+                                <option value="1000+">1000+ employees</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="editWebsite" class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                            <input type="url" id="editWebsite" name="website"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="https://example.com">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="editAddress" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea id="editAddress" name="address" rows="2"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="editCompanyDescription" class="block text-sm font-medium text-gray-700 mb-1">Company Description</label>
+                            <textarea id="editCompanyDescription" name="company_description" rows="3"
+                                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Brief description of the company..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <button type="button" onclick="closeEditModal()"
+                            class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Update Recruiter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
+// Edit recruiter functionality
+function editRecruiter(recruiterId) {
+    // Show the edit modal
+    document.getElementById('editRecruiterModal').classList.remove('hidden');
+
+    // Reset form
+    document.getElementById('editRecruiterForm').reset();
+    document.getElementById('editRecruiterId').value = recruiterId;
+
+    // Fetch recruiter data
+    fetch(`/talent-admin/recruiter/${recruiterId}/edit`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const recruiter = data.recruiter;
+
+                // Populate form fields
+                document.getElementById('editName').value = recruiter.name || '';
+                document.getElementById('editEmail').value = recruiter.email || '';
+                document.getElementById('editPhone').value = recruiter.phone || '';
+                document.getElementById('editCompanyName').value = recruiter.company_name || '';
+                document.getElementById('editIndustry').value = recruiter.industry || '';
+                document.getElementById('editCompanySize').value = recruiter.company_size || '';
+                document.getElementById('editWebsite').value = recruiter.website || '';
+                document.getElementById('editAddress').value = recruiter.address || '';
+                document.getElementById('editCompanyDescription').value = recruiter.company_description || '';
+            } else {
+                showNotification('error', 'Failed to load recruiter data');
+                closeEditModal();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('error', 'Error loading recruiter data');
+            closeEditModal();
+        });
+}
+
+function closeEditModal() {
+    document.getElementById('editRecruiterModal').classList.add('hidden');
+}
+
+// Handle form submission
+document.getElementById('editRecruiterForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const recruiterId = document.getElementById('editRecruiterId').value;
+
+    // Show loading state
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+    submitBtn.disabled = true;
+
+    // Convert FormData to JSON
+    const data = {};
+    formData.forEach((value, key) => {
+        if (key !== 'recruiter_id') {
+            // Only include password if it's not empty
+            if (key === 'password' || key === 'password_confirmation') {
+                if (value.trim() !== '') {
+                    data[key] = value;
+                }
+            } else if (value.trim() !== '') {
+                data[key] = value;
+            }
+        }
+    });
+
+    fetch(`/talent-admin/recruiter/${recruiterId}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('success', data.message || 'Recruiter updated successfully!');
+            closeEditModal();
+
+            // Refresh the page to show updated data
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            showNotification('error', data.message || 'Failed to update recruiter');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('error', 'An error occurred while updating the recruiter');
+    })
+    .finally(() => {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+
+// Close modal when clicking outside
+document.getElementById('editRecruiterModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeEditModal();
+    }
+});
+
 // Recruiter details functionality
 function viewRecruiterDetails(recruiterId) {
     document.getElementById('recruiterDetailsModal').classList.remove('hidden');

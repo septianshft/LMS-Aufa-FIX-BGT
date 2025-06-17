@@ -8,10 +8,14 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
             {{-- Smart Talent Conversion Notifications --}}
-            @include('profile.partials.smart-talent-notifications')
+            @if(in_array(auth()->user()->role, ['trainee', 'talent']))
+                @include('profile.partials.smart-talent-notifications')
+            @endif
 
             <!-- Enhanced Skills Analytics Dashboard -->
-            @include('profile.partials.skills-analytics-dashboard')
+            @if(in_array(auth()->user()->role, ['trainee', 'talent']))
+                @include('profile.partials.skills-analytics-dashboard')
+            @endif
 
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <div class="max-w-xl">

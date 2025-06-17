@@ -1,0 +1,208 @@
+@startuml Talent_Request_Workflow
+!theme plain
+skinparam monochrome true
+skinparam shadowing false
+
+title Alur Kerja Permintaan Talenta - Dari Permintaan Recruiter hingga Kedua Pihak Menerima\n(Arsitektur Laravel MVC)
+
+actor Recruiter
+actor "Admin Talenta" as TalentAdmin
+actor Talenta as Talent
+participant "Dashboard Recruiter\n(dashboard.blade.php)" as RecruiterView << View >>
+participant "Dashboard Admin Talenta\n(manage_requests.blade.php)" as AdminView << View >>
+participant "Dashboard Talenta\n(dashboard.blade.php)" as TalentView << View >>
+participant "RecruiterController" as RecruiterController << Controller >>
+participant "TalentAdminController" as AdminController << Controller >>
+participant "TalentController" as TalentController << Controller >>
+participant "TalentDiscovery\nService" as DiscoveryService << Service >>
+participant "TalentRequest\nModel" as RequestModel << Model >>
+participant "TalentRequest\nNotificationService" as NotificationService << Service >>
+participant "User Model" as UserModel << Model >>
+participant "Talent Model" as TalentModel << Model >>
+database "MySQL Database" as Database << Database >>
+
+== Fase Penemuan Talenta ==
+Recruiter -> RecruiterView: 1. Navigasi ke penemuan talenta
+activate RecruiterView
+RecruiterView -> RecruiterController: 2. dashboard()
+activate RecruiterController
+RecruiterController -> DiscoveryService: 3. discoverTalents(filters)
+activate DiscoveryService
+DiscoveryService -> Database: 4. SELECT users.*, talents.*\nFROM users\nJOIN talents ON users.id = talents.user_id\nWHERE available_for_scouting=true\nAND is_active_talent=true
+activate Database
+Database --> DiscoveryService: 5. Data talenta yang cocok
+deactivate Database
+DiscoveryService --> RecruiterController: 6. Koleksi talenta terfilter
+deactivate DiscoveryService
+RecruiterController --> RecruiterView: 7. Data profil talenta
+deactivate RecruiterController
+RecruiterView --> Recruiter: 8. Tampilkan antarmuka penemuan talenta
+deactivate RecruiterView
+
+== Pembuatan Permintaan Talenta ==
+Recruiter -> RecruiterView: 9. Kirim formulir permintaan talenta
+activate RecruiterView
+RecruiterView -> RecruiterController: 10. submitTalentRequest(Request)
+activate RecruiterController
+
+note over RecruiterController
+  Request berisi:
+  - talent_id
+  - project_title
+  - project_description
+  - requirements
+  - budget_range
+  - employment_type
+  - salary_type
+  - project_duration
+end note
+
+RecruiterController -> RecruiterController: 11. Validasi data permintaan
+RecruiterController -> RequestModel: 12. create(requestData)
+activate RequestModel
+
+RequestModel -> Database: 13. INSERT INTO talent_requests\n(recruiter_id, talent_id, talent_user_id,\nproject_title, project_description,\nrequirements, budget_range,\nemployment_type, salary_type,\nstatus='pending', talent_accepted=false,\nadmin_accepted=false,\nboth_parties_accepted=false,\ncreated_at, updated_at)
+activate Database
+Database --> RequestModel: 14. Permintaan dibuat dengan ID
+deactivate Database
+RequestModel --> RecruiterController: 15. Objek TalentRequest
+deactivate RequestModel
+
+RecruiterController -> NotificationService: 16. notifyNewTalentRequest(talentRequest)
+activate NotificationService
+NotificationService -> Database: 17. Simpan notifikasi untuk admin dan talenta
+activate Database
+Database --> NotificationService: 18. Notifikasi tersimpan
+deactivate Database
+NotificationService --> RecruiterController: 19. Notifikasi terkirim
+deactivate NotificationService
+
+RecruiterController --> RecruiterView: 20. Respons sukses
+deactivate RecruiterController
+RecruiterView --> Recruiter: 21. Tampilkan pesan sukses\n"Permintaan dikirim untuk review admin"
+deactivate RecruiterView
+
+== Review & Persetujuan Admin ==
+TalentAdmin -> AdminView: 22. Navigasi ke kelola permintaan
+activate AdminView
+AdminView -> AdminController: 23. manageRequests()
+activate AdminController
+AdminController -> Database: 24. SELECT talent_requests.*\nWHERE status='pending'\nWITH recruiter.user, talent.user
+activate Database
+Database --> AdminController: 25. Daftar permintaan tertunda
+deactivate Database
+AdminController --> AdminView: 26. Data permintaan untuk review
+deactivate AdminController
+AdminView --> TalentAdmin: 27. Tampilkan antarmuka permintaan tertunda
+deactivate AdminView
+
+TalentAdmin -> AdminView: 28. Setujui permintaan talenta
+activate AdminView
+AdminView -> AdminController: 29. updateRequestStatus(talentRequest, 'approved')
+activate AdminController
+AdminController -> RequestModel: 30. markAdminAccepted()
+activate RequestModel
+
+RequestModel -> Database: 31. UPDATE talent_requests SET\nstatus='approved',\nadmin_accepted=true,\nadmin_accepted_at=NOW()\nWHERE id=?
+activate Database
+Database --> RequestModel: 32. Persetujuan admin tercatat
+deactivate Database
+
+RequestModel -> RequestModel: 33. checkAndMarkBothAccepted()
+note over RequestModel: Cek jika talenta sudah menerima
+RequestModel --> AdminController: 34. Persetujuan admin selesai
+deactivate RequestModel
+
+AdminController -> NotificationService: 35. notifyStatusChange(request, 'pending', 'approved')
+activate NotificationService
+NotificationService -> Database: 36. Simpan notifikasi talenta
+activate Database
+Database --> NotificationService: 37. Talenta diberi tahu
+deactivate Database
+NotificationService --> AdminController: 38. Notifikasi terkirim
+deactivate NotificationService
+
+AdminController --> AdminView: 39. Respons sukses
+deactivate AdminController
+AdminView --> TalentAdmin: 40. Tampilkan konfirmasi persetujuan
+deactivate AdminView
+
+== Review & Penerimaan Talenta ==
+Talent -> TalentView: 41. Lihat permintaan talenta
+activate TalentView
+TalentView -> TalentController: 42. getMyRequests()
+activate TalentController
+TalentController -> Database: 43. SELECT talent_requests.*\nWHERE talent_user_id=?\nAND status IN ('pending', 'approved')\nWITH recruiter.user
+activate Database
+Database --> TalentController: 44. Permintaan disetujui untuk talenta
+deactivate Database
+TalentController --> TalentView: 45. Data peluang proyek
+deactivate TalentController
+TalentView --> Talent: 46. Tampilkan peluang proyek
+deactivate TalentView
+
+Talent -> TalentView: 47. Terima permintaan talenta
+activate TalentView
+TalentView -> TalentController: 48. acceptRequest(talentRequest)
+activate TalentController
+TalentController -> RequestModel: 49. markTalentAccepted()
+activate RequestModel
+
+== Cek Penerimaan Kedua Pihak ==
+RequestModel -> Database: 50. UPDATE talent_requests SET\ntalent_accepted=true,\ntalent_accepted_at=NOW()\nWHERE id=?
+activate Database
+Database --> RequestModel: 51. Penerimaan talenta tercatat
+deactivate Database
+
+RequestModel -> RequestModel: 52. checkAndMarkBothAccepted()
+note over RequestModel: Cek jika admin_accepted=true DAN talent_accepted=true
+
+alt Kedua Pihak Menerima
+    RequestModel -> Database: 53. UPDATE talent_requests SET\nboth_parties_accepted=true,\nstatus='meeting_arranged',\nmeeting_arranged_at=NOW(),\nworkflow_completed_at=NOW()\nWHERE id=?
+    activate Database
+    Database --> RequestModel: 54. Penerimaan kedua pihak tercatat
+    deactivate Database
+
+    == Notifikasi ke Semua Pihak ==
+    RequestModel -> NotificationService: 55. notifyBothPartiesAccepted(request)
+    activate NotificationService
+    NotificationService -> Database: 56. Simpan notifikasi untuk semua pihak
+    activate Database
+    Database --> NotificationService: 57. Semua pihak diberi tahu
+    deactivate Database
+    NotificationService --> RequestModel: 58. Notifikasi terkirim
+    deactivate NotificationService
+
+    == Manajemen Pemblokiran Waktu ==
+    RequestModel -> Database: 59. UPDATE talent_requests SET\nis_blocking_talent=true\nWHERE id=?
+    activate Database
+    Database --> RequestModel: 60. Pemblokiran waktu diaktifkan
+    deactivate Database
+
+    note over Database: Mencegah talenta menerima\npermintaan yang bertentangan selama periode proyek
+
+    RequestModel --> TalentController: 61. Penerimaan kedua pihak selesai
+    deactivate RequestModel
+    TalentController --> TalentView: 62. Respons sukses
+    deactivate TalentController
+    TalentView --> Talent: 63. Tampilkan pesan sukses\n"Pertemuan akan diatur segera"
+    deactivate TalentView
+
+else Admin Belum Menerima
+    RequestModel --> TalentController: 64. Menunggu persetujuan admin
+    TalentController --> TalentView: 65. Respons status tertunda
+    TalentView --> Talent: 66. Tampilkan status persetujuan admin tertunda
+end
+
+== Status Penyelesaian Alur Kerja ==
+note over RequestModel, Database
+  Status alur kerja berikutnya yang mungkin:
+  - meeting_arranged → agreement_reached
+  - agreement_reached → onboarded
+  - onboarded → completed
+
+  Setiap transisi memperbarui field timestamp yang sesuai
+  dan memicu notifikasi yang tepat
+end note
+
+@enduml

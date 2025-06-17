@@ -79,9 +79,6 @@ class RecruiterController extends Controller
 
             // Add scouting metrics and availability status to each talent
             $talents->getCollection()->transform(function ($talent) use ($availabilityCache) {
-                // Use cached availability to avoid repeated database calls
-                $talent->availability_status = $availabilityCache[$talent->user_id] ?? ['available' => false];
-
                 // Always load scouting metrics for dashboard display
                 // First check for cached metrics
                 $cacheKey = "talent_metrics_{$talent->id}";
@@ -91,9 +88,18 @@ class RecruiterController extends Controller
                     $talent->scouting_metrics = $cachedMetrics;
                 } else {
                     // Calculate and cache metrics if not found
-                    $talent->scouting_metrics = $this->scoutingService->getTalentScoutingMetrics($talent);
-                    cache()->put($cacheKey, $talent->scouting_metrics, now()->addHours(24));
+                    $metrics = $this->scoutingService->getTalentScoutingMetrics($talent);
+                    $talent->scouting_metrics = $metrics;
+                    cache()->put($cacheKey, $metrics, now()->addHours(24));
+
+                    // Save only the scouting_metrics to database for persistence
+                    // Use update() to save only specific columns
+                    $talent->update(['scouting_metrics' => $metrics]);
                 }
+
+                // Use cached availability to avoid repeated database calls
+                // Set this after saving to avoid saving it to database
+                $talent->availability_status = $availabilityCache[$talent->user_id] ?? ['available' => false];
 
                 return $talent;
             });

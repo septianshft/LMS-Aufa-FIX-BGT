@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // This migration is a duplicate and should not run
-        // The actual removal was handled by 2025_06_14_205956_remove_urgency_level_from_talent_requests_table.php
+        Schema::table('talents', function (Blueprint $table) {
+            $table->json('scouting_metrics')->nullable()->after('is_active');
+        });
     }
 
     /**
@@ -20,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // No action needed
+        Schema::table('talents', function (Blueprint $table) {
+            $table->dropColumn('scouting_metrics');
+        });
     }
 };

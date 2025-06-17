@@ -73,6 +73,13 @@
                  <i class="fas fa-fw fa-briefcase"></i>
                  <span>Manage Recruiters</span></a>
          </li>
+
+         <!-- Nav Item - Manage Talent Admins -->
+         <li class="nav-item  {{ Request::is('talent-admin/manage-talent-admins*') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent_admin.manage_talent_admins') }}">
+                 <i class="fas fa-fw fa-user-shield"></i>
+                 <span>Manage Admins</span></a>
+         </li>
      @endif
 
      @if (Auth()->user()->hasRole('talent'))

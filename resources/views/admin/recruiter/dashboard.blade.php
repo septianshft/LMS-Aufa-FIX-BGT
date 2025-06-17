@@ -314,7 +314,16 @@
                             <div class="compare-checkbox hidden absolute top-4 right-4 z-10">
                                 @php
                                     $talentSkills = $talent->user->getTalentSkillsArray();
-                                    $skillsJson = json_encode($talentSkills);
+                                    // Ensure skills is always a valid array
+                                    if (!is_array($talentSkills)) {
+                                        $talentSkills = [];
+                                    }
+                                    // Use proper JSON encoding for HTML attributes with additional safety
+                                    $skillsJson = json_encode($talentSkills, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_UNICODE);
+                                    // Fallback for invalid JSON
+                                    if (json_last_error() !== JSON_ERROR_NONE) {
+                                        $skillsJson = '[]';
+                                    }
                                 @endphp
                                 <input type="checkbox"
                                        class="talent-compare-check w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500"
@@ -326,8 +335,7 @@
                                        data-talent-courses="{{ $metrics['progress_tracking']['completed_courses'] ?? 0 }}"
                                        data-talent-certificates="{{ $metrics['certifications']['total_certificates'] ?? 0 }}"
                                        data-talent-quiz-avg="{{ $metrics['quiz_performance']['average_score'] ?? 0 }}"
-                                       data-talent-skills="{{ htmlspecialchars($skillsJson, ENT_QUOTES, 'UTF-8') }}"
-                                       onchange="updateCompareSelection()">
+                                       data-talent-skills="{{ $skillsJson }}">
                             </div>
 
                             <!-- Profile -->
@@ -603,10 +611,13 @@
                             </div>
 
                             <div>
-                                <label for="budgetRange" class="block text-sm font-semibold text-gray-700 mb-2">Budget Range</label>
+                                <label for="budgetRange" class="block text-sm font-semibold text-gray-700 mb-2">
+                                    Project Budget Range
+                                    <span class="text-xs text-gray-500 block font-normal">Total budget for the entire project/freelance work</span>
+                                </label>
                                 <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
                                         id="budgetRange" name="budget_range">
-                                    <option value="">Select budget range</option>
+                                    <option value="">Select project budget range</option>
                                     <option value="Under Rp 10.000.000">Under Rp 10.000.000</option>
                                     <option value="Rp 10.000.000 - Rp 50.000.000">Rp 10.000.000 - Rp 50.000.000</option>
                                     <option value="Rp 50.000.000 - Rp 100.000.000">Rp 50.000.000 - Rp 100.000.000</option>
@@ -614,6 +625,7 @@
                                     <option value="Rp 250.000.000+">Rp 250.000.000+</option>
                                     <option value="Negotiable">Negotiable</option>
                                 </select>
+                                <p class="text-xs text-gray-500 mt-1">💡 This is for freelance projects, not monthly employment salaries</p>
                             </div>
 
                             <div>
@@ -1497,13 +1509,42 @@ function toggleCompareMode() {
         selectedTalents = [];
         updateCompareSelection();
     }
+
+    // Make sure the comparison panel visibility is updated
+    if (comparisonPanel) {
+        if (isCompareMode && selectedTalents.length > 0) {
+            comparisonPanel.style.display = 'block';
+            comparisonPanel.classList.remove('translate-y-full');
+        } else if (!isCompareMode) {
+            comparisonPanel.classList.add('translate-y-full');
+            setTimeout(() => {
+                comparisonPanel.style.display = 'none';
+            }, 300);
+        }
+    }
 }
 
 function updateCompareSelection() {
     const checkedBoxes = document.querySelectorAll('.talent-compare-check:checked');
 
     selectedTalents = Array.from(checkedBoxes).map(cb => {
-        const skills = cb.dataset.talentSkills ? JSON.parse(cb.dataset.talentSkills) : [];
+        let skills = [];
+        try {
+            // Safely parse JSON with error handling
+            const skillsData = cb.dataset.talentSkills;
+            if (skillsData && skillsData.trim() !== '' && skillsData !== 'null' && skillsData !== 'undefined') {
+                skills = JSON.parse(skillsData);
+                // Ensure skills is an array
+                if (!Array.isArray(skills)) {
+                    console.warn('Skills data is not an array:', skills);
+                    skills = [];
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to parse talent skills JSON:', error);
+            console.warn('Raw data:', cb.dataset.talentSkills);
+            skills = [];
+        }
 
         return {
             id: cb.dataset.talentId,
@@ -1752,6 +1793,47 @@ function getBestTalent(criteria) {
 }
 
 // Handle talent request form submission
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard JavaScript loaded successfully');
+
+    // Initialize export dropdown
+    initializeExportDropdown();
+
+    // Add event delegation for talent card clicks in compare mode
+    document.addEventListener('click', function(e) {
+        // Handle talent card clicks for comparison
+        if (isCompareMode && e.target.closest('.talent-card')) {
+            const card = e.target.closest('.talent-card');
+            const checkbox = card.querySelector('.talent-compare-check');
+
+            // Don't trigger card click if clicking on the checkbox itself
+            if (!e.target.matches('.talent-compare-check') && checkbox) {
+                checkbox.checked = !checkbox.checked;
+                // Trigger the change event to update comparison
+                checkbox.dispatchEvent(new Event('change'));
+            }
+        }
+    });
+
+    // Handle checkbox changes for comparison
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('.talent-compare-check')) {
+            console.log('Checkbox changed, updating comparison');
+            updateCompareSelection();
+        }
+    });
+
+    // Verify that all required functions exist
+    const requiredFunctions = ['toggleScoutingFilters', 'toggleCompareMode', 'refreshTalents', 'updateCompareSelection'];
+    requiredFunctions.forEach(funcName => {
+        if (typeof window[funcName] === 'function') {
+            console.log(`✓ Function ${funcName} is available`);
+        } else {
+            console.error(`✗ Function ${funcName} is missing`);
+        }
+    });
+});
+
 document.getElementById('talentRequestForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
