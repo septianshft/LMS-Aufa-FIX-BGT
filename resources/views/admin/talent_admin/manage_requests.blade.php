@@ -160,10 +160,18 @@
                                         </div>
                                     </td>
                                     <td class="py-6 px-4">
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $request->getStatusBadgeColorClasses() }}">
-                                            <i class="{{ $request->getStatusIcon() }} mr-1"></i>
-                                            {{ $request->getUnifiedDisplayStatus() }}
-                                        </span>
+                                        <div class="space-y-1">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $request->getStatusBadgeColorClasses() }}">
+                                                <i class="{{ $request->getStatusIcon() }} mr-1"></i>
+                                                {{ $request->getUnifiedDisplayStatus() }}
+                                            </span>
+                                            @if($request->status === 'completed' && $request->workflow_completed_at && $request->project_id)
+                                                <div class="flex items-center text-xs text-blue-600">
+                                                    <i class="fas fa-info-circle mr-1"></i>
+                                                    <span class="font-medium">Auto-completed via project closure</span>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </td>
                                     <td class="py-6 px-4">
                                         <div class="text-gray-900 font-medium text-sm">{{ $request->created_at->format('d M Y') }}</div>
@@ -249,9 +257,17 @@
                                         #{{ $request->id }}
                                     </span>
                                 </div>
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $request->getStatusBadgeColorClasses() }}">
-                                    {{ $request->getUnifiedDisplayStatus() }}
-                                </span>
+                                <div class="text-right">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $request->getStatusBadgeColorClasses() }}">
+                                        {{ $request->getUnifiedDisplayStatus() }}
+                                    </span>
+                                    @if($request->status === 'completed' && $request->workflow_completed_at && $request->project_id)
+                                        <div class="flex items-center justify-end text-xs text-blue-600 mt-1">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            <span class="font-medium">Auto-completed</span>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
 
                             <!-- Recruiter and Talent Info -->

@@ -242,7 +242,9 @@ class RecruiterController extends Controller
             'project_description' => 'required|string',
             'requirements' => 'nullable|string',
             'budget_range' => 'nullable|string|max:100',
-            'project_duration' => 'required|string|max:100'
+            'project_duration' => 'required|string|max:100',
+            'project_id' => 'nullable|exists:projects,id',
+            'is_project_assignment' => 'nullable|boolean'
         ]);
 
         $user = Auth::user();
@@ -318,7 +320,8 @@ class RecruiterController extends Controller
             ], 409); // 409 Conflict status code
         }
 
-        $talentRequest = TalentRequest::create([
+        // Prepare the talent request data
+        $talentRequestData = [
             'recruiter_id' => $recruiter->id,
             'talent_id' => $request->talent_id,
             'talent_user_id' => $talentUserId, // Add for direct user reference
@@ -333,14 +336,23 @@ class RecruiterController extends Controller
             'project_end_date' => $projectEndDate,
             'is_blocking_talent' => true, // This request will block the talent if approved
             'blocking_notes' => "Project duration: {$projectDuration}, estimated from {$projectStartDate->format('M d, Y')} to {$projectEndDate->format('M d, Y')}"
-        ]);
+        ];
+
+        // Add project-specific fields if this is a project assignment
+        if ($request->project_id) {
+            $talentRequestData['project_id'] = $request->project_id;
+        }
+
+        $talentRequest = TalentRequest::create($talentRequestData);
 
         // Send notifications to both talent and admin
         $notificationsSent = $this->notificationService->notifyNewTalentRequest($talentRequest);
 
         return response()->json([
             'success' => true,
-            'message' => 'Talent request submitted successfully! Both the talent and admin have been notified.',
+            'message' => $request->is_project_assignment ?
+                'Project talent assignment request submitted successfully! Both the talent and admin have been notified.' :
+                'Talent request submitted successfully! Both the talent and admin have been notified.',
             'request_id' => $talentRequest->id,
             'notifications_sent' => $notificationsSent,
             'project_timeline' => [

@@ -34,7 +34,6 @@ class User extends Authenticatable
         // Talent scouting fields
         'available_for_scouting',
         'talent_skills',
-        'hourly_rate',
         'talent_bio',
         'portfolio_url',
         'location',
@@ -66,7 +65,6 @@ class User extends Authenticatable
             'talent_skills' => 'array',
             'available_for_scouting' => 'boolean',
             'is_active_talent' => 'boolean',
-            'hourly_rate' => 'decimal:2',
         ];
     }
 
@@ -119,6 +117,11 @@ class User extends Authenticatable
     public function recruiter()
     {
         return $this->hasOne(Recruiter::class);
+    }
+
+    public function talentAdmin()
+    {
+        return $this->hasOne(TalentAdmin::class);
     }
 
     public function certificates()

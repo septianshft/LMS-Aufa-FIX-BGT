@@ -88,7 +88,6 @@ class TraineeSeeder extends Seeder
                 'password' => bcrypt('password123'),
                 'available_for_scouting' => false, // Will be enabled when they opt-in
                 'talent_skills' => null, // Will be auto-generated from courses
-                'hourly_rate' => null,
                 'talent_bio' => null,
                 'portfolio_url' => null,
                 'location' => $profile['location'],

@@ -9,7 +9,6 @@
 @section('container')
 
 @php
-    // Add debugging to catch null issues
     $latestRequests = $latestRequests ?? collect([]);
     $latestTalents = $latestTalents ?? collect([]);
     $latestRecruiters = $latestRecruiters ?? collect([]);
@@ -284,7 +283,7 @@
                                         </button>
                                     </form>
                                 @endif
-                                <a href="{{ route('talent_admin.show_request', $request) }}" 
+                                <a href="{{ route('talent_admin.show_request', $request) }}"
                                    class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 text-sm">
                                     <i class="fas fa-eye mr-1"></i>Detail
                                 </a>
@@ -630,17 +629,6 @@ function saveRecruiter() {
     const originalText = saveBtn.innerHTML;
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...';
-
-    // Debug: Log what we're sending
-    console.log('=== RECRUITER CREATION DEBUG ===');
-    console.log('Form data entries:');
-    for (let [key, value] of formData.entries()) {
-        if (key !== 'password' && key !== 'password_confirmation') {
-            console.log(`  ${key}: ${value}`);
-        } else {
-            console.log(`  ${key}: [hidden]`);
-        }
-    }
 
     // Check CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]');

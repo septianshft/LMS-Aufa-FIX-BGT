@@ -138,27 +138,12 @@ class TalentDiscoveryController extends Controller
             'level' => 'nullable|string|in:beginner,intermediate,advanced',
             'min_experience' => 'nullable|integer|min:1',
             'specializations' => 'nullable|array',
-            'hourly_rate_min' => 'nullable|numeric|min:0',
-            'hourly_rate_max' => 'nullable|numeric|min:0',
             'availability' => 'nullable|string|in:available,busy',
-            'sort_by' => 'nullable|string|in:match_score,experience,recent,rate',
+            'sort_by' => 'nullable|string|in:match_score,experience,recent',
             'sort_order' => 'nullable|string|in:asc,desc',
         ]);
 
         $talents = $this->matchingService->discoverTalents($filters);
-
-        // Apply additional filters that the service doesn't handle
-        if (isset($filters['hourly_rate_min'])) {
-            $talents = $talents->filter(function($talent) use ($filters) {
-                return ($talent['hourly_rate'] ?? 0) >= $filters['hourly_rate_min'];
-            });
-        }
-
-        if (isset($filters['hourly_rate_max'])) {
-            $talents = $talents->filter(function($talent) use ($filters) {
-                return ($talent['hourly_rate'] ?? 0) <= $filters['hourly_rate_max'];
-            });
-        }
 
         // Apply sorting
         $sortBy = $filters['sort_by'] ?? 'experience';
@@ -174,11 +159,6 @@ class TalentDiscoveryController extends Controller
                 $talents = $sortOrder === 'desc'
                     ? $talents->sortByDesc('last_activity')
                     : $talents->sortBy('last_activity');
-                break;
-            case 'rate':
-                $talents = $sortOrder === 'desc'
-                    ? $talents->sortByDesc('hourly_rate')
-                    : $talents->sortBy('hourly_rate');
                 break;
             default:
                 // Keep current order

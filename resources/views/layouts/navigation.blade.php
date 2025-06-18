@@ -41,8 +41,30 @@
 
                     @endrole
 
+                    {{-- Project-Centric System Navigation --}}
+                    @if(Auth::user()->recruiter)
+                    <x-nav-link :href="route('projects.index')" :active="request()->routeIs('projects.*')">
+                        {{ __('My Projects') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('projects.create')" :active="request()->routeIs('projects.create')">
+                        {{ __('Create Project') }}
+                    </x-nav-link>
+                    @endif
+
+                    @if(Auth::user()->talentAdmin)
+                    <x-nav-link :href="route('admin.projects.index')" :active="request()->routeIs('admin.projects.*')">
+                        {{ __('Project Management') }}
+                    </x-nav-link>
+                    @endif
+
+                    @if(Auth::user()->talent)
+                    <x-nav-link :href="route('talent.assignments.index')" :active="request()->routeIs('talent.assignments.*')">
+                        {{ __('My Assignments') }}
+                    </x-nav-link>
+                    @endif
+
                 </div>
-        
+
 
             </div>
 

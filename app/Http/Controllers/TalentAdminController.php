@@ -159,9 +159,6 @@ class TalentAdminController extends Controller
         $latestRecruiters = $recentActivity['latestRecruiters'] ?? collect([]);
         $latestRequests = $recentActivity['latestRequests'] ?? collect([]);
 
-        // Debug: Log the count of latest requests
-        Log::info('Dashboard Latest Requests Count: ' . $latestRequests->count());
-
         return view('talent_admin.dashboard', compact(
             'user', 'title', 'roles', 'assignedKelas',
             'activeTalents', 'totalTalents', 'availableTalents', 'activeRecruiters', 'totalRecruiters',
@@ -345,6 +342,64 @@ class TalentAdminController extends Controller
                 break;
             case 'onboarded':
                 $updateData['onboarded_at'] = now();
+
+                // Auto-create ProjectAssignment if project_id exists and assignment doesn't exist yet
+                if ($talentRequest->project_id && $talentRequest->talent_id) {
+                    $existingAssignment = \App\Models\ProjectAssignment::where('project_id', $talentRequest->project_id)
+                        ->where('talent_id', $talentRequest->talent_id)
+                        ->first();
+
+                    if (!$existingAssignment) {
+                        try {
+                            // Extract numeric budget value
+                            $budgetValue = 0;
+                            if ($talentRequest->budget_range) {
+                                // Extract first number from budget range like "Rp 5.000.000 - Rp 15.000.000"
+                                preg_match('/[\d,]+/', str_replace('.', '', $talentRequest->budget_range), $matches);
+                                if (!empty($matches)) {
+                                    $budgetValue = intval(str_replace(',', '', $matches[0]));
+                                }
+                            }
+
+                            // Create assignment with 'accepted' status to auto-transition project
+                            \App\Models\ProjectAssignment::create([
+                                'project_id' => $talentRequest->project_id,
+                                'talent_id' => $talentRequest->talent_id,
+                                'specific_role' => $talentRequest->project_title ?? 'General Role',
+                                'status' => \App\Models\ProjectAssignment::STATUS_ACCEPTED,
+                                'talent_accepted_at' => now(),
+                                'assignment_notes' => 'Auto-assigned from talent request onboarding',
+                                'individual_budget' => $budgetValue,
+                                'priority_level' => 'medium',
+                                'talent_start_date' => $talentRequest->project_start_date ?? now(),
+                                'talent_end_date' => $talentRequest->project_end_date ?? now()->addDays(30)
+                            ]);
+
+                            // Check if all assignments for this project are accepted and update project status
+                            $this->checkAndActivateProject($talentRequest->project_id);
+                        } catch (\Exception $e) {
+                            // Failed to auto-create project assignment - log for debugging if needed
+                            \Illuminate\Support\Facades\Log::warning('Failed to auto-create project assignment during onboarding', [
+                                'talent_request_id' => $talentRequest->id,
+                                'project_id' => $talentRequest->project_id,
+                                'talent_id' => $talentRequest->talent_id,
+                                'error' => $e->getMessage()
+                            ]);
+                        }
+                    } else {
+                        // If assignment exists but not accepted, auto-accept it
+                        if ($existingAssignment->status !== \App\Models\ProjectAssignment::STATUS_ACCEPTED) {
+                            $existingAssignment->update([
+                                'status' => \App\Models\ProjectAssignment::STATUS_ACCEPTED,
+                                'talent_accepted_at' => now(),
+                                'assignment_notes' => ($existingAssignment->assignment_notes ?? '') . ' - Auto-accepted during onboarding'
+                            ]);
+
+                            // Check if all assignments for this project are accepted and update project status
+                            $this->checkAndActivateProject($talentRequest->project_id);
+                        }
+                    }
+                }
                 break;
             case 'completed':
                 $updateData['completed_at'] = now();
@@ -515,65 +570,159 @@ class TalentAdminController extends Controller
      */
     public function getTalentDetails(Talent $talent)
     {
-        // Load talent with user relationship
-        $talent->load('user');
+        try {
+            // Load talent with user relationship
+            $talent->load('user');
 
-        // Get talent skills safely
-        $talentSkills = [];
-        if ($talent->user->talent_skills) {
-            if (is_string($talent->user->talent_skills)) {
-                $decoded = json_decode($talent->user->talent_skills, true);
-                $talentSkills = is_array($decoded) ? $decoded : [];
-            } elseif (is_array($talent->user->talent_skills)) {
-                $talentSkills = $talent->user->talent_skills;
+            // Check if user exists
+            if (!$talent->user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User not found for this talent'
+                ], 404);
             }
+
+            // Get talent skills safely
+            $talentSkills = [];
+            if ($talent->user->talent_skills) {
+                if (is_string($talent->user->talent_skills)) {
+                    $decoded = json_decode($talent->user->talent_skills, true);
+                    $talentSkills = is_array($decoded) ? $decoded : [];
+                } elseif (is_array($talent->user->talent_skills)) {
+                    $talentSkills = $talent->user->talent_skills;
+                }
+            }
+
+            // Get user statistics
+            $stats = [
+                'completed_courses' => $talent->user->courseProgress()->where('progress', '>=', 100)->count(),
+                'certificates' => $talent->user->certificates()->count(),
+                'skill_count' => count($talentSkills),
+                'experience_years' => $talent->experience_years ?? 0
+            ];
+
+            // Format skills for display - simplified structure
+            $formattedSkills = collect($talentSkills)->map(function($skill) {
+                if (is_array($skill)) {
+                    return [
+                        'name' => $skill['skill_name'] ?? ($skill['name'] ?? 'Unknown'),
+                        'proficiency' => $skill['proficiency'] ?? ($skill['level'] ?? 'intermediate'),
+                        'completed_date' => $skill['completed_date'] ?? ($skill['acquired_at'] ?? null)
+                    ];
+                }
+                return ['name' => (string)$skill, 'proficiency' => 'intermediate', 'completed_date' => null];
+            })->toArray();
+
+            // Get portfolio/projects if available
+            $portfolio = [];
+            if ($talent->portfolio) {
+                if (is_string($talent->portfolio)) {
+                    $decoded = json_decode($talent->portfolio, true);
+                    $portfolio = is_array($decoded) ? $decoded : [];
+                } elseif (is_array($talent->portfolio)) {
+                    $portfolio = $talent->portfolio;
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'talent' => [
+                    'id' => $talent->id,
+                    'name' => $talent->user->name,
+                    'email' => $talent->user->email,
+                    'phone' => $talent->user->phone ?? null,
+                    'location' => $talent->user->location ?? null,
+                    'job' => $talent->user->pekerjaan ?? null,
+                    'bio' => $talent->user->bio ?? null,
+                    'experience_level' => $talent->experience_level ?? null,
+                    'avatar' => $talent->user->avatar ? asset('storage/' . $talent->user->avatar) : null,
+                    'is_active' => $talent->is_active,
+                    'joined_date' => $talent->created_at->format('M d, Y H:i'),
+                    'formatted_skills' => $formattedSkills,
+                    'portfolio' => $portfolio,
+                    'portfolio_url' => $talent->portfolio_url ?? null,
+                    'stats' => $stats
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in getTalentDetails: ' . $e->getMessage(), [
+                'talent_id' => $talent->id ?? 'unknown',
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'An error occurred while fetching talent details: ' . $e->getMessage()
+            ], 500);
         }
+    }
 
-        // Get user statistics
-        $stats = [
-            'completed_courses' => $talent->user->courseProgress()->where('progress', '>=', 100)->count(),
-            'certificates' => $talent->user->certificates()->count(),
-            'skill_count' => count($talentSkills),
-            'experience_years' => $talent->experience_years ?? 0
-        ];
-
-        // Format skills for display - simplified structure
-        $formattedSkills = collect($talentSkills)->map(function($skill) {
-            if (is_array($skill)) {
-                return [
-                    'name' => $skill['skill_name'] ?? ($skill['name'] ?? 'Unknown'),
-                    'proficiency' => $skill['proficiency'] ?? ($skill['level'] ?? 'intermediate'),
-                    'completed_date' => $skill['completed_date'] ?? ($skill['acquired_at'] ?? null)
-                ];
+    /**
+     * Get talent details for modal view (project context)
+     * For now, allows any authenticated user - should be improved with proper project access control
+     */
+    public function getProjectTalentDetails(Talent $talent)
+    {
+        try {
+            // For now, just ensure user is authenticated
+            // TODO: Add proper project-specific access control
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required'
+                ], 401);
             }
-            return ['name' => (string)$skill, 'proficiency' => 'intermediate', 'completed_date' => null];
-        })->toArray();
 
-        // Get portfolio/projects if available
-        $portfolio = [];
-        if ($talent->portfolio) {
-            if (is_string($talent->portfolio)) {
-                $decoded = json_decode($talent->portfolio, true);
-                $portfolio = is_array($decoded) ? $decoded : [];
-            } elseif (is_array($talent->portfolio)) {
-                $portfolio = $talent->portfolio;
-            }
+            // Use the existing logic for getting talent details
+            return $this->getTalentDetails($talent);
+
+        } catch (\Exception $e) {
+            Log::error('Error in getProjectTalentDetails: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch talent details'
+            ], 500);
         }
+    }
 
-        return response()->json([
-            'id' => $talent->id,
-            'name' => $talent->user->name,
-            'email' => $talent->user->email,
-            'phone' => $talent->user->phone ?? null,
-            'location' => $talent->user->location ?? null,
-            'job' => $talent->user->pekerjaan ?? null,
-            'avatar' => $talent->user->avatar ? asset('storage/' . $talent->user->avatar) : null,
-            'is_active' => $talent->is_active,
-            'joined_date' => $talent->created_at->format('M d, Y H:i'),
-            'skills' => $formattedSkills,
-            'portfolio' => $portfolio,
-            'stats' => $stats
-        ]);
+    /**
+     * Get talent details by user ID for talent requests (project context)
+     * For now, allows any authenticated user - should be improved with proper project access control
+     */
+    public function getProjectTalentDetailsByUserId(User $user)
+    {
+        try {
+            // For now, just ensure user is authenticated
+            // TODO: Add proper project-specific access control
+            $authUser = Auth::user();
+            if (!$authUser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Authentication required'
+                ], 401);
+            }
+
+            // Find talent record for this user
+            $talent = Talent::where('user_id', $user->id)->first();
+
+            if (!$talent) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Talent record not found for this user'
+                ], 404);
+            }
+
+            // Use the project-specific access control
+            return $this->getProjectTalentDetails($talent);
+
+        } catch (\Exception $e) {
+            Log::error('Error in getProjectTalentDetailsByUserId: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch talent details'
+            ], 500);
+        }
     }
 
     /**
@@ -1409,5 +1558,99 @@ class TalentAdminController extends Controller
         }
     }
 
-    // ...existing code...
+    /**
+     * Get talent details by user ID for talent requests (original admin method)
+     */
+    public function getTalentDetailsByUserId(User $user)
+    {
+        // Find talent record for this user
+        $talent = Talent::where('user_id', $user->id)->first();
+
+        if (!$talent) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Talent record not found for this user'
+            ], 404);
+        }
+
+        // Use the existing getTalentDetails logic (admin access)
+        return $this->getTalentDetails($talent);
+    }
+
+    /**
+     * Check if all assignments for a project are accepted and activate the project
+     */
+    private function checkAndActivateProject($projectId)
+    {
+        try {
+            $project = \App\Models\Project::find($projectId);
+            if (!$project) {
+                return;
+            }
+
+            // Only transition from 'approved' to 'active'
+            if ($project->status !== \App\Models\Project::STATUS_APPROVED) {
+                return;
+            }
+
+            // Check if all project assignments are accepted
+            $totalAssignments = $project->assignments()->count();
+            $acceptedAssignments = $project->assignments()
+                ->where('status', \App\Models\ProjectAssignment::STATUS_ACCEPTED)
+                ->count();
+
+            // If all assignments are accepted, transition project to active
+            if ($totalAssignments > 0 && $acceptedAssignments === $totalAssignments) {
+                $project->update([
+                    'status' => \App\Models\Project::STATUS_ACTIVE
+                ]);
+            }
+        } catch (\Exception $e) {
+            // Silently handle errors to avoid disrupting the onboarding process
+        }
+    }
+
+    /**
+     * Manage projects for talent admins (especially closure requests)
+     */
+    public function manageProjects(Request $request)
+    {
+        $query = \App\Models\Project::with(['recruiter.user', 'assignments.talent.user'])
+            ->orderBy('updated_at', 'desc');
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'LIKE', "%{$search}%")
+                  ->orWhere('description', 'LIKE', "%{$search}%")
+                  ->orWhereHas('recruiter.user', function($q) use ($search) {
+                      $q->where('name', 'LIKE', "%{$search}%");
+                  });
+            });
+        }
+
+        $projects = $query->paginate(15);
+
+        // Append query parameters to pagination links
+        $projects->appends($request->query());
+
+        $title = 'Manage Projects';
+        $roles = 'Talent Admin';
+        $assignedKelas = [];
+        $user = Auth::user();
+
+        return view('admin.talent_admin.manage_projects', compact(
+            'projects',
+            'title',
+            'roles',
+            'assignedKelas',
+            'user'
+        ));
+    }
 }

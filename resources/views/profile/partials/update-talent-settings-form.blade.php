@@ -99,17 +99,6 @@
 
         <!-- Additional Talent Information (only show if opting in) -->
         <div id="talent-details" class="{{ $user->available_for_scouting ? '' : 'hidden' }}">
-            <!-- Hourly Rate -->
-            <div>
-                <x-input-label for="hourly_rate" :value="__('Hourly Rate (IDR)')" />
-                <p class="text-sm text-gray-600 mt-1 mb-2">💼 Set your freelance hourly rate for project-based work (not monthly employment)</p>
-                <x-text-input id="hourly_rate" name="hourly_rate" type="number" step="0.01" min="0"
-                             class="mt-1 block w-full" :value="old('hourly_rate', $user->hourly_rate)"
-                             placeholder="e.g., 150000 (Rp 150,000 per hour)" />
-                <x-input-error class="mt-2" :messages="$errors->get('hourly_rate')" />
-                <p class="text-xs text-gray-500 mt-1">This helps recruiters estimate project costs and find talents within their budget</p>
-            </div>
-
             <!-- Bio -->
             <div>
                 <x-input-label for="talent_bio" :value="__('Professional Bio')" />

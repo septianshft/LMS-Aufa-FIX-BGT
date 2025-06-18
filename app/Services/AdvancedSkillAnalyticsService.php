@@ -25,7 +25,6 @@ class AdvancedSkillAnalyticsService
             'skill_progression_trends' => $this->getSkillProgressionTrends(),
             'top_performing_skills' => $this->getTopPerformingSkills(),
             'conversion_funnel' => $this->getConversionFunnelMetrics(),
-            'learning_to_earning' => $this->getLearningToEarningMetrics()
         ];
     }
 
@@ -212,47 +211,32 @@ class AdvancedSkillAnalyticsService
     }
 
     /**
-     * Learning to earning correlation metrics
+     * Learning engagement correlation metrics
      */
-    public function getLearningToEarningMetrics(): array
+    public function getLearningEngagementMetrics(): array
     {
-        $talents = User::where('available_for_scouting', true)
-            ->whereNotNull('hourly_rate')
-            ->get();
+        $talents = User::where('available_for_scouting', true)->get();
 
         $correlationData = [
-            'avg_hourly_rate_by_skill_count' => [],
-            'avg_hourly_rate_by_category' => [],
-            'roi_analysis' => $this->calculateROIAnalysis($talents)
+            'avg_skills_by_category' => []
         ];
 
         foreach ($talents as $talent) {
             $talentSkills = $this->getTalentSkills($talent);
-            $skillCount = count($talentSkills);
-            $hourlyRate = (float) $talent->hourly_rate;
-
-            if (!isset($correlationData['avg_hourly_rate_by_skill_count'][$skillCount])) {
-                $correlationData['avg_hourly_rate_by_skill_count'][$skillCount] = [];
-            }
-            $correlationData['avg_hourly_rate_by_skill_count'][$skillCount][] = $hourlyRate;
 
             // Analyze by primary skill category
             if (!empty($talentSkills) && is_array($talentSkills[0])) {
                 $primaryCategory = $talentSkills[0]['category'] ?? 'General';
-                if (!isset($correlationData['avg_hourly_rate_by_category'][$primaryCategory])) {
-                    $correlationData['avg_hourly_rate_by_category'][$primaryCategory] = [];
+                if (!isset($correlationData['avg_skills_by_category'][$primaryCategory])) {
+                    $correlationData['avg_skills_by_category'][$primaryCategory] = [];
                 }
-                $correlationData['avg_hourly_rate_by_category'][$primaryCategory][] = $hourlyRate;
+                $correlationData['avg_skills_by_category'][$primaryCategory][] = count($talentSkills);
             }
         }
 
         // Calculate averages
-        foreach ($correlationData['avg_hourly_rate_by_skill_count'] as $count => &$rates) {
-            $rates = round(array_sum($rates) / count($rates), 2);
-        }
-
-        foreach ($correlationData['avg_hourly_rate_by_category'] as $category => &$rates) {
-            $rates = round(array_sum($rates) / count($rates), 2);
+        foreach ($correlationData['avg_skills_by_category'] as $category => &$skillCounts) {
+            $skillCounts = round(array_sum($skillCounts) / count($skillCounts), 2);
         }
 
         return $correlationData;
@@ -414,33 +398,6 @@ class AdvancedSkillAnalyticsService
 
         arsort($recentSkills);
         return array_slice($recentSkills, 0, 5, true);
-    }
-
-    private function calculateROIAnalysis($talents): array
-    {
-        $roiData = [
-            'avg_investment_per_talent' => 0, // Could be calculated from course costs
-            'avg_earning_potential' => 0,
-            'roi_percentage' => 0
-        ];
-
-        if ($talents->count() > 0) {
-            $avgHourlyRate = $talents->avg('hourly_rate') ?? 0;
-            $avgSkillCount = $talents->avg(function($talent) {
-                return count($this->getTalentSkills($talent));
-            });
-
-            // Estimate annual earning potential (assumptions: 20 hours/week, 50 weeks/year)
-            $annualEarningPotential = $avgHourlyRate * 20 * 50;
-            $estimatedInvestment = $avgSkillCount * 100; // Assume $100 per course/skill
-
-            $roiData['avg_investment_per_talent'] = round($estimatedInvestment, 2);
-            $roiData['avg_earning_potential'] = round($annualEarningPotential, 2);
-            $roiData['roi_percentage'] = $estimatedInvestment > 0 ?
-                round((($annualEarningPotential - $estimatedInvestment) / $estimatedInvestment) * 100, 2) : 0;
-        }
-
-        return $roiData;
     }
 
     /**

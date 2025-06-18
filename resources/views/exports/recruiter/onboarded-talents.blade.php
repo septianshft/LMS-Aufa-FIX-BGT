@@ -170,15 +170,7 @@
                     </tr>
                     <tr>
                         <th>Experience Level</th>
-                        <td>{{ ucfirst($request->talent->user->experience_level ?? 'Not specified') }}</td>
-                        <th>Hourly Rate</th>
-                        <td>
-                            @if($request->talent->user->hourly_rate)
-                                Rp {{ number_format($request->talent->user->hourly_rate, 0, ',', '.') }}/hour
-                            @else
-                                Not specified
-                            @endif
-                        </td>
+                        <td colspan="3">{{ ucfirst($request->talent->user->experience_level ?? 'Not specified') }}</td>
                     </tr>
                     @if($request->talent->user->talent_bio)
                     <tr>

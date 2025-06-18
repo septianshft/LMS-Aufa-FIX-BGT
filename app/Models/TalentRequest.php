@@ -37,7 +37,11 @@ class TalentRequest extends Model
         'project_start_date',
         'project_end_date',
         'is_blocking_talent',
-        'blocking_notes'
+        'blocking_notes',
+        // Project-centric system fields
+        'project_id',
+        'migrated_to_project_system',
+        'legacy_talent_request_id'
     ];
 
     protected $casts = [
@@ -54,7 +58,9 @@ class TalentRequest extends Model
         'project_start_date' => 'datetime',
         'project_end_date' => 'datetime',
         'is_blocking_talent' => 'boolean',
-        'deleted_at' => 'datetime'
+        'deleted_at' => 'datetime',
+        // Project-centric system casts
+        'migrated_to_project_system' => 'boolean'
     ];
 
     // Relationships
@@ -78,6 +84,14 @@ class TalentRequest extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'talent_user_id');
+    }
+
+    /**
+     * Relationship to the new project system
+     */
+    public function project()
+    {
+        return $this->belongsTo(Project::class);
     }
 
     // Helper method to get talent user (either from direct reference or through talent)
@@ -992,5 +1006,62 @@ class TalentRequest extends Model
 
         $colorType = $this->getUnifiedStatusBadgeColor();
         return $colorMapping[$colorType] ?? 'bg-gray-100 text-gray-800';
+    }
+
+    // ===================================================
+    // PROJECT-CENTRIC SYSTEM MIGRATION METHODS
+    // ===================================================
+
+    /**
+     * Check if this talent request has been migrated to the new project system
+     */
+    public function isMigratedToProjectSystem(): bool
+    {
+        return $this->migrated_to_project_system === true;
+    }
+
+    /**
+     * Check if this talent request is eligible for migration
+     */
+    public function isEligibleForMigration(): bool
+    {
+        // Only migrate requests that are not completed/rejected
+        return !in_array($this->status, ['completed', 'rejected']);
+    }
+
+    /**
+     * Mark this talent request as migrated
+     */
+    public function markAsMigrated(int $projectId): bool
+    {
+        return $this->update([
+            'project_id' => $projectId,
+            'migrated_to_project_system' => true
+        ]);
+    }
+
+    /**
+     * Get scope for non-migrated talent requests
+     */
+    public function scopeNotMigrated($query)
+    {
+        return $query->where('migrated_to_project_system', false)
+                    ->orWhereNull('migrated_to_project_system');
+    }
+
+    /**
+     * Get scope for migrated talent requests
+     */
+    public function scopeMigrated($query)
+    {
+        return $query->where('migrated_to_project_system', true);
+    }
+
+    /**
+     * Get scope for legacy (pre-project system) talent requests
+     */
+    public function scopeLegacy($query)
+    {
+        return $query->whereNull('project_id');
     }
 }

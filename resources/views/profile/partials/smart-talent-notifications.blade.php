@@ -21,12 +21,6 @@ use Illuminate\Support\Facades\Cache;
 @if($smartSuggestion && !auth()->user()->hasRole('talent'))
     @php $suggestion = $smartSuggestion; @endphp
     <div class="smart-talent-notification bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-lg mb-6 shadow-lg">
-        <!-- Debug info (only in local environment) -->
-        @if(app()->environment('local'))
-            <div class="text-xs opacity-75 mb-2">
-                Debug: smart_talent_suggestion found - User ID: {{ auth()->id() }}
-            </div>
-        @endif
         <div class="flex items-start">
             <div class="flex-shrink-0">
                 <div class="w-8 h-8 bg-yellow-300 text-blue-600 rounded-full flex items-center justify-center text-xl font-bold">
@@ -83,12 +77,6 @@ use Illuminate\Support\Facades\Cache;
 @if($certificateSuggestion && !auth()->user()->hasRole('talent'))
     @php $suggestion = $certificateSuggestion; @endphp
     <div class="certificate-talent-notification bg-gradient-to-r from-green-500 to-teal-600 text-white p-4 rounded-lg mb-6 shadow-lg" style="display: none;">
-        <!-- Debug info (only in local environment) -->
-        @if(app()->environment('local'))
-            <div class="text-xs opacity-75 mb-2">
-                Debug: certificate_talent_suggestion found - User ID: {{ auth()->id() }}
-            </div>
-        @endif
         <div class="flex items-start">
             <div class="flex-shrink-0">
                 <div class="w-8 h-8 bg-yellow-300 text-green-600 rounded-full flex items-center justify-center text-xl font-bold">
@@ -288,20 +276,8 @@ document.addEventListener('DOMContentLoaded', function() {
             notification.style.transition = 'all 0.5s ease';
             notification.style.opacity = '1';
             notification.style.transform = 'translateY(0)';
-            console.log(`Showing notification ${notificationType} with animation`);
         }, index * 200);
     });
-
-    // Debug: Show localStorage state
-    const localStorageKeys = Object.keys(localStorage).filter(key => key.startsWith('dismissed_'));
-    if (localStorageKeys.length > 0) {
-        console.log('Current dismissal states in localStorage:');
-        localStorageKeys.forEach(key => {
-            const timestamp = localStorage.getItem(key);
-            const minutesAgo = Math.floor((Date.now() - parseInt(timestamp)) / (60 * 1000));
-            console.log(`  - ${key}: ${minutesAgo} minutes ago`);
-        });
-    }
 });
 </script>
 

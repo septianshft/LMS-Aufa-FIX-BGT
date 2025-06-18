@@ -11,17 +11,6 @@
         <p class="text-gray-600">Find the perfect talent for your project based on skills and experience from our LMS platform.</p>
     </div>
 
-    <!-- Performance Metrics Display (Debug Mode) -->
-    <div id="performanceDisplay" class="hidden bg-gray-100 rounded-lg p-4 mb-4 text-sm">
-        <h3 class="font-semibold mb-2">Performance Metrics</h3>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>Search Time: <span id="searchTime">0ms</span></div>
-            <div>Cache Hits: <span id="cacheHits">0</span></div>
-            <div>Results Count: <span id="resultsCount">0</span></div>
-            <div>View Mode: <span id="currentViewMode">list</span></div>
-        </div>
-    </div>
-
     <!-- Search and Filter Section -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -79,16 +68,7 @@
         <!-- Advanced Filters (Collapsible) -->
         <div id="advancedFilters" class="hidden mt-6 pt-6 border-t border-gray-200">
             <h3 class="text-lg font-medium text-gray-900 mb-4">Advanced Filters</h3>
-            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-money-bill mr-2"></i>Hourly Rate Range (IDR)
-                    </label>
-                    <div class="flex space-x-2">
-                        <input type="number" id="minRate" placeholder="Min" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        <input type="number" id="maxRate" placeholder="Max" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                    </div>
-                </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-map-marker-alt mr-2"></i>Location
@@ -112,7 +92,6 @@
                     <select id="sortBy" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
                         <option value="updated_at">Last Active</option>
                         <option value="experience">Experience Level</option>
-                        <option value="rate">Hourly Rate</option>
                         <option value="skills">Skill Count</option>
                     </select>
                 </div>
@@ -148,10 +127,6 @@
                     class="bg-gray-300 hover:bg-gray-400 text-gray-700 px-6 py-2 rounded-lg font-medium transition-colors duration-200">
                 <i class="fas fa-times mr-2"></i>Clear All
             </button>
-            <button onclick="togglePerformanceMetrics()"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium transition-colors duration-200 text-sm">
-                <i class="fas fa-chart-line mr-1"></i>Debug
-            </button>
         </div>
     </div>
 
@@ -177,8 +152,6 @@
                 <span id="resultsTitle">Search Results</span>
                 <span id="resultsCount" class="text-sm text-gray-500 ml-2"></span>
             </h2>
-            <!-- Performance Info (debug mode) -->
-            <div id="performanceInfo" class="hidden text-xs text-gray-500"></div>
             <div class="flex gap-2">
                 <button onclick="toggleView('grid')" id="gridViewBtn"
                         class="p-2 text-gray-400 hover:text-gray-600 transition-colors duration-200">
@@ -335,11 +308,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize enhanced performance features
 function initializeEnhancedFeatures() {
-    // Show debug info if in debug mode
-    if (window.location.search.includes('debug=1')) {
-        document.getElementById('performanceDisplay').classList.remove('hidden');
-    }
-
     // Setup intersection observer for lazy loading
     if ('IntersectionObserver' in window) {
         intersectionObserver = new IntersectionObserver(handleIntersection, {
@@ -421,14 +389,11 @@ function initializePerformanceTracking() {
     if (performance.mark) {
         performance.mark('talent-discovery-loaded');
     }
-
-    // Update performance display periodically
-    setInterval(updatePerformanceDisplay, 5000);
 }
 
 // Setup advanced filter listeners
 function setupAdvancedFilterListeners() {
-    const advancedInputs = ['minRate', 'maxRate', 'locationFilter', 'availabilityFilter', 'sortBy'];
+    const advancedInputs = ['locationFilter', 'availabilityFilter', 'sortBy'];
     advancedInputs.forEach(inputId => {
         const element = document.getElementById(inputId);
         if (element) {
@@ -506,12 +471,10 @@ function hasActiveFilters() {
     const skills = document.getElementById('skillSearch').value.trim();
     const level = document.getElementById('experienceLevel').value;
     const minExperience = document.getElementById('minExperience').value;
-    const minRate = document.getElementById('minRate')?.value;
-    const maxRate = document.getElementById('maxRate')?.value;
     const location = document.getElementById('locationFilter')?.value;
     const availability = document.getElementById('availabilityFilter')?.value;
 
-    return skills || level || minExperience || minRate || maxRate || location || availability;
+    return skills || level || minExperience || location || availability;
 }
 
 // Show/hide search indicator
@@ -538,22 +501,6 @@ function toggleAdvancedFilters() {
     }
 }
 
-// Toggle performance metrics display
-function togglePerformanceMetrics() {
-    const display = document.getElementById('performanceDisplay');
-    display.classList.toggle('hidden');
-    updatePerformanceDisplay();
-}
-
-// Update performance display
-function updatePerformanceDisplay() {
-    if (document.getElementById('performanceDisplay').classList.contains('hidden')) return;
-
-    document.getElementById('searchTime').textContent = Math.round(performanceMetrics.averageResponseTime) + 'ms';
-    document.getElementById('cacheHits').textContent = performanceMetrics.cacheHits;
-    document.getElementById('resultsCount').textContent = performanceMetrics.totalResults;
-    document.getElementById('currentViewMode').textContent = currentView;
-}
 function debounceSearch(func, delay = 500) {
     return function(...args) {
         clearTimeout(searchTimeout);
@@ -657,14 +604,10 @@ function collectAllFilters() {
 
     // Advanced filters (if shown)
     if (!document.getElementById('advancedFilters').classList.contains('hidden')) {
-        const minRate = document.getElementById('minRate')?.value;
-        const maxRate = document.getElementById('maxRate')?.value;
         const location = document.getElementById('locationFilter')?.value;
         const availability = document.getElementById('availabilityFilter')?.value;
         const sortBy = document.getElementById('sortBy')?.value;
 
-        if (minRate) filters.min_rate = parseFloat(minRate);
-        if (maxRate) filters.max_rate = parseFloat(maxRate);
         if (location) filters.location = location;
         if (availability) filters.availability = availability;
         if (sortBy) filters.sort_by = sortBy;
@@ -877,7 +820,6 @@ function createGridCardHTML(talent, avatarHTML) {
 
             <div class="flex justify-between items-center text-sm text-gray-500">
                 <span><i class="fas fa-trophy mr-1"></i>${skills.length} skills</span>
-                ${talent.hourly_rate ? `<span><i class="fas fa-money-bill mr-1"></i>Rp ${new Intl.NumberFormat('id-ID').format(talent.hourly_rate)}/hr</span>` : ''}
             </div>
         </div>
 
@@ -914,7 +856,6 @@ function createListCardHTML(talent, avatarHTML) {
                         ${talent.bio ? `<p class="text-gray-600 text-sm mt-2 line-clamp-2">${talent.bio}</p>` : ''}
                     </div>
                     <div class="flex flex-col items-end space-y-2">
-                        ${talent.hourly_rate ? `<span class="text-lg font-semibold text-green-600">Rp ${new Intl.NumberFormat('id-ID').format(talent.hourly_rate * 15000)}/hr</span>` : ''}
                         <div class="flex gap-2">
                             <button onclick="showTalentProfile(${talent.id})"
                                     class="bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg text-sm font-medium transition-colors">
@@ -1157,20 +1098,12 @@ function showAnalytics(results) {
                              skillCount >= 2 ? 'Intermediate (2-4 skills)' :
                              'Beginner (0-1 skills)';
         experienceLevels[skillCategory] = (experienceLevels[skillCategory] || 0) + 1;
-
-        // Calculate average rate
-        if (talent.hourly_rate) {
-            totalHourlyRate += parseFloat(talent.hourly_rate);
-            ratedTalents++;
-        }
     });
 
     const topSkills = Object.entries(skillCounts)
         .sort(([,a], [,b]) => b - a)
         .slice(0, 3)
         .map(([skill]) => skill);
-
-    const avgHourlyRate = ratedTalents > 0 ? (totalHourlyRate / ratedTalents).toFixed(0) : 'N/A';
 
     analyticsCards.innerHTML = `
         <div class="text-center p-4 bg-purple-50 rounded-lg">
@@ -1180,10 +1113,6 @@ function showAnalytics(results) {
         <div class="text-center p-4 bg-blue-50 rounded-lg">
             <div class="text-2xl font-bold text-blue-600">${topSkills.length > 0 ? topSkills[0] : 'N/A'}</div>
             <div class="text-sm text-gray-600">Top Skill</div>
-        </div>
-        <div class="text-center p-4 bg-green-50 rounded-lg">
-            <div class="text-2xl font-bold text-green-600">$${avgHourlyRate}</div>
-            <div class="text-sm text-gray-600">Avg. Rate/hr</div>
         </div>
         <div class="text-center p-4 bg-orange-50 rounded-lg">
             <div class="text-2xl font-bold text-orange-600">${Math.round(performanceMetrics.averageResponseTime)}ms</div>
@@ -1198,17 +1127,6 @@ function showAnalytics(results) {
 function updatePerformanceInfo(source, responseTime) {
     performanceMetrics.totalResults = allResults.length;
 
-    const debugMode = window.location.search.includes('debug=1');
-    if (debugMode) {
-        const perfInfo = document.getElementById('performanceInfo');
-        perfInfo.classList.remove('hidden');
-        perfInfo.innerHTML = `
-            ${source}: ${Math.round(responseTime)}ms |
-            Cache: ${performanceMetrics.cacheHits}/${performanceMetrics.searches} hits |
-            Avg: ${Math.round(performanceMetrics.averageResponseTime)}ms |
-            Results: ${performanceMetrics.totalResults}
-        `;
-    }
 }
 
 // Modal functions for talent profiles
@@ -1244,7 +1162,6 @@ function createTalentProfileHTML(talent) {
                     <h4 class="text-xl font-semibold text-gray-900">${talent.name}</h4>
                     <p class="text-purple-600 font-medium">${talent.skills ? talent.skills.length + ' Skills' : 'Professional'}</p>
                     ${talent.location ? `<p class="text-gray-500"><i class="fas fa-map-marker-alt mr-1"></i>${talent.location}</p>` : ''}
-                    ${talent.hourly_rate ? `<p class="text-green-600 font-semibold">Rp ${new Intl.NumberFormat('id-ID').format(talent.hourly_rate * 15000)}/hour</p>` : ''}
                 </div>
             </div>
 

@@ -365,6 +365,71 @@
             </div>
         </div>
     </div>
+
+    @if($talentRequest->status === 'completed' && $talentRequest->workflow_completed_at)
+    <!-- Completion Details -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-success text-white">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        Completion Details
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Completed At:</label>
+                                <p class="text-muted">{{ $talentRequest->workflow_completed_at->format('d M Y, H:i') }}</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Duration:</label>
+                                <p class="text-muted">{{ $talentRequest->created_at->diffForHumans($talentRequest->workflow_completed_at, true) }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($talentRequest->project_id)
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-info-circle mr-3"></i>
+                                    <div>
+                                        <strong>Automatic Completion</strong><br>
+                                        This talent request was automatically marked as completed due to project closure approval.
+                                        @if($talentRequest->project)
+                                            <br><strong>Project:</strong> {{ $talentRequest->project->name }}
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-success">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-user-check mr-3"></i>
+                                    <div>
+                                        <strong>Talent Availability</strong><br>
+                                        This talent is now available for new recruitment requests.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 @endsection
 

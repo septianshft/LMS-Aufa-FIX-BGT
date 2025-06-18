@@ -35,7 +35,6 @@ class TalentFactory extends Factory
                     ]
                 ],
                 'pekerjaan' => $this->faker->randomElement(['Full-stack Developer', 'Backend Developer', 'Frontend Developer', 'Web Developer']),
-                'hourly_rate' => $this->faker->numberBetween(20, 100),
                 'talent_bio' => $this->faker->paragraph(),
                 'portfolio_url' => $this->faker->url(),
                 'location' => $this->faker->city(),

@@ -20,7 +20,7 @@ class TalentMatchingService
 
         return Cache::remember($cacheKey, 300, function() use ($filters, $perPage) {
             $query = User::select(['id', 'name', 'email', 'avatar', 'talent_bio', 'portfolio_url',
-                                 'hourly_rate', 'talent_skills', 'experience_level', 'updated_at',
+                                 'talent_skills', 'experience_level', 'updated_at',
                                  'available_for_scouting', 'is_active_talent'])
                 ->where('available_for_scouting', true)
                 ->where('is_active_talent', true)
@@ -85,7 +85,7 @@ class TalentMatchingService
 
         return Cache::remember($cacheKey, 180, function() use ($requiredSkills, $limit) {
             $query = User::select(['id', 'name', 'email', 'avatar', 'talent_skills', 'updated_at',
-                                 'talent_bio', 'hourly_rate', 'experience_level'])
+                                 'talent_bio', 'experience_level'])
                 ->where('available_for_scouting', true)
                 ->where('is_active_talent', true)
                 ->whereNotNull('talent_skills')
@@ -122,7 +122,7 @@ class TalentMatchingService
         return Cache::remember($cacheKey, 600, function() use ($limit) {
             // Use database ordering instead of loading all and sorting in PHP
             $talents = User::select(['id', 'name', 'email', 'avatar', 'talent_skills', 'updated_at',
-                                   'talent_bio', 'hourly_rate', 'experience_level'])
+                                   'talent_bio', 'experience_level'])
                 ->where('available_for_scouting', true)
                 ->where('is_active_talent', true)
                 ->whereNotNull('talent_skills')
@@ -155,7 +155,6 @@ class TalentMatchingService
             'email' => $user->email,
             'avatar' => $user->avatar,
             'bio' => $user->talent_bio,
-            'hourly_rate' => $user->hourly_rate,
             'skills' => $skills->toArray(),
             'skill_count' => $skills->count(),
             'experience_level' => $user->experience_level,

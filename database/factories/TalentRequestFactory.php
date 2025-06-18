@@ -16,6 +16,7 @@ class TalentRequestFactory extends Factory
         return [
             'talent_id' => Talent::factory(),
             'recruiter_id' => Recruiter::factory(),
+            'project_id' => null, // Will be populated when integrated with new project system
             'project_title' => $this->faker->sentence(4),
             'project_description' => $this->faker->paragraph(3),
             'required_skills' => json_encode($this->faker->randomElements(['PHP', 'JavaScript', 'Python', 'React', 'Laravel', 'Node.js'], 3)),
@@ -28,6 +29,7 @@ class TalentRequestFactory extends Factory
             'recruiter_notes' => $this->faker->optional()->paragraph(),
             'talent_notes' => $this->faker->optional()->paragraph(),
             'admin_notes' => $this->faker->optional()->paragraph(),
+            'migrated_to_project' => false, // Track migration status
             'created_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
             'updated_at' => $this->faker->dateTimeBetween('-30 days', 'now'),
         ];

@@ -353,8 +353,110 @@ ENTITY(talent_requests) {
   meeting_arranged_at: TIMESTAMP NULLABLE
   onboarded_at: TIMESTAMP NULLABLE
   workflow_completed_at: TIMESTAMP NULLABLE
+  == PROJECT SYSTEM MIGRATION ==
+  project_id: BIGINT FK NULLABLE
+  migrated_to_project: BOOLEAN NOT NULL
+  migrated_at: TIMESTAMP NULLABLE
   == SYSTEM FIELDS ==
   soft_deletes, timestamps
+}
+
+' Project-Centric System (New)
+ENTITY(projects) {
+  == PRIMARY KEY ==
+  +id: BIGINT PK
+  == FOREIGN KEYS ==
+  recruiter_id: BIGINT FK NOT NULL
+  == PROJECT DATA ==
+  title: VARCHAR NOT NULL
+  description: TEXT NOT NULL
+  industry: VARCHAR NULLABLE
+  general_requirements: TEXT NULLABLE
+  == BUDGET & TIMELINE ==
+  overall_budget_min: DECIMAL(10,2) NULLABLE
+  overall_budget_max: DECIMAL(10,2) NULLABLE
+  expected_start_date: DATE NOT NULL
+  expected_end_date: DATE NOT NULL
+  estimated_duration_days: INTEGER NOT NULL
+  == STATUS MANAGEMENT ==
+  status: ENUM(draft,pending_admin,approved,active,overdue,extension_requested,closure_requested,completed,cancelled) NOT NULL
+  == SYSTEM FIELDS ==
+  timestamps
+}
+
+ENTITY(project_assignments) {
+  == PRIMARY KEY ==
+  +id: BIGINT PK
+  == FOREIGN KEYS ==
+  project_id: BIGINT FK NOT NULL
+  talent_id: BIGINT FK NOT NULL
+  == ASSIGNMENT DETAILS ==
+  specific_role: VARCHAR NOT NULL
+  talent_start_date: DATE NOT NULL
+  talent_end_date: DATE NOT NULL
+  individual_budget: DECIMAL(10,2) NULLABLE
+  specific_requirements: TEXT NULLABLE
+  working_hours_per_week: INTEGER NOT NULL
+  priority_level: ENUM(low,medium,high) NOT NULL
+  assignment_notes: TEXT NULLABLE
+  == STATUS MANAGEMENT ==
+  status: ENUM(assigned,admin_pending,talent_pending,accepted,active,completed) NOT NULL
+  talent_accepted_at: TIMESTAMP NULLABLE
+  == SYSTEM FIELDS ==
+  timestamps
+}
+
+ENTITY(project_timeline_events) {
+  == PRIMARY KEY ==
+  +id: BIGINT PK
+  == FOREIGN KEYS ==
+  project_id: BIGINT FK NOT NULL
+  user_id: BIGINT FK NULLABLE
+  == EVENT DATA ==
+  event_type: ENUM(created,approved,rejected,cancelled,talent_assigned,talent_accepted,talent_rejected,extension_requested,extension_approved,extension_rejected,extended,overdue,closure_requested,completed,conflict_detected,conflict_resolved,notification_sent) NOT NULL
+  description: TEXT NOT NULL
+  event_data: JSON NULLABLE
+  == SYSTEM FIELDS ==
+  timestamps
+}
+
+ENTITY(project_extensions) {
+  == PRIMARY KEY ==
+  +id: BIGINT PK
+  == FOREIGN KEYS ==
+  project_id: BIGINT FK NOT NULL
+  conflict_id: BIGINT FK NULLABLE
+  requested_by: BIGINT FK NOT NULL
+  == EXTENSION DETAILS ==
+  original_end_date: DATE NOT NULL
+  requested_end_date: DATE NOT NULL
+  extension_days: INTEGER NOT NULL
+  extension_reason: TEXT NOT NULL
+  additional_budget: DECIMAL(10,2) NOT NULL
+  urgency_level: ENUM(low,medium,high,critical) NOT NULL
+  triggered_by_talent_addition: BOOLEAN NOT NULL
+  == TIMESTAMPS ==
+  requested_at: TIMESTAMP NOT NULL
+  == SYSTEM FIELDS ==
+  timestamps
+}
+
+ENTITY(timeline_conflicts) {
+  == PRIMARY KEY ==
+  +id: BIGINT PK
+  == FOREIGN KEYS ==
+  project_id: BIGINT FK NOT NULL
+  assignment_id: BIGINT FK NULLABLE
+  == CONFLICT DETAILS ==
+  conflict_type: ENUM(duration_overrun,late_addition,availability_clash,budget_mismatch) NOT NULL
+  severity: ENUM(low,medium,high,critical) NOT NULL
+  detected_at: TIMESTAMP NOT NULL
+  project_end_date: DATE NOT NULL
+  talent_proposed_end_date: DATE NOT NULL
+  overrun_days: INTEGER NOT NULL
+  overrun_percentage: DECIMAL(5,2) NOT NULL
+  == SYSTEM FIELDS ==
+  timestamps
 }
 
 ' ===== RELATIONSHIPS =====
@@ -404,6 +506,19 @@ recruiters ||--o{ talent_requests : "recruiter_id"
 talents ||--o{ talent_requests : "talent_id"
 users ||--o{ talent_requests : "talent_user_id"
 
+' Project-Centric System (New)
+recruiters ||--o{ projects : "recruiter_id"
+projects ||--o{ talent_requests : "project_id"
+projects ||--o{ project_assignments : "project_id"
+talents ||--o{ project_assignments : "talent_id"
+projects ||--o{ project_timeline_events : "project_id"
+users ||--o{ project_timeline_events : "user_id"
+projects ||--o{ project_extensions : "project_id"
+timeline_conflicts ||--o{ project_extensions : "conflict_id"
+users ||--o{ project_extensions : "requested_by"
+projects ||--o{ timeline_conflicts : "project_id"
+project_assignments ||--o{ timeline_conflicts : "assignment_id"
+
 note right of users
   **Multi-Role User System**:
   Trainees → LMS Learning → Skills → Talent Conversion
@@ -422,15 +537,24 @@ note right of users
 end note
 
 note bottom of talent_requests
-  **Workflow**: pending → approved → meeting_arranged → completed
+  **Enhanced Workflow**: pending → approved → meeting_arranged → onboarded → completed
   **Dual Acceptance**: talent + admin approval required
   **Time Blocking**: prevents scheduling conflicts
+  **Project Integration**: Links to project-centric system
+  **Auto-Completion**: When project closes, related requests auto-complete
 
   **Indonesian Employment Models**:
   • **Full-time**: Monthly salary negotiations
   • **Contract**: Project-based or monthly terms
   • **Freelance**: Hourly or project rates
   • **Flexible**: Mixed compensation structures
+end note
+
+note right of projects
+  **Project Lifecycle**: draft → approved → active → completed/cancelled
+  **Closure System**: Recruiters request → Admin approves → Auto-complete talent requests
+  **Timeline Management**: Extensions, conflicts, and overrun detection
+  **Multi-talent Support**: Projects can have multiple talent assignments
 end note
 
 @enduml

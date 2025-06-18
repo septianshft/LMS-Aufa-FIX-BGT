@@ -60,6 +60,14 @@
                  <span>Manage Requests</span></a>
          </li>
 
+         <!-- PROJECT-CENTRIC SYSTEM -->
+         <!-- Nav Item - Project Management -->
+         <li class="nav-item  {{ Request::is('admin/projects*') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('admin.projects.index') }}">
+                 <i class="fas fa-fw fa-cogs"></i>
+                 <span>Project Management</span></a>
+         </li>
+
          <!-- Nav Item - Manage Talents -->
          <li class="nav-item  {{ Request::is('talent-admin/manage-talents') ? 'active' : '' }} animate-btn">
              <a class="nav-link" href="{{ route('talent_admin.manage_talents') }}">
@@ -90,11 +98,19 @@
                  <span>Talent Dashboard</span></a>
          </li>
 
-         <!-- Nav Item - My Requests -->
+         <!-- Nav Item - My Requests (Legacy System) -->
          <li class="nav-item  {{ Request::is('talent/my-requests*') ? 'active' : '' }} animate-btn">
              <a class="nav-link" href="{{ route('talent.my_requests') }}">
                  <i class="fas fa-fw fa-tasks"></i>
                  <span>My Requests</span></a>
+         </li>
+
+         <!-- PROJECT-CENTRIC SYSTEM -->
+         <!-- Nav Item - My Assignments -->
+         <li class="nav-item  {{ Request::is('talent/assignments*') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('talent.assignments.index') }}">
+                 <i class="fas fa-fw fa-briefcase"></i>
+                 <span>My Assignments</span></a>
          </li>
      @endif
 
@@ -106,11 +122,26 @@
                  <span>Recruiter Dashboard</span></a>
          </li>
 
-         <!-- Nav Item - My Requests -->
+         <!-- Nav Item - My Requests (Legacy System) -->
          <li class="nav-item  {{ Request::is('recruiter/my-requests*') ? 'active' : '' }} animate-btn">
              <a class="nav-link" href="{{ route('recruiter.my_requests') }}">
                  <i class="fas fa-fw fa-clipboard-list"></i>
                  <span>My Requests</span></a>
+         </li>
+
+         <!-- PROJECT-CENTRIC SYSTEM -->
+         <!-- Nav Item - My Projects -->
+         <li class="nav-item  {{ Request::is('projects') || Request::is('projects/index') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('projects.index') }}">
+                 <i class="fas fa-fw fa-project-diagram"></i>
+                 <span>My Projects</span></a>
+         </li>
+
+         <!-- Nav Item - Create Project -->
+         <li class="nav-item  {{ Request::is('projects/create') ? 'active' : '' }} animate-btn">
+             <a class="nav-link" href="{{ route('projects.create') }}">
+                 <i class="fas fa-fw fa-plus-circle"></i>
+                 <span>Create Project</span></a>
          </li>
      @endif
 

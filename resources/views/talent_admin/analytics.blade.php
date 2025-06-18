@@ -310,53 +310,6 @@
             </div>
         </div>
 
-        <!-- Learning to Earning Correlation -->
-        {{-- @if(isset($skillAnalytics['learning_to_earning']))
-            <div class="bg-white rounded-2xl shadow-xl border border-gray-100 hover-lift">
-                <div class="bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-t-2xl p-6">
-                    <h2 class="text-xl font-bold text-white flex items-center">
-                        <i class="fas fa-dollar-sign mr-3"></i>
-                        Analisis Belajar ke Penghasilan
-                    </h2>
-                    <p class="text-indigo-100 text-sm mt-1">Korelasi antara pembelajaran dan potensi penghasilan</p>
-                </div>
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- ROI Analysis -->
-                        @if(isset($skillAnalytics['learning_to_earning']['roi_analysis']))
-                            @php $roi = $skillAnalytics['learning_to_earning']['roi_analysis']; @endphp
-                            <div class="text-center p-4 bg-green-50 rounded-lg">
-                                <div class="text-2xl font-bold text-green-600">Rp{{ number_format($roi['avg_investment_per_talent']) }}</div>
-                                <div class="text-sm text-gray-600">Rata-rata Investasi per Talent</div>
-                            </div>
-                            <div class="text-center p-4 bg-blue-50 rounded-lg">
-                                <div class="text-2xl font-bold text-blue-600">Rp{{ number_format($roi['avg_earning_potential']) }}</div>
-                                <div class="text-sm text-gray-600">Rata-rata Potensi Penghasilan</div>
-                            </div>
-                            <div class="text-center p-4 bg-yellow-50 rounded-lg">
-                                <div class="text-2xl font-bold text-yellow-600">{{ $roi['roi_percentage'] }}%</div>
-                                <div class="text-sm text-gray-600">Persentase ROI</div>
-                            </div>
-                        @endif
-                    </div>
-
-                    <!-- Hourly Rate by Category -->
-                    @if(isset($skillAnalytics['learning_to_earning']['avg_hourly_rate_by_category']))
-                        <div class="mt-6">
-                            <h3 class="font-bold text-gray-700 mb-4">💰 Rata-rata Tarif Per Jam Berdasarkan Kategori Keahlian</h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                @foreach($skillAnalytics['learning_to_earning']['avg_hourly_rate_by_category'] as $category => $rate)
-                                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                        <span class="font-medium text-gray-700">{{ $category }}</span>
-                                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-bold">Rp{{ $rate }}/jam</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        @endif --}}
     </div>
 </div>
 

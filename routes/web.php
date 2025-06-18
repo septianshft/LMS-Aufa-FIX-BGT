@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Project;
 use App\Http\Controllers\{
     FrontController,
     ProfileController,
@@ -26,6 +27,9 @@ use App\Http\Controllers\{
     TalentController,
     RecruiterController,
     TalentDiscoveryController,
+    ProjectController,
+    ProjectAssignmentController,
+    ProjectAdminController,
 };
 // ====================
 // FRONTEND ROUTES
@@ -158,6 +162,14 @@ Route::middleware('auth')->group(function () {
     // TALENT SCOUTING ROUTES
     // ====================
 
+    // Shared routes accessible by admin and talent_admin for project management
+    Route::middleware(['auth', 'role:admin|talent_admin'])->group(function () {
+        // Details endpoints for modal views (accessible from project management)
+        Route::get('talent-admin/talents/{talent}/details', [TalentAdminController::class, 'getTalentDetails'])->name('talent_admin.talent_details');
+        Route::get('talent-admin/users/{user}/talent-details', [TalentAdminController::class, 'getTalentDetailsByUserId'])->name('talent_admin.talent_details_by_user');
+        Route::get('talent-admin/recruiters/{recruiter}/details', [TalentAdminController::class, 'getRecruiterDetails'])->name('talent_admin.recruiter_details');
+    });
+
     // Talent Admin Routes
     Route::middleware('role:talent_admin')->group(function () {
         Route::get('talent-admin/dashboard', [TalentAdminController::class, 'dashboard'])->name('talent_admin.dashboard');
@@ -182,6 +194,9 @@ Route::middleware('auth')->group(function () {
         Route::post('talent-admin/clear-dashboard-cache', [TalentAdminController::class, 'clearDashboardCache'])->name('talent_admin.clear_dashboard_cache');
         Route::get('talent-admin/dashboard-data', [TalentAdminController::class, 'getDashboardData'])->name('talent_admin.dashboard_data');
 
+        // Project Management Routes for Talent Admins
+        Route::get('talent-admin/manage-projects', [TalentAdminController::class, 'manageProjects'])->name('talent_admin.manage_projects');
+
         // Talent Admin Management Routes
         Route::get('talent-admin/manage-admins', [TalentAdminController::class, 'manageTalentAdmins'])->name('talent_admin.manage_talent_admins');
         Route::get('talent-admin/admin/create', [TalentAdminController::class, 'createTalentAdmin'])->name('talent_admin.create_talent_admin');
@@ -197,10 +212,6 @@ Route::middleware('auth')->group(function () {
         Route::get('talent-admin/recruiter/{recruiter}/edit', [TalentAdminController::class, 'editRecruiter'])->name('talent_admin.edit_recruiter');
         Route::put('talent-admin/recruiter/{recruiter}', [TalentAdminController::class, 'updateRecruiter'])->name('talent_admin.update_recruiter');
         Route::delete('talent-admin/recruiter/{recruiter}', [TalentAdminController::class, 'destroyRecruiter'])->name('talent_admin.destroy_recruiter');
-
-        // Details endpoints for modal views
-        Route::get('talent-admin/talents/{talent}/details', [TalentAdminController::class, 'getTalentDetails'])->name('talent_admin.talent_details');
-        Route::get('talent-admin/recruiters/{recruiter}/details', [TalentAdminController::class, 'getRecruiterDetails'])->name('talent_admin.recruiter_details');
 
         // Conversion suggestion endpoint
         Route::post('talent-admin/suggest-conversion/{user}', [TalentAdminController::class, 'suggestConversion'])->name('talent_admin.suggest_conversion');
@@ -359,6 +370,101 @@ Route::get('/test-dashboard-data', function () {
     }
 
     return response()->json($results, 200, [], JSON_PRETTY_PRINT);
+});
+
+// Test routes (remove in production)
+Route::get('/test-talent-details/{talent}', function(App\Models\Talent $talent) {
+    $controller = new App\Http\Controllers\TalentAdminController(
+        app(App\Services\AdvancedSkillAnalyticsService::class),
+        app(App\Services\SmartConversionTrackingService::class),
+        app(App\Services\TalentRequestNotificationService::class)
+    );
+    return $controller->getTalentDetails($talent);
+})->middleware('auth');
+
+Route::get('/test-user-talent-details/{user}', function(App\Models\User $user) {
+    $controller = new App\Http\Controllers\TalentAdminController(
+        app(App\Services\AdvancedSkillAnalyticsService::class),
+        app(App\Services\SmartConversionTrackingService::class),
+        app(App\Services\TalentRequestNotificationService::class)
+    );
+    return $controller->getProjectTalentDetailsByUserId($user);
+})->middleware('auth');
+
+// ===================================================
+// PROJECT-CENTRIC SYSTEM ROUTES
+// ===================================================
+
+Route::middleware(['auth', 'verified'])->group(function () {
+
+    // Project routes for recruiters
+    Route::resource('projects', ProjectController::class);
+    Route::post('projects/{project}/request-extension', [ProjectController::class, 'requestExtension'])
+        ->name('projects.request-extension');
+    Route::post('projects/{project}/request-closure', [ProjectController::class, 'requestClosure'])
+        ->name('projects.request-closure');
+    Route::post('projects/{project}/approve-closure', [ProjectController::class, 'approveClosure'])
+        ->name('projects.approve-closure')
+        ->middleware('role:talent_admin');
+    Route::post('projects/{project}/reject-closure', [ProjectController::class, 'rejectClosure'])
+        ->name('projects.reject-closure')
+        ->middleware('role:talent_admin');
+
+    // Talent details routes accessible from projects (for project members)
+    Route::get('projects/talent/{talent}/details', [TalentAdminController::class, 'getProjectTalentDetails'])
+        ->name('projects.talent_details');
+    Route::get('projects/user/{user}/talent-details', [TalentAdminController::class, 'getProjectTalentDetailsByUserId'])
+        ->name('projects.talent_details_by_user');
+
+    // Project assignment routes
+    Route::post('projects/{project}/assignments', [ProjectAssignmentController::class, 'store'])
+        ->name('project-assignments.store');
+    Route::patch('assignments/{assignment}/accept', [ProjectAssignmentController::class, 'accept'])
+        ->name('project-assignments.accept');
+    Route::patch('assignments/{assignment}/decline', [ProjectAssignmentController::class, 'decline'])
+        ->name('project-assignments.decline');
+    Route::patch('assignments/{assignment}', [ProjectAssignmentController::class, 'update'])
+        ->name('project-assignments.update');
+    Route::delete('assignments/{assignment}', [ProjectAssignmentController::class, 'destroy'])
+        ->name('project-assignments.destroy');
+
+    // Admin Project Management Routes
+    Route::middleware(['auth', 'role:admin|talent_admin'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('projects', [ProjectAdminController::class, 'index'])->name('projects.index');
+        Route::get('projects/all', [ProjectAdminController::class, 'allProjects'])->name('projects.all');
+        Route::get('projects/analytics', [ProjectAdminController::class, 'analytics'])->name('projects.analytics');
+        Route::get('projects/{project}', [ProjectAdminController::class, 'show'])->name('projects.show');
+
+        // Project approval routes
+        Route::patch('projects/{project}/approve', [ProjectAdminController::class, 'approve'])->name('projects.approve');
+        Route::patch('projects/{project}/reject', [ProjectAdminController::class, 'reject'])->name('projects.reject');
+
+        // Redirect GET requests to approve/reject back to project show page
+        Route::get('projects/{project}/approve', function(Project $project) {
+            return redirect()->route('admin.projects.show', $project);
+        });
+        Route::get('projects/{project}/reject', function(Project $project) {
+            return redirect()->route('admin.projects.show', $project);
+        });
+
+        // Extension management routes
+        Route::get('projects/{project}/extensions', [ProjectAdminController::class, 'extensionPartial'])->name('projects.extensions');
+        Route::patch('extensions/{extension}/approve', [ProjectAdminController::class, 'approveExtension'])->name('extensions.approve');
+        Route::patch('extensions/{extension}/reject', [ProjectAdminController::class, 'rejectExtension'])->name('extensions.reject');
+        Route::put('extensions/{extension}/review', [ProjectAdminController::class, 'reviewExtension'])->name('extensions.review');
+
+        // Closure request management routes
+        Route::get('projects/{project}/closure-details', [ProjectAdminController::class, 'closureDetails'])->name('projects.closure-details');
+    });
+
+    // Talent Assignment Routes
+    Route::middleware(['auth', 'role:talent'])->prefix('talent')->name('talent.')->group(function () {
+        Route::get('assignments', [ProjectAssignmentController::class, 'talentIndex'])->name('assignments.index');
+        Route::get('assignments/{assignment}', [ProjectAssignmentController::class, 'talentShow'])->name('assignments.show');
+        Route::put('assignments/{assignment}/respond', [ProjectAssignmentController::class, 'respond'])->name('assignments.respond');
+        Route::put('assignments/{assignment}/progress', [ProjectAssignmentController::class, 'updateProgress'])->name('assignments.progress');
+        Route::post('assignments/{assignment}/request-extension', [ProjectAssignmentController::class, 'requestExtension'])->name('assignments.request-extension');
+    });
 });
 
 require __DIR__.'/auth.php';

@@ -30,4 +30,8 @@ class Talent extends Model
     public function talentRequests(){
         return $this->hasMany(TalentRequest::class);
     }
+
+    public function assignments(){
+        return $this->hasMany(ProjectAssignment::class);
+    }
 }

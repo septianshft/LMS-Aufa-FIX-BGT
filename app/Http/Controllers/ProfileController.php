@@ -67,7 +67,6 @@ class ProfileController extends Controller
     {
         $request->validate([
             'available_for_scouting' => 'boolean',
-            'hourly_rate' => 'nullable|numeric|min:0',
             'talent_bio' => 'nullable|string|max:1000',
             'portfolio_url' => 'nullable|url|max:255',
             'location' => 'nullable|string|max:255',
@@ -81,7 +80,6 @@ class ProfileController extends Controller
         // Update talent fields
         $user->update([
             'available_for_scouting' => $isOptingIn,
-            'hourly_rate' => $isOptingIn ? $request->hourly_rate : null,
             'talent_bio' => $isOptingIn ? $request->talent_bio : null,
             'portfolio_url' => $isOptingIn ? $request->portfolio_url : null,
             'location' => $isOptingIn ? $request->location : null,

@@ -161,6 +161,7 @@
 
     <!-- Page-specific scripts -->
     @yield('scripts')
+    @stack('scripts')
 
     <!-- Page level plugins -->
 

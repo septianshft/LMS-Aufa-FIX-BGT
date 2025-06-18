@@ -190,12 +190,6 @@
                     <td>{{ $request->talent->user->location }}</td>
                 </tr>
                 @endif
-                @if($request->talent->user->hourly_rate)
-                <tr>
-                    <th>Hourly Rate</th>
-                    <td>Rp {{ number_format($request->talent->user->hourly_rate, 0, ',', '.') }}/hour</td>
-                </tr>
-                @endif
                 @if($request->talent->user->portfolio_url)
                 <tr>
                     <th>Portfolio</th>

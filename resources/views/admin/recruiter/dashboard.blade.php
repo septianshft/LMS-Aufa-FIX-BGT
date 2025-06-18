@@ -1408,21 +1408,16 @@ function initializeExportDropdown() {
 }
 
 function toggleExportDropdown() {
-    console.log('toggleExportDropdown called'); // Debug log
     const dropdownMenu = document.getElementById('exportDropdownMenu');
     if (!dropdownMenu) {
-        console.error('Dropdown menu not found!'); // Debug log
         return;
     }
 
     const isVisible = dropdownMenu.classList.contains('opacity-100');
-    console.log('Current visibility:', isVisible); // Debug log
 
     if (isVisible) {
-        console.log('Closing dropdown'); // Debug log
         closeExportDropdown();
     } else {
-        console.log('Opening dropdown'); // Debug log
         openExportDropdown();
     }
 }
