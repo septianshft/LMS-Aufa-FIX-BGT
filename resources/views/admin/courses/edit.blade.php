@@ -50,8 +50,8 @@
 
                     <div class="mt-4">
                         <x-input-label for="thumbnail" :value="__('Thumbnail')" />
-                        <img src="{{Storage::url($course->thumbnail)}}" alt="" class="rounded-2xl object-cover w-[120px] h-[90px]">
-                        <x-text-input id="thumbnail" class="block mt-1 w-full" type="file" name="thumbnail" autocomplete="thumbnail" />
+                        <img src="{{ asset(path: 'storage/' . $course->thumbnail) }}" class="rounded-2xl object-cover w-[120px] h-[90px]" alt="thumbnail">
+                       <x-text-input id="thumbnail" class="block mt-1 w-full" type="file" name="thumbnail" autocomplete="thumbnail" />
                         <x-input-error :messages="$errors->get('thumbnail')" class="mt-2" />
                     </div>
                     
@@ -96,6 +96,18 @@
                             @endforeach
                         </select>
                         <x-input-error :messages="$errors->get('course_level_id')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label for="enrollment_start" :value="__('Enrollment Start')" />
+                        <x-text-input id="enrollment_start" class="block mt-1 w-full" type="datetime-local" name="enrollment_start" :value="old('enrollment_start', optional($course->enrollment_start)->format('Y-m-d\TH:i'))" />
+                        <x-input-error :messages="$errors->get('enrollment_start')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label for="enrollment_end" :value="__('Enrollment End')" />
+                        <x-text-input id="enrollment_end" class="block mt-1 w-full" type="datetime-local" name="enrollment_end" :value="old('enrollment_end', optional($course->enrollment_end)->format('Y-m-d\TH:i'))" />
+                        <x-input-error :messages="$errors->get('enrollment_end')" class="mt-2" />
                     </div>
 
                     <div class="mt-4">

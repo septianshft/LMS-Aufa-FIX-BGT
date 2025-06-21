@@ -117,6 +117,14 @@ class CourseController extends Controller
             return redirect()->route('front.pricing', $course->slug);
         }
 
+        if ($course->mode && $course->mode->name === 'onsite') {
+            $today = now()->toDateString();
+            if (($course->enrollment_start && $today < $course->enrollment_start) ||
+                ($course->enrollment_end && $today > $course->enrollment_end)) {
+                return redirect()->back()->with('error', 'Enrollment period is closed.');
+            }
+        }
+
         $existing = SubscribeTransaction::where('user_id', $user->id)
             ->where('course_id', $course->id)
             ->where('is_paid', true)
@@ -172,6 +180,9 @@ public function store(StoreCourseRequest $request)
 {
     $data = $request->validated();
 
+    $data['enrollment_start'] = $request->input('enrollment_start');
+    $data['enrollment_end'] = $request->input('enrollment_end');
+
     // Upload thumbnail
     if ($request->hasFile('thumbnail')) {
         $path = $request->file('thumbnail')->store('thumbnails', 'public');
@@ -187,7 +198,7 @@ public function store(StoreCourseRequest $request)
     // ✅ Buat Modul Default
     $module = CourseModule::create([
         'course_id' => $course->id,
-        'title' => 'Modul 1',
+        'name' => 'Modul 1',
         'description' => 'Modul default',
         'order' => 1,
     ]);
@@ -233,6 +244,7 @@ public function store(StoreCourseRequest $request)
         'modules.videos',
         'modules.materials',
         'modules.tasks',
+        'meetings',
     ]);
 
     return view('admin.courses.show', compact('course'));
@@ -262,6 +274,9 @@ public function store(StoreCourseRequest $request)
     {
         DB::transaction(function () use ($request, $course) {
             $validated = $request->validated();
+
+            $validated['enrollment_start'] = $request->input('enrollment_start');
+            $validated['enrollment_end'] = $request->input('enrollment_end');
 
             if (Auth::user()->hasRole('admin') && $request->filled('trainer_id')) {
                 $course->trainer_id = $request->input('trainer_id');

@@ -81,16 +81,23 @@
 
             <!-- Course List -->
             <div class="flex-1">
-                <div id="courseContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div id="courseContent" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                     @foreach($courses as $course)
                     <div class="flex flex-col rounded-xl bg-white overflow-hidden transition-all hover:ring-2 hover:ring-[#FF6129]">
-                        <a href="{{ route('front.details', $course->slug) }}" class="w-full h-48 overflow-hidden">
-                            <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
-                        </a>
+                        <a href="{{ route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
+                        <img src="{{ asset(path: 'storage/' . $course->thumbnail) }}" alt="thumbnail" class="w-full h-full object-cover">                        </a>
                         <div class="p-4 flex flex-col gap-2">
                             <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:underline">{{ $course->name }}</a>
                             <p class="text-sm text-gray-600">Trainer: {{ $course->trainer?->user?->name ?? 'Unknown' }}</p>
                             <p class="text-sm text-gray-600">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
+                            @if($course->enrollment_start || $course->enrollment_end)
+                                <p class="text-xs text-gray-500">
+                                    Enrollment:
+                                    {{ $course->enrollment_start ? $course->enrollment_start->format('d M Y') : '-' }}
+                                    -
+                                    {{ $course->enrollment_end ? $course->enrollment_end->format('d M Y') : '-' }}
+                                </p>
+                            @endif
                             <p class="font-semibold">{{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}</p>
                             <a href="{{ route('front.details', $course->slug) }}" class="mt-2 inline-block bg-[#FF6129] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#e85520] transition-all">Lihat Detail</a>
                         </div>

@@ -240,6 +240,8 @@ class TraineeSeeder extends Seeder
                 'thumbnail' => '/images/courses/' . $courseData['slug'] . '.jpg',
                 'trainer_id' => $defaultTrainer->id,
                 'created_at' => $faker->dateTimeBetween('-1 year', '-6 months'),
+                'enrollment_start' => now()->subWeeks(1),
+                'enrollment_end' => now()->addWeeks(3),
             ];
 
             // Add course_mode_id if it exists

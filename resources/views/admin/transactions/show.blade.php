@@ -45,7 +45,7 @@
                         </div>
                     </div>
                     <div>
-                        <img src="{{Storage::url($subscribeTransaction->proof)}}" alt="{{Storage::url($subscribeTransaction->proof)}}">
+                        <img src="{{Storage::url(path: $subscribeTransaction->proof)}}" alt="{{Storage::url($subscribeTransaction->proof)}}">
                     </div>
                 </div>
                 @if($subscribeTransaction->is_paid)

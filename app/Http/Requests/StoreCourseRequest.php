@@ -33,6 +33,8 @@ class StoreCourseRequest extends FormRequest
             'trainer_id' => 'nullable|exists:trainers,id',
             'course_keypoints.*' => 'nullable|string|max:255',
             'path_trailer' => 'required|string|max:255',
+            'enrollment_start' => 'nullable|date',
+            'enrollment_end' => 'nullable|date|after_or_equal:enrollment_start',
 
         ];
     }

@@ -3,7 +3,7 @@
     <div class="course-card w-1/3 px-3 pb-[70px] mt-[2px]">
         <div class="flex flex-col rounded-t-[12px] rounded-b-[24px] gap-[32px] bg-white w-full pb-[10px] overflow-hidden transition-all duration-300 hover:ring-2 hover:ring-[#FF6129]">
             <a href="{{ route('front.details', $course->slug) }}" class="thumbnail w-full h-[200px] shrink-0 rounded-[10px] overflow-hidden">
-                <img src="{{ $course->thumbnail_url }}" class="w-full h-full object-cover" alt="thumbnail">
+            <img src="{{ asset(path: 'storage/' . $course->thumbnail) }}" class="rounded-2xl object-cover w-[120px] h-[90px]" alt="thumbnail">
             </a>
             <div class="flex flex-col px-4 gap-[10px]">
                 <a href="{{ route('front.details', $course->slug) }}" class="font-semibold text-lg line-clamp-2 hover:line-clamp-none min-h-[56px]">{{ $course->name }}</a>
@@ -11,6 +11,14 @@
                     {{ $course->price > 0 ? 'Rp ' . number_format($course->price, 0, ',', '.') : 'FREE' }}
                 </div>
                 <p class="text-sm text-[#6D7786]">{{ $course->mode->name ?? '' }} - {{ $course->level->name ?? '' }}</p>
+                @if($course->enrollment_start || $course->enrollment_end)
+                <p class="text-xs text-gray-500">
+                    Enrollment:
+                    {{ $course->enrollment_start ? $course->enrollment_start->format('d M Y') : '-' }}
+                    -
+                    {{ $course->enrollment_end ? $course->enrollment_end->format('d M Y') : '-' }}
+                </p>
+                @endif
 
                 <form action="{{ route('cart.store', $course->slug) }}" method="POST">
                     @csrf

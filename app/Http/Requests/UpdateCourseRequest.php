@@ -29,10 +29,12 @@ class UpdateCourseRequest extends FormRequest
             'category_id' => 'required|string|max:255',
             'course_mode_id' => 'required|exists:course_modes,id',
             'course_level_id' => 'required|exists:course_levels,id',
-            'thumbnail' => 'sometimes|string|max:255',
+            'thumbnail' => 'nullable|file|image|mimes:jpeg,png,jpg,gif,webp|max:2048',
             'price' => 'required|numeric|min:0',
             'trainer_id' => 'nullable|exists:trainers,id',
             'course_keypoints.*' => 'nullable|string|max:255',
+            'enrollment_start' => 'nullable|date',
+            'enrollment_end' => 'nullable|date|after_or_equal:enrollment_start',
         ];
     }
 }

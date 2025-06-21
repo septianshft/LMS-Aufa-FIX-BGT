@@ -32,6 +32,8 @@ class DatabaseSeeder extends Seeder
         $this->command->info('🎓 Creating trainee with LMS completion data...');
         $this->call(TraineeSeeder::class);
 
+        $this->call(CourseMeetingSeeder::class);
+
         $this->command->info('✅ Seeding completed successfully!');
         $this->displaySystemSummary();
     }

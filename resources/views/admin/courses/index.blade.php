@@ -17,8 +17,9 @@
             @forelse($courses as $course)
                 <div class="item-card flex flex-col md:flex-row gap-y-10 justify-between md:items-center">
                     <div class="flex flex-row items-center gap-x-3">
-                        <img src="{{Storage::url($course->thumbnail)}}" alt="" class="rounded-2xl object-cover w-[120px] h-[90px]">
-                        <div class="flex flex-col">
+                    <img src="{{ asset(path: 'storage/' . $course->thumbnail) }}" class="rounded-2xl object-cover w-[120px] h-[90px]" alt="thumbnail">
+                    
+                    <div class="flex flex-col">
                             <h3 class="text-indigo-950 text-xl font-bold">{{ $course->name }}</h3>
                             <p class="text-slate-500 text-sm">{{$course->category->name}}</p>
                         </div>
@@ -39,7 +40,7 @@
                         <a href="{{ route('admin.courses.show', $course)}}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
                             Manage
                         </a>
-                        <form action="{{ route('admin.courses.destroy', $course) }}" method="POST">
+                        <form action="{{ route('admin.courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-bold py-4 px-6 bg-red-700 text-white rounded-full">

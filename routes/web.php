@@ -21,6 +21,7 @@ use App\Http\Controllers\{
     SubscribeTransactionController,
     TrainerController,
     FinalQuizController,
+    CourseMeetingController,
     QuizAttemptController, // Pastikan ini sudah ada
     CertificateController,
     TalentAdminController,
@@ -110,6 +111,7 @@ Route::middleware('auth')->group(function () {
             Route::resource('courses', CourseController::class);
             Route::resource('course_videos', CourseVideoController::class);
             Route::resource('course_modules', CourseModuleController::class);
+            Route::resource('courses.meetings', CourseMeetingController::class)->except('show');
 
             Route::get('/add/video/{course:id}', [CourseVideoController::class, 'create'])->name('course.add_video');
             Route::post('/add/video/save/{course:id}', [CourseVideoController::class, 'store'])->name('course.add_video.save');
@@ -130,6 +132,9 @@ Route::middleware('auth')->group(function () {
                 Route::post('module/{courseModule}/videos', [ModuleVideoController::class, 'store'])->name('videos.store');
                 Route::post('module/{courseModule}/materials', [ModuleMaterialController::class, 'store'])->name('materials.store');
                 Route::post('module/{courseModule}/tasks', [ModuleTaskController::class, 'store'])->name('tasks.store');
+                Route::delete('videos/{courseVideo}', [ModuleVideoController::class, 'destroy'])->name('videos.destroy');
+                Route::delete('materials/{courseMaterial}', [ModuleMaterialController::class, 'destroy'])->name('materials.destroy');
+                Route::delete('tasks/{moduleTask}', [ModuleTaskController::class, 'destroy'])->name('tasks.destroy');
             });
 
           // Final Quiz Management Routes

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Certificate;
 use App\Models\CourseModule;
+use App\Models\CourseMeeting;
 use Illuminate\Support\Facades\Storage;
 
 class Course extends Model
@@ -23,7 +24,14 @@ class Course extends Model
         'category_id',
         'trainer_id',
         'course_mode_id',
-        'course_level_id'
+        'course_level_id',
+        'enrollment_start',
+        'enrollment_end'
+    ];
+
+    protected $casts = [
+        'enrollment_start' => 'datetime',
+        'enrollment_end' => 'datetime',
     ];
 
     public function category(){
@@ -63,7 +71,7 @@ class Course extends Model
     public function getThumbnailUrlAttribute(): string
     {
         if ($this->thumbnail && Storage::disk('public')->exists($this->thumbnail)) {
-            return Storage::url($this->thumbnail);
+            return Storage::disk('public')->url($this->thumbnail);
         }
 
         return asset('assets/default-course.jpg');
@@ -94,6 +102,11 @@ public function finalQuizzes()
     public function certificates()
     {
         return $this->hasMany(Certificate::class);
+    }
+
+    public function meetings()
+    {
+        return $this->hasMany(CourseMeeting::class);
     }
 
 

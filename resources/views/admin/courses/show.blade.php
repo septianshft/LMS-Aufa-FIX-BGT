@@ -12,8 +12,8 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-10 flex flex-col gap-y-5">
                 <div class="item-card flex flex-row gap-y-10 justify-between items-center">
                     <div class="flex flex-row items-center gap-x-3">
-                        <img src="{{Storage::url($course->thumbnail)}}" alt="" class="rounded-2xl object-cover w-[200px] h-[150px]">
-                        <div class="flex flex-col">
+                    <img src="{{ asset(path: 'storage/' . $course->thumbnail) }}" class="rounded-2xl object-cover w-[120px] h-[90px]" alt="thumbnail">
+                    <div class="flex flex-col">
                             <h3 class="text-indigo-950 text-xl font-bold">{{$course->name}}</h3>
                             <p class="text-slate-500 text-sm">{{$course->category->name}}</p>
                         </div>
@@ -26,7 +26,7 @@
                         <a href="{{ route('admin.courses.edit', $course) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
                             Edit Course
                         </a>
-                        <form action="{{ route('admin.courses.destroy', $course) }}" method="POST">
+                        <form action="{{ route('admin.courses.destroy', $course) }}" method="POST" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-bold py-4 px-6 bg-red-700 text-white rounded-full">
@@ -35,6 +35,17 @@
                         </form>
                     </div>
                 </div>
+
+                @if($course->enrollment_start || $course->enrollment_end)
+                    <div>
+                        <p class="text-slate-500 text-sm">Enrollment Period</p>
+                        <p class="text-indigo-950 text-md font-semibold">
+                            {{ $course->enrollment_start ? $course->enrollment_start->format('d M Y H:i') : '-' }}
+                            -
+                            {{ $course->enrollment_end ? $course->enrollment_end->format('d M Y H:i') : '-' }}
+                        </p>
+                    </div>
+                @endif
 
                 <hr class="my-5">
 
@@ -63,7 +74,7 @@
                         <a href="{{ route('admin.course_videos.edit', $video) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
                             Edit Video
                         </a>
-                        <form action="{{ route('admin.course_videos.destroy', $video) }}" method="POST">
+                        <form action="{{ route('admin.course_videos.destroy', $video) }}" method="POST" onsubmit="return confirm('Are you sure?')">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="font-bold py-4 px-6 bg-red-700 text-white rounded-full">
@@ -117,6 +128,28 @@
                                     <li>{{ $t->name }}</li>
                                 @endforeach
                             </ul>
+                        </div>
+                    </div>
+                @endforeach
+
+                <hr class="my-5">
+
+                <div class="flex flex-row justify-between items-center mb-4">
+                    <div class="flex flex-col">
+                        <h3 class="text-indigo-950 text-xl font-bold">Meetings</h3>
+                        <p class="text-slate-500 text-sm">{{ $course->meetings->count() }}</p>
+                    </div>
+                    <a href="{{ route('admin.courses.meetings.index', $course) }}" class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">Manage Meetings</a>
+                </div>
+
+                @foreach($course->meetings as $meeting)
+                    <div class="border rounded p-4 mb-3 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-semibold">{{ $meeting->title }}</h4>
+                            <p class="text-sm text-gray-600">{{ $meeting->start_datetime->format('d M Y H:i') }} - {{ $meeting->end_datetime->format('d M Y H:i') }}</p>
+                            @if($meeting->location)
+                                <p class="text-sm text-gray-600">{{ $meeting->location }}</p>
+                            @endif
                         </div>
                     </div>
                 @endforeach

@@ -96,6 +96,18 @@
                     </div>
 
                     <div class="mt-4">
+                        <x-input-label for="enrollment_start" :value="__('Enrollment Start')" />
+                        <x-text-input id="enrollment_start" class="block mt-1 w-full" type="datetime-local" name="enrollment_start" :value="old('enrollment_start')" />
+                        <x-input-error :messages="$errors->get('enrollment_start')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
+                        <x-input-label for="enrollment_end" :value="__('Enrollment End')" />
+                        <x-text-input id="enrollment_end" class="block mt-1 w-full" type="datetime-local" name="enrollment_end" :value="old('enrollment_end')" />
+                        <x-input-error :messages="$errors->get('enrollment_end')" class="mt-2" />
+                    </div>
+
+                    <div class="mt-4">
                         <x-input-label for="about" :value="__('about')" />
                         <textarea name="about" id="about" cols="30" rows="5" class="border border-slate-300 rounded-xl w-full"></textarea>
                         <x-input-error :messages="$errors->get('about')" class="mt-2" />
