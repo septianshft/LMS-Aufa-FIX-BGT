@@ -132,6 +132,20 @@ class User extends Authenticatable
     // TALENT SCOUTING INTEGRATION METHODS
 
     /**
+     * Standardized accessor for talent_skills field.
+     * Always returns an array, handles JSON string, array, or null.
+     */
+    public function getTalentSkillsArray(): array
+    {
+        $talents_skills = $this->talent_skills;
+        // Handle case where talent_skills might be a string (legacy data)
+        if (is_string($talents_skills)) {
+            $talents_skills = json_decode($talents_skills, true) ?? [];
+        }
+        // Ensure we have an array
+        return is_array($talents_skills) ? $talents_skills : [];
+    }
+    /**
      * Add skill from course completion - simplified approach
      */
     public function addSkillFromCourse($course)
@@ -509,21 +523,6 @@ class User extends Authenticatable
         return $proficiencies;
     }
 
-    /**
-     * Get talent skills as array, handling both string and array formats
-     */
-    public function getTalentSkillsArray(): array
-    {
-        $talents_skills = $this->talent_skills;
-
-        // Handle case where talent_skills might be a string (legacy data)
-        if (is_string($talents_skills)) {
-            $talents_skills = json_decode($talents_skills, true) ?? [];
-        }
-
-        // Ensure we have an array
-        return is_array($talents_skills) ? $talents_skills : [];
-    }
 
     /**
      * Get conversion suggestion status

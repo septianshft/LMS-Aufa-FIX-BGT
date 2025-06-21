@@ -181,28 +181,22 @@
                 </table>
 
                 <!-- Skills -->
-                @if($request->talent->user->talent_skills)
+                @php
+                    $skills = $request->talent->user->getTalentSkillsArray();
+                @endphp
+                @if(is_array($skills) && count($skills) > 0)
                 <div class="section-title">Skills & Expertise</div>
                 <table>
                     <tr>
                         <th>Skills</th>
                         <td>
-                            @php
-                                $skills = is_string($request->talent->user->talent_skills)
-                                    ? json_decode($request->talent->user->talent_skills, true)
-                                    : $request->talent->user->talent_skills;
-                            @endphp
-                            @if(is_array($skills))
-                                @foreach($skills as $skill)
-                                    @if(is_array($skill))
-                                        {{ $skill['skill_name'] ?? $skill['name'] ?? 'Unknown' }}@if(!$loop->last), @endif
-                                    @else
-                                        {{ $skill }}@if(!$loop->last), @endif
-                                    @endif
-                                @endforeach
-                            @else
-                                No skills listed
-                            @endif
+                            @foreach($skills as $skill)
+                                @if(is_array($skill))
+                                    {{ $skill['skill_name'] ?? $skill['name'] ?? 'Unknown' }}@if(!$loop->last), @endif
+                                @else
+                                    {{ $skill }}@if(!$loop->last), @endif
+                                @endif
+                            @endforeach
                         </td>
                     </tr>
                 </table>

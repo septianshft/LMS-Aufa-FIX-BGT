@@ -8,31 +8,27 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database for trainee-to-talent conversion testing.
-     * Clean environment: only essential accounts + trainee with course completion data.
+     * Seed the application's database with clean essential accounts only.
+     * LMS system + trainee, recruiter, and talent admin accounts.
      */
     public function run(): void
     {
-        $this->command->info('🌱 Starting seeding for trainee-to-talent conversion testing...');
+        $this->command->info('🌱 Starting clean seeding with essential accounts...');
 
         // Core system setup
         $this->command->info('📋 Creating roles and permissions...');
         $this->call(RolePermissionSeeder::class);
 
-        // LMS system infrastructure (needed for course completion tracking)
+        // LMS system infrastructure (untouched)
         $this->command->info('📚 Setting up LMS infrastructure...');
         $this->call(CourseLevelSeeder::class);
         $this->call(CourseModeSeeder::class);
 
-        // Essential system users only - no sample talents
-        $this->command->info('👥 Creating essential system users...');
+        // Essential accounts: trainee, recruiter, talent admin only
+        $this->command->info('👥 Creating essential accounts...');
         $this->call(SystemUserSeeder::class);
 
-        // Talent scouting system (disabled for clean testing)
-        $this->command->info('🎯 Setting up talent scouting system...');
-        $this->call(TalentScoutingSeeder::class);
-
-        // Trainee with course completion data for conversion testing
+        // Trainee with course completion data
         $this->command->info('🎓 Creating trainee with LMS completion data...');
         $this->call(TraineeSeeder::class);
 
@@ -43,7 +39,7 @@ class DatabaseSeeder extends Seeder
     private function displaySystemSummary()
     {
         $this->command->info('');
-        $this->command->info('📊 CLEAN SYSTEM SETUP FOR CONVERSION TESTING:');
+        $this->command->info('📊 CLEAN SYSTEM SETUP:');
         $this->command->info('═══════════════════════════════════════════════');
 
         // User statistics
@@ -54,9 +50,6 @@ class DatabaseSeeder extends Seeder
         $traineeCount = User::whereHas('roles', function($query) {
             $query->where('name', 'trainee');
         })->count();
-        $talentCount = User::whereHas('roles', function($query) {
-            $query->where('name', 'talent');
-        })->count();
         $recruiterCount = User::whereHas('roles', function($query) {
             $query->where('name', 'recruiter');
         })->count();
@@ -64,7 +57,6 @@ class DatabaseSeeder extends Seeder
         $this->command->info("👥 TOTAL USERS: {$userCount}");
         $this->command->info("🛠️ Talent Admins: {$talentAdminCount}");
         $this->command->info("🎓 Trainees: {$traineeCount}");
-        $this->command->info("⭐ Talents: {$talentCount}");
         $this->command->info("👔 Recruiters: {$recruiterCount}");
 
         $this->command->info('');
@@ -80,19 +72,9 @@ class DatabaseSeeder extends Seeder
         $this->command->info('🔐 Login: http://127.0.0.1:8000/login');
         $this->command->info('🛠️ Talent Admin: http://127.0.0.1:8000/talent-admin/dashboard');
         $this->command->info('👔 Recruiter: http://127.0.0.1:8000/recruiter/dashboard');
-        $this->command->info('⭐ Talent: http://127.0.0.1:8000/talent/dashboard');
 
         $this->command->info('');
-        $this->command->info('🔄 TRAINEE-TO-TALENT CONVERSION TEST:');
-        $this->command->info('═══════════════════════════════════════════════');
-        $this->command->info('1. Login as trainee@test.com → View completed courses');
-        $this->command->info('2. Navigate to Profile → Opt-in as talent');
-        $this->command->info('3. Logout and login again with same credentials');
-        $this->command->info('4. Verify talent role access and auto-generated skills');
-        $this->command->info('5. Test recruiter can find and contact the new talent');
-
-        $this->command->info('');
-        $this->command->info('✅ READY FOR CONVERSION TESTING!');
+        $this->command->info('✅ CLEAN SYSTEM READY!');
         $this->command->info('');
     }
 }

@@ -19,13 +19,11 @@ class MockLMSDataService
         // Simulate LMS scoring algorithm
         $user = \App\Models\User::find($userId);
 
-        if (!$user || !$user->talent_skills) {
+        if (!$user) {
             return 0;
         }
 
-        $skills = is_string($user->talent_skills)
-            ? json_decode($user->talent_skills, true)
-            : $user->talent_skills;
+        $skills = $user->getTalentSkillsArray();
 
         if (!$skills) return 0;
 
@@ -136,9 +134,7 @@ class MockLMSDataService
 
         if (!$user) return null;
 
-        $skills = is_string($user->talent_skills)
-            ? json_decode($user->talent_skills, true)
-            : ($user->talent_skills ?? []);
+        $skills = $user->getTalentSkillsArray();
 
         return [
             'user_id' => $userId,

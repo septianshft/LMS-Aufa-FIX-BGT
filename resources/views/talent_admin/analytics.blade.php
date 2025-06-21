@@ -29,25 +29,16 @@
             <button onclick="refreshAnalytics()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                 <i class="fas fa-sync-alt mr-2"></i>Perbarui Data
             </button>
-            <button id="auto-refresh-toggle" onclick="toggleAutoRefresh()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors shadow-sm">
-                <i class="fas fa-sync-alt mr-2"></i>Auto-refresh
-            </button>
             <div class="relative">
                 <button onclick="document.getElementById('export-menu').classList.toggle('hidden')" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors shadow-sm">
                     <i class="fas fa-download mr-2"></i>Ekspor
                 </button>
                 <div id="export-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-10">
-                    <button onclick="exportAnalytics('pdf'); document.getElementById('export-menu').classList.add('hidden')" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-t-lg">
+                    <button onclick="exportAnalytics('pdf'); document.getElementById('export-menu').classList.add('hidden')" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-lg">
                         <i class="fas fa-file-pdf text-red-600 mr-2"></i>Export PDF
-                    </button>
-                    <button onclick="exportAnalytics('excel'); document.getElementById('export-menu').classList.add('hidden')" class="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-b-lg">
-                        <i class="fas fa-file-excel text-green-600 mr-2"></i>Export Excel
                     </button>
                 </div>
             </div>
-            <a href="{{ route('talent_admin.dashboard') }}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors shadow-sm">
-                <i class="fas fa-arrow-left mr-2"></i>Kembali ke Dashboard
-            </a>
         </div>
     </div>
 
@@ -70,27 +61,27 @@
                             @php $stages = $skillAnalytics['conversion_funnel']['funnel_stages']; @endphp
                             <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
                                 <span class="font-medium">👥 Total Pengguna</span>
-                                <span class="text-2xl font-bold text-blue-600">{{ number_format($stages['total_users']) }}</span>
+                                <span class="text-2xl font-bold text-blue-600">{{ number_format($stages['total_users'] ?? 0) }}</span>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-indigo-50 rounded-lg">
                                 <span class="font-medium">📚 Peserta Terdaftar</span>
-                                <span class="text-2xl font-bold text-indigo-600">{{ number_format($stages['registered_trainees']) }}</span>
+                                <span class="text-2xl font-bold text-indigo-600">{{ number_format($stages['registered_trainees'] ?? 0) }}</span>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
                                 <span class="font-medium">✅ Penyelesaian Kursus</span>
-                                <span class="text-2xl font-bold text-purple-600">{{ number_format($stages['course_completions']) }}</span>
+                                <span class="text-2xl font-bold text-purple-600">{{ number_format($stages['course_completions'] ?? 0) }}</span>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-pink-50 rounded-lg">
                                 <span class="font-medium">🎯 Perolehan Keahlian</span>
-                                <span class="text-2xl font-bold text-pink-600">{{ number_format($stages['skill_acquisitions']) }}</span>
+                                <span class="text-2xl font-bold text-pink-600">{{ number_format($stages['skill_acquisitions'] ?? 0) }}</span>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg">
                                 <span class="font-medium">💼 Daftar Talent</span>
-                                <span class="text-2xl font-bold text-green-600">{{ number_format($stages['talent_opt_ins']) }}</span>
+                                <span class="text-2xl font-bold text-green-600">{{ number_format($stages['talent_opt_ins'] ?? 0) }}</span>
                             </div>
                             <div class="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
                                 <span class="font-medium">🎉 Penempatan Berhasil</span>
-                                <span class="text-2xl font-bold text-yellow-600">{{ number_format($stages['successful_placements']) }}</span>
+                                <span class="text-2xl font-bold text-yellow-600">{{ number_format($stages['successful_placements'] ?? 0) }}</span>
                             </div>
                         @endif
                     </div>
@@ -108,7 +99,7 @@
                 </div>
                 <div class="p-6">
                     <div class="text-center mb-6">
-                        <div class="text-3xl font-bold text-blue-600">{{ $conversionAnalytics['conversion_ready'] }}</div>
+                        <div class="text-3xl font-bold text-blue-600">{{ $conversionAnalytics['conversion_ready'] ?? 0 }}</div>
                         <div class="text-gray-600">Siap Konversi</div>
                     </div>
 
@@ -116,26 +107,26 @@
                         @if(isset($conversionAnalytics['readiness_distribution']))
                             <div class="flex justify-between items-center">
                                 <span class="text-sm">🔥 Tinggi (80-100)</span>
-                                <span class="font-bold text-red-600">{{ $conversionAnalytics['readiness_distribution']['high'] }}</span>
+                                <span class="font-bold text-red-600">{{ $conversionAnalytics['readiness_distribution']['high'] ?? 0 }}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-sm">🟡 Sedang (60-79)</span>
-                                <span class="font-bold text-yellow-600">{{ $conversionAnalytics['readiness_distribution']['medium'] }}</span>
+                                <span class="font-bold text-yellow-600">{{ $conversionAnalytics['readiness_distribution']['medium'] ?? 0 }}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-sm">🟢 Rendah (40-59)</span>
-                                <span class="font-bold text-green-600">{{ $conversionAnalytics['readiness_distribution']['low'] }}</span>
+                                <span class="font-bold text-green-600">{{ $conversionAnalytics['readiness_distribution']['low'] ?? 0 }}</span>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-sm">⚪ Sangat Rendah (0-39)</span>
-                                <span class="font-bold text-gray-600">{{ $conversionAnalytics['readiness_distribution']['very_low'] }}</span>
+                                <span class="font-bold text-gray-600">{{ $conversionAnalytics['readiness_distribution']['very_low'] ?? 0 }}</span>
                             </div>
                         @endif
                     </div>
 
                     <div class="mt-6 p-4 bg-blue-50 rounded-lg">
                         <div class="text-center">
-                            <div class="text-lg font-bold text-blue-600">{{ $conversionAnalytics['average_readiness_score'] }}%</div>
+                            <div class="text-lg font-bold text-blue-600">{{ $conversionAnalytics['average_readiness_score'] ?? 0 }}%</div>
                             <div class="text-xs text-blue-600">Skor Kesiapan Rata-rata</div>
                         </div>
                     </div>
@@ -160,7 +151,7 @@
                             @foreach(array_slice($skillAnalytics['skill_categories'], 0, 8, true) as $category => $count)
                                 <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                                     <span class="font-medium text-gray-700">{{ $category }}</span>
-                                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">{{ $count }}</span>
+                                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-bold">{{ $count ?? 0 }}</span>
                                 </div>
                             @endforeach
                         @endif
@@ -200,22 +191,16 @@
                             <div class="mt-6">
                                 <h3 class="font-bold text-gray-700 mb-3">🏆 Keahlian Paling Populer</h3>
                                 <div class="space-y-2">
-                                    @php
-                                        $allSkills = collect();
-                                        foreach(\App\Models\User::whereHas('talent')->get() as $user) {
-                                            $userSkills = $user->getSkills();
-                                            foreach($userSkills as $skill) {
-                                                $allSkills->push($skill['skill_name']);
-                                            }
-                                        }
-                                        $popularSkills = $allSkills->countBy()->sortDesc()->take(5);
-                                    @endphp
-                                    @foreach($popularSkills as $skill => $count)
-                                        <div class="flex justify-between items-center text-sm">
-                                            <span class="text-gray-600">{{ $skill }}</span>
-                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">{{ $count }}</span>
-                                        </div>
-                                    @endforeach
+                                    @if(isset($popularSkills) && count($popularSkills) > 0)
+                                        @foreach($popularSkills as $skill => $count)
+                                            <div class="flex justify-between items-center text-sm">
+                                                <span class="text-gray-600">{{ $skill }}</span>
+                                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-bold">{{ $count }}</span>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <div class="text-gray-400 text-sm">Tidak ada data keahlian populer.</div>
+                                    @endif
                                 </div>
                             </div>
                         @endif
@@ -290,7 +275,8 @@
                                         </td>
                                         <td class="py-4 px-4">
                                             <button onclick="suggestConversion({{ $candidate['user']['id'] }})"
-                                                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors">
+                                                    class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-green-700 transition-colors"
+                                                    aria-label="Sarankan konversi untuk {{ $candidate['user']['name'] }}">
                                                 <i class="fas fa-paper-plane mr-1"></i>
                                                 Sarankan
                                             </button>
@@ -554,84 +540,22 @@ function suggestConversion(userId) {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Dashboard analitik dimuat');
 
-    // Add auto-refresh option (optional - can be enabled by admin)
-    let autoRefreshEnabled = false;
-    let autoRefreshInterval;
-
-    // Auto-refresh toggle function
-    window.toggleAutoRefresh = function() {
-        autoRefreshEnabled = !autoRefreshEnabled;
-        const toggleBtn = document.getElementById('auto-refresh-toggle');
-
-        if (autoRefreshEnabled) {
-            // Start auto-refresh every 5 minutes
-            autoRefreshInterval = setInterval(() => {
-                console.log('Auto-refreshing analytics...');
-                refreshAnalytics();
-            }, 300000); // 5 minutes
-
-            if (toggleBtn) {
-                toggleBtn.innerHTML = '<i class="fas fa-stop mr-2"></i>Stop Auto-refresh';
-                toggleBtn.classList.remove('bg-gray-600');
-                toggleBtn.classList.add('bg-red-600', 'hover:bg-red-700');
-            }
-
-            // Show notification
-            Swal.fire({
-                icon: 'success',
-                title: 'Auto-refresh Aktif',
-                text: 'Data akan diperbarui otomatis setiap 5 menit',
-                timer: 3000,
-                showConfirmButton: false
-            });
-        } else {
-            // Stop auto-refresh
-            if (autoRefreshInterval) {
-                clearInterval(autoRefreshInterval);
-            }
-
-            if (toggleBtn) {
-                toggleBtn.innerHTML = '<i class="fas fa-sync-alt mr-2"></i>Auto-refresh';
-                toggleBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                toggleBtn.classList.add('bg-gray-600');
-            }
-
-            // Show notification
-            Swal.fire({
-                icon: 'info',
-                title: 'Auto-refresh Dinonaktifkan',
-                text: 'Data tidak akan diperbarui otomatis',
-                timer: 3000,
-                showConfirmButton: false
-            });
-        }
-    };
+    // (Auto-refresh logic removed for simplicity)
 
     // Export analytics function
     window.exportAnalytics = function(format) {
-        Swal.fire({
-            title: 'Ekspor Data Analytics',
-            text: `Menyiapkan file ${format.toUpperCase()}...`,
-            icon: 'info',
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        // Simulate export (replace with actual endpoint when available)
-        setTimeout(() => {
+        if (format === 'pdf') {
+            // Use Laravel route name if available
+            const url = "{{ route('talent_admin.export_analytics_pdf') }}";
+            window.open(url, '_blank');
+        } else {
             Swal.fire({
-                icon: 'success',
-                title: 'Ekspor Berhasil!',
-                text: `File ${format.toUpperCase()} telah diunduh`,
-                confirmButtonColor: '#16a34a'
+                icon: 'error',
+                title: 'Format tidak didukung',
+                text: 'Hanya ekspor PDF yang tersedia.',
+                confirmButtonColor: '#dc2626'
             });
-
-            // In real implementation, trigger file download
-            // window.open(`/talent-admin/analytics/export?format=${format}`, '_blank');
-        }, 2000);
+        }
     };
 
     // Add keyboard shortcuts
@@ -667,8 +591,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(event) {
         const exportMenu = document.getElementById('export-menu');
         const exportButton = event.target.closest('button[onclick*="export-menu"]');
-
-        if (!exportButton && !exportMenu.contains(event.target)) {
+        if (exportMenu && !exportButton && !exportMenu.contains(event.target)) {
             exportMenu.classList.add('hidden');
         }
     });

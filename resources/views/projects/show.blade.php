@@ -144,51 +144,40 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap gap-3">
-                @if($project->status === 'pending_admin')
+                @php
+                    $isRecruiter = auth()->user() && auth()->user()->hasRole('recruiter');
+                    $isProjectOwner = auth()->user() && auth()->user()->recruiter && auth()->user()->recruiter->id === $project->recruiter_id;
+                    $hasPendingExtensions = $project->extensions()->where('status', 'pending')->exists();
+                @endphp
+
+
+
+                @if($isRecruiter && $isProjectOwner && $project->status === 'pending_admin')
                     <a href="{{ route('projects.edit', $project) }}"
                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
                         <i class="fas fa-edit mr-2"></i>Edit Project
                     </a>
                 @endif
 
-                @if($project->status === 'approved')
+                @if($isRecruiter && $isProjectOwner && $project->status === 'approved')
                     <button onclick="showProjectTalentModal()"
                             class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
-                        <i class="fas fa-user-plus mr-2"></i>Assign Talent
+                        <i class="fas fa-user-plus mr-2"></i>Request Talent
                     </button>
                 @endif
 
-                @if(in_array($project->status, ['active', 'overdue']) && !$project->extensions()->pending()->exists())
+                @if($isRecruiter && $isProjectOwner && in_array($project->status, ['active', 'overdue']) && !$hasPendingExtensions)
                     <button onclick="showExtensionModal()"
                             class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
                         <i class="fas fa-clock mr-2"></i>Request Extension
                     </button>
                 @endif
 
-                @if(in_array($project->status, ['active', 'overdue']) && $project->status !== 'closure_requested')
+                @if($isRecruiter && $isProjectOwner && in_array($project->status, ['active', 'overdue']) && $project->status !== 'closure_requested')
                     <button onclick="showClosureRequestModal()"
                             class="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
                         <i class="fas fa-times mr-2"></i>Request Closure
                     </button>
-                @endif
-
-                @if($project->status === 'closure_requested')
-                    <div class="flex space-x-3">
-                        <form action="{{ route('projects.approve-closure', $project) }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" onclick="return confirm('Are you sure you want to approve this closure request?')"
-                                    class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
-                                <i class="fas fa-check mr-2"></i>Approve Closure
-                            </button>
-                        </form>
-                        <form action="{{ route('projects.reject-closure', $project) }}" method="POST" class="inline">
-                            @csrf
-                            <button type="submit" onclick="return confirm('Are you sure you want to reject this closure request?')"
-                                    class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200">
-                                <i class="fas fa-ban mr-2"></i>Reject Closure
-                            </button>
-                        </form>
-                    </div>
                 @endif
             </div>
         </div>
@@ -225,7 +214,7 @@
             <div class="p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-semibold text-gray-900">Talent Management</h2>
-                    @if($project->status === 'approved')
+                    @if($isRecruiter && $isProjectOwner && $project->status === 'approved')
                         <div class="flex space-x-2">
                             @if($availableTalents->count() > 0)
                                 <button onclick="showProjectTalentModal()"
@@ -259,19 +248,51 @@
 
                     // Add talent requests
                     foreach($project->talentRequests as $request) {
-                        // Get talent name with multiple fallbacks
+                        // Get talent name with proper fallback chain
                         $talentName = 'Unknown Talent';
-                        if ($request->talent && $request->talent->user && $request->talent->user->name) {
-                            $talentName = $request->talent->user->name;
-                        } elseif ($request->talentUser && $request->talentUser->name) {
+
+                        // Use the helper method first
+                        $talentUser = $request->getTalentUser();
+                        if ($talentUser && $talentUser->name) {
+                            $talentName = $talentUser->name;
+                        }
+                        // Fallback to direct relationship checks
+                        elseif ($request->talentUser && $request->talentUser->name) {
                             $talentName = $request->talentUser->name;
+                        }
+                        elseif ($request->talent && $request->talent->user && $request->talent->user->name) {
+                            $talentName = $request->talent->user->name;
+                        }
+
+                        // Determine role description for talent request
+                        $roleDescription = 'Project Contributor';
+                        if (!empty($request->requirements)) {
+                            // Extract role from requirements if it looks like a role description
+                            $requirements = strtolower($request->requirements);
+                            if (strpos($requirements, 'developer') !== false) {
+                                $roleDescription = 'Developer';
+                            } elseif (strpos($requirements, 'designer') !== false) {
+                                $roleDescription = 'Designer';
+                            } elseif (strpos($requirements, 'manager') !== false) {
+                                $roleDescription = 'Project Manager';
+                            } elseif (strpos($requirements, 'analyst') !== false) {
+                                $roleDescription = 'Analyst';
+                            } elseif (strpos($requirements, 'engineer') !== false) {
+                                $roleDescription = 'Engineer';
+                            } else {
+                                // Use first few words of requirements as role if it's short
+                                $firstWords = implode(' ', array_slice(explode(' ', $request->requirements), 0, 3));
+                                if (strlen($firstWords) <= 30) {
+                                    $roleDescription = $firstWords;
+                                }
+                            }
                         }
 
                         $allTalentInteractions->push((object)[
                             'type' => 'talent_request',
                             'id' => $request->id,
                             'talent_name' => $talentName,
-                            'role' => $request->project_title ?? 'Not specified',
+                            'role' => $roleDescription,
                             'status' => $request->status,
                             'start_date' => $request->project_start_date,
                             'end_date' => $request->project_end_date,
@@ -286,46 +307,6 @@
                     // Sort by creation date (newest first)
                     $allTalentInteractions = $allTalentInteractions->sortByDesc('created_at');
                 @endphp
-
-                <!-- Debug Information (Remove this in production) -->
-                @if(config('app.debug') && request()->has('debug'))
-                    <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <h4 class="font-semibold text-yellow-800 mb-2">Debug Information:</h4>
-                        <p><strong>Total Assignments:</strong> {{ $project->assignments->count() }}</p>
-                        <p><strong>Total Talent Requests:</strong> {{ $project->talentRequests->count() }}</p>
-                        <p><strong>Total Interactions:</strong> {{ $allTalentInteractions->count() }}</p>
-
-                        @if($project->talentRequests->count() > 0)
-                            <div class="mt-3">
-                                <strong>Sample Talent Request Data:</strong>
-                                @php $sampleRequest = $project->talentRequests->first(); @endphp
-                                <ul class="list-disc list-inside text-sm text-yellow-700">
-                                    <li>ID: {{ $sampleRequest->id }}</li>
-                                    <li>Status: {{ $sampleRequest->status }}</li>
-                                    <li>Project Title: {{ $sampleRequest->project_title ?? 'NULL' }}</li>
-                                    <li>Budget Range: {{ $sampleRequest->budget_range ?? 'NULL' }}</li>
-                                    <li>Start Date: {{ $sampleRequest->project_start_date ?? 'NULL' }}</li>
-                                    <li>End Date: {{ $sampleRequest->project_end_date ?? 'NULL' }}</li>
-                                    <li>Talent ID: {{ $sampleRequest->talent_id ?? 'NULL' }}</li>
-                                    <li>Talent User ID: {{ $sampleRequest->talent_user_id ?? 'NULL' }}</li>
-                                </ul>
-                            </div>
-                        @endif
-
-                        @if($project->assignments->count() > 0)
-                            <div class="mt-3">
-                                <strong>Sample Assignment Data:</strong>
-                                @php $sampleAssignment = $project->assignments->first(); @endphp
-                                <ul class="list-disc list-inside text-sm text-yellow-700">
-                                    <li>ID: {{ $sampleAssignment->id }}</li>
-                                    <li>Status: {{ $sampleAssignment->status }}</li>
-                                    <li>Talent ID: {{ $sampleAssignment->talent_id ?? 'NULL' }}</li>
-                                    <li>Talent User ID: {{ $sampleAssignment->talent_user_id ?? 'NULL' }}</li>
-                                </ul>
-                            </div>
-                        @endif
-                    </div>
-                @endif
 
                 @if($allTalentInteractions->count() > 0)
                     <div class="space-y-4">
@@ -360,7 +341,7 @@
                                                         }
                                                     @endphp
                                                     @if($hasValidTalentLink)
-                                                        <button onclick="viewTalentDetails({{ $talentId }}, {{ $isUserId ? 'true' : 'false' }})"
+                                                        <button onclick='viewTalentDetails({{ json_encode($interaction->data) }})'
                                                                 class="text-blue-600 hover:text-blue-800 transition-colors cursor-pointer font-semibold hover:underline">
                                                             {{ $interaction->talent_name }}
                                                         </button>
@@ -477,7 +458,7 @@
                                                 }
                                             @endphp
                                             @if($hasValidTalentLink)
-                                                <button onclick="viewTalentDetails({{ $talentId }}, {{ $isUserId ? 'true' : 'false' }})"
+                                                <button onclick='viewTalentDetails({{ json_encode($interaction->data) }})'
                                                         class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center transition-colors">
                                                     <i class="fas fa-eye mr-1"></i>View Details
                                                 </button>
@@ -487,7 +468,7 @@
                                                 </span>
                                             @endif
 
-                                            @if($interaction->type === 'assignment' && in_array($interaction->status, ['assigned', 'accepted']))
+                                            @if($isRecruiter && $isProjectOwner && $interaction->type === 'assignment' && in_array($interaction->status, ['assigned', 'accepted']))
                                                 <div class="flex space-x-2">
                                                     <button onclick="editAssignment({{ $interaction->id }})"
                                                             class="text-blue-600 hover:text-blue-800 text-sm">
@@ -840,27 +821,25 @@
 @endif
 
 <!-- Talent Details Modal -->
-<div id="talentDetailsModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-2xl rounded-2xl bg-white">
-        <div class="mt-3">
-            <!-- Modal Header -->
-            <div class="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                <h3 class="text-2xl font-bold text-gray-900 flex items-center">
-                    <i class="fas fa-user-circle text-blue-600 mr-3"></i>
-                    Talent Details
-                </h3>
-                <button onclick="closeTalentDetailsModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
+<div id="talent-details-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-3xl shadow-lg rounded-md bg-white">
+        <div class="flex justify-between items-center pb-3">
+            <h3 class="text-2xl font-bold text-gray-900">Talent Details</h3>
+            <div class="modal-close cursor-pointer z-50" onclick="closeModal('talent-details-modal')">
+                <svg class="fill-current text-black" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+                    <path d="M14.53 4.53l-1.06-1.06L9 7.94 4.53 3.47 3.47 4.53 7.94 9l-4.47 4.47 1.06 1.06L9 10.06l4.47 4.47 1.06-1.06L10.06 9z"></path>
+                </svg>
             </div>
-
-            <!-- Modal Content -->
-            <div id="talentDetailsContent" class="space-y-6">
-                <!-- Loading state -->
-                <div class="text-center py-8">
-                    <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
-                    <p class="text-gray-600">Loading talent details...</p>
-                </div>
+        </div>
+        <div class="mt-4">
+            <div id="modal-talent-content"></div>
+            <div id="modal-loading-state" class="text-center p-8">
+                <i class="fas fa-spinner fa-spin text-4xl text-blue-500"></i>
+                <p class="mt-2 text-gray-600">Loading details...</p>
+            </div>
+            <div id="modal-error-state" class="text-center p-8 hidden">
+                <i class="fas fa-exclamation-triangle text-4xl text-red-500"></i>
+                <p class="mt-2 text-gray-600">Could not load talent details.</p>
             </div>
         </div>
     </div>
@@ -1076,6 +1055,7 @@ document.addEventListener('click', function(event) {
     const assignModal = document.getElementById('assignTalentModal');
     const extensionModal = document.getElementById('extensionModal');
     const talentDetailsModal = document.getElementById('talentDetailsModal');
+    const talentDetailsModalNew = document.getElementById('talent-details-modal');
 
     if (assignModal && event.target === assignModal) {
         hideAssignTalentModal();
@@ -1088,9 +1068,13 @@ document.addEventListener('click', function(event) {
     if (talentDetailsModal && event.target === talentDetailsModal) {
         closeTalentDetailsModal();
     }
+
+    if (talentDetailsModalNew && event.target === talentDetailsModalNew) {
+        closeModal('talent-details-modal');
+    }
 });
 
-// Date validation for assignment form
+// Date validation and form handling
 document.addEventListener('DOMContentLoaded', function() {
     const startDateInput = document.getElementById('talent_start_date');
     const endDateInput = document.getElementById('talent_end_date');
@@ -1412,289 +1396,248 @@ function updateTalentIdField(talentId) {
     document.getElementById('requestTalentId').value = talentId;
 }
 
-// Talent Details Modal Functions
-function viewTalentDetails(talentId, isUserId = false) {
-    console.log('viewTalentDetails called with ID:', talentId, 'isUserId:', isUserId);
+// Function to view talent details from talent interaction data
+function viewTalentDetails(talentData) {
+    console.log("Viewing details for:", talentData);
 
-    // Validate talent ID
-    if (!talentId || talentId === 'null' || talentId === 'undefined') {
-        console.error('Invalid talent ID provided:', talentId);
-        alert('Invalid talent ID. Cannot load details.');
-        return;
-    }
+    const modal = document.getElementById('talent-details-modal');
+    const content = document.getElementById('modal-talent-content');
+    const loading = document.getElementById('modal-loading-state');
+    const error = document.getElementById('modal-error-state');
 
-    const modal = document.getElementById('talentDetailsModal');
     if (!modal) {
         console.error('Talent details modal element not found!');
         alert('Modal element not found. Please refresh the page.');
         return;
     }
 
-    // Show modal
+    // Show the modal and loading state
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    content.innerHTML = '';
+    loading.classList.remove('hidden');
+    error.classList.add('hidden');
 
-    // Reset content to loading state
-    const contentElement = document.getElementById('talentDetailsContent');
-    if (contentElement) {
-        contentElement.innerHTML = `
-            <div class="text-center py-8">
-                <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
-                <p class="text-gray-600">Loading talent details...</p>
-            </div>
-        `;
-    }
-
-    // Determine the correct endpoint
-    const endpoint = isUserId
-        ? `/projects/user/${talentId}/talent-details`
-        : `/projects/talent/${talentId}/details`;
-
-    console.log('Fetching from endpoint:', endpoint);
-    console.log('Talent ID:', talentId, 'Is User ID:', isUserId);
-
-    // Fetch talent details
-    fetch(endpoint, {
-        method: 'GET',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-            'Accept': 'application/json'
-        }
-    })
-    .then(response => {
-        console.log('Response status:', response.status, 'OK:', response.ok);
-        if (!response.ok) {
-            return response.text().then(text => {
-                throw new Error(`HTTP ${response.status}: ${text}`);
-            });
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log('Response data:', data);
-        if (data.success && data.talent) {
-            displayTalentDetails(data.talent);
-        } else {
-            throw new Error(data.message || 'Failed to load talent details');
-        }
-    })
-    .catch(error => {
-        console.error('Error fetching talent details:', error);
-        if (contentElement) {
-            contentElement.innerHTML = `
-                <div class="text-center py-8">
-                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
-                    </div>
-                    <h4 class="text-lg font-semibold text-red-800 mb-2">Error Loading Details</h4>
-                    <p class="text-red-600 mb-2">${error.message}</p>
-                    <p class="text-sm text-gray-600 mb-4">Endpoint: ${endpoint}</p>
-                    <button onclick="closeTalentDetailsModal()"
-                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                        Close
-                    </button>
-                </div>
-            `;
-        }
-    });
+    // Display the talent details directly from the data
+    displayTalentDetails(talentData);
 }
 
-function displayTalentDetails(talent) {
-    const contentElement = document.getElementById('talentDetailsContent');
-    const modalTitle = document.querySelector('#talentDetailsModal h3');
+function displayTalentDetails(data) {
+    console.log("Displaying data:", data);
+    const content = document.getElementById('modal-talent-content');
+    const loading = document.getElementById('modal-loading-state');
 
-    if (!contentElement) return;
+    if (!content) return;
 
-    // Update modal title to include talent name
-    if (modalTitle) {
-        modalTitle.innerHTML = `
-            <i class="fas fa-user-circle text-blue-600 mr-3"></i>
-            Talent Details - ${talent.name}
-        `;
+    // Extract talent information from different possible data structures
+    let talentName = 'Unknown Talent';
+    let talentEmail = 'Not provided';
+    let talentRole = 'Not specified';
+    let talentBudget = 'Not specified';
+
+    if (data.talent && data.talent.user && data.talent.user.name) {
+        talentName = data.talent.user.name;
+        talentEmail = data.talent.user.email || 'Not provided';
+    } else if (data.talentUser && data.talentUser.name) {
+        talentName = data.talentUser.name;
+        talentEmail = data.talentUser.email || 'Not provided';
     }
 
-    const content = `
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Profile Info -->
-            <div class="lg:col-span-1">
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-2xl p-6 text-center">
-                    ${talent.avatar ?
-                        `<img class="w-24 h-24 rounded-2xl object-cover mx-auto mb-4 shadow-lg" src="${talent.avatar}" alt="${talent.name}">` :
-                        `<div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                            <i class="fas fa-user text-white text-2xl"></i>
-                        </div>`
-                    }
-                    <h4 class="text-xl font-bold text-gray-900 mb-2">${talent.name}</h4>
-                    <p class="text-gray-600 mb-4">${talent.job || 'No job specified'}</p>
-                    <div class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${talent.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}">
-                        <i class="fas fa-${talent.is_active ? 'check-circle' : 'pause-circle'} mr-1"></i>
-                        ${talent.is_active ? 'Active' : 'Inactive'}
+    if (data.specific_role) {
+        talentRole = data.specific_role;
+    } else if (data.project_title) {
+        talentRole = data.project_title;
+    }
+
+    if (data.individual_budget) {
+        talentBudget = `Rp ${Number(data.individual_budget).toLocaleString()}`;
+    } else if (data.budget_range) {
+        talentBudget = data.budget_range;
+    }
+
+    const content_html = `
+        <div class="space-y-6">
+            <!-- Profile Header -->
+            <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h4 class="text-xl font-bold text-gray-900">${talentName}</h4>
+                    <p class="text-gray-600">${talentRole}</p>
+                    <p class="text-sm text-gray-500">${talentEmail}</p>
+                </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <h5 class="font-semibold text-gray-700">Assignment Type</h5>
+                        <p class="text-gray-900">${data.type === 'assignment' ? 'Direct Assignment' : 'Talent Request'}</p>
+                    </div>
+                    <div>
+                        <h5 class="font-semibold text-gray-700">Status</h5>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            ${data.status ? data.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Unknown'}
+                        </span>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <h5 class="font-semibold text-gray-700">Budget</h5>
+                        <p class="text-gray-900">${talentBudget}</p>
+                    </div>
+                    <div>
+                        <h5 class="font-semibold text-gray-700">Timeline</h5>
+                        <p class="text-gray-900">
+                            ${data.talent_start_date && data.talent_end_date ?
+
+                                `${new Date(data.talent_start_date).toLocaleDateString()} - ${new Date(data.talent_end_date).toLocaleDateString()}` :
+                                data.project_start_date && data.project_end_date ?
+                                `${new Date(data.project_start_date).toLocaleDateString()} - ${new Date(data.project_end_date).toLocaleDateString()}` :
+                                'Not set'
+                            }
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <!-- Details -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Contact Information -->
-                <div class="bg-white border border-gray-200 rounded-2xl p-6">
-                    <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-id-card text-blue-600 mr-2"></i>
-                        Contact Information
-                    </h5>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <span class="font-medium text-gray-500">Email:</span>
-                            <p class="text-gray-900">${talent.email || 'Not provided'}</p>
-                        </div>
-                        <div>
-                            <span class="font-medium text-gray-500">Phone:</span>
-                            <p class="text-gray-900">${talent.phone || 'Not provided'}</p>
-                        </div>
-                        <div>
-                            <span class="font-medium text-gray-500">Location:</span>
-                            <p class="text-gray-900">${talent.location || 'Not specified'}</p>
-                        </div>
-                        <div>
-                            <span class="font-medium text-gray-500">Experience Level:</span>
-                            <p class="text-gray-900">${talent.experience_level ? talent.experience_level.charAt(0).toUpperCase() + talent.experience_level.slice(1) : 'Not specified'}</p>
-                        </div>
+            <!-- Requirements -->
+            ${data.specific_requirements || data.requirements ? `
+                <div>
+                    <h5 class="font-semibold text-gray-700 mb-2">Requirements</h5>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-gray-700">${data.specific_requirements || data.requirements}</p>
                     </div>
                 </div>
-
-                <!-- Bio -->
-                ${talent.bio ? `
-                    <div class="bg-white border border-gray-200 rounded-2xl p-6">
-                        <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-user-edit text-green-600 mr-2"></i>
-                            About
-                        </h5>
-                        <p class="text-gray-700 leading-relaxed">${talent.bio}</p>
-                    </div>
-                ` : ''}
-
-                <!-- Skills -->
-                ${talent.formatted_skills && talent.formatted_skills.length > 0 ? `
-                    <div class="bg-white border border-gray-200 rounded-2xl p-6">
-                        <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                            <i class="fas fa-star text-yellow-600 mr-2"></i>
-                            Skills & Expertise
-                        </h5>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            ${talent.formatted_skills.map(skill => `
-                                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                    <span class="font-medium text-gray-900">${skill.name}</span>
-                                    <span class="text-sm px-2 py-1 rounded-full ${
-                                        skill.proficiency === 'advanced' ? 'bg-green-100 text-green-800' :
-                                        skill.proficiency === 'intermediate' ? 'bg-yellow-100 text-yellow-800' :
-                                        'bg-blue-100 text-blue-800'
-                                    }">${skill.proficiency}</span>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-
-                <!-- Statistics -->
-                <div class="bg-white border border-gray-200 rounded-2xl p-6">
-                    <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <i class="fas fa-chart-bar text-purple-600 mr-2"></i>
-                        Statistics
-                    </h5>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-blue-600">${talent.stats?.completed_courses || 0}</div>
-                            <div class="text-xs text-gray-500">Courses</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-green-600">${talent.stats?.certificates || 0}</div>
-                            <div class="text-xs text-gray-500">Certificates</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-purple-600">${talent.stats?.skill_count || 0}</div>
-                            <div class="text-xs text-gray-500">Skills</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-orange-600">${talent.stats?.experience_years || 0}</div>
-                            <div class="text-xs text-gray-500">Years Exp</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex justify-end space-x-4 mt-8 pt-6 border-t border-gray-200">
-            <button onclick="closeTalentDetailsModal()"
-                    class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-                Close
-            </button>
-            ${talent.portfolio_url ? `
-                <a href="${talent.portfolio_url}" target="_blank"
-                   class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-external-link-alt mr-2"></i>View Portfolio
-                </a>
             ` : ''}
+
+            <!-- Additional Info -->
+            <div class="bg-blue-50 rounded-lg p-4">
+                <h5 class="font-semibold text-blue-800 mb-2">Additional Information</h5>
+                <div class="text-sm text-blue-700 space-y-1">
+                    <p><strong>Created:</strong> ${data.created_at ? new Date(data.created_at).toLocaleDateString() : 'Unknown'}</p>
+                    <p><strong>Priority:</strong> ${data.priority_level || 'Medium'}</p>
+                    ${data.talent_id ? `<p><strong>Talent ID:</strong> ${data.talent_id}</p>` : ''}
+                </div>
+            </div>
+
+            <!-- Close Button -->
+            <div class="flex justify-end">
+                <button onclick="closeModal('talent-details-modal')"
+                        class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                    Close
+                </button>
+            </div>
         </div>
     `;
 
-    contentElement.innerHTML = content;
+    content.innerHTML = content_html;
+    loading.classList.add('hidden');
 }
 
-function closeTalentDetailsModal() {
-    const modal = document.getElementById('talentDetailsModal');
-    const modalTitle = document.querySelector('#talentDetailsModal h3');
-
+// Close modal function
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
     if (modal) {
         modal.classList.add('hidden');
         document.body.style.overflow = 'auto';
-
-        // Reset modal title
-        if (modalTitle) {
-            modalTitle.innerHTML = `
-                <i class="fas fa-user-circle text-blue-600 mr-3"></i>
-                Talent Details
-            `;
-        }
-
-        // Reset modal content
-        const contentElement = document.getElementById('talentDetailsContent');
-        if (contentElement) {
-            contentElement.innerHTML = `
-                <div class="text-center py-8">
-                    <i class="fas fa-spinner fa-spin text-3xl text-blue-600 mb-4"></i>
-                    <p class="text-gray-600">Loading talent details...</p>
-                </div>
-            `;
-        }
     }
 }
 
-// Close modals when clicking outside
-document.addEventListener('click', function(event) {
-    const talentDetailsModal = document.getElementById('talentDetailsModal');
-    const assignModal = document.getElementById('assignTalentModal');
-    const extensionModal = document.getElementById('extensionModal');
-    const closureModal = document.getElementById('closureRequestModal');
+// Fallback function to show basic talent info when API is unavailable
+function showBasicTalentInfo(talentId, isUserId = false) {
+    const contentElement = document.getElementById('talentDetailsContent');
+    if (!contentElement) return;
 
-    // Close talent details modal if clicking outside
-    if (talentDetailsModal && event.target === talentDetailsModal) {
-        closeTalentDetailsModal();
+    // Create a basic talent info display
+    const content = `
+        <div class="text-center py-8">
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <i class="fas fa-user text-white text-3xl"></i>
+            </div>
+
+            <h4 class="text-xl font-bold text-gray-900 mb-2">Talent Information</h4>
+            <p class="text-gray-600 mb-6">Limited information available</p>
+
+            <div class="bg-white border border-gray-200 rounded-2xl p-6 text-left max-w-md mx-auto">
+                <h5 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-id-card text-blue-600 mr-2"></i>
+                    Basic Information
+                </h5>
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">ID:</span>
+                        <span class="text-gray-900">${talentId}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">Type:</span>
+                        <span class="text-gray-900">${isUserId ? 'User ID' : 'Talent ID'}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="font-medium text-gray-500">Status:</span>
+                        <span class="text-blue-900">Available for viewing</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                    <div class="text-left">
+                        <h6 class="font-semibold text-blue-900 mb-1">Note</h6>
+                        <p class="text-blue-800 text-sm">
+                            Full talent details are currently unavailable. This may be due to system maintenance
+                            or network connectivity issues. Please try again later or contact your administrator.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-4 mt-8">
+                <button onclick="closeModal('talent-details-modal')"
+                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    `;
+
+    const modalContent = document.getElementById('modal-talent-content');
+    if (modalContent) {
+        modalContent.innerHTML = content;
+    }
+}
+
+// Auto-dismiss notifications and close modals on Escape key
+document.addEventListener('DOMContentLoaded', function() {
+    const successNotification = document.getElementById('success-notification');
+    const errorNotification = document.getElementById('error-notification');
+
+    if (successNotification) {
+        setTimeout(function() {
+            successNotification.style.transition = 'opacity 0.5s ease-out';
+            successNotification.style.opacity = '0';
+            setTimeout(function() {
+                successNotification.remove();
+            }, 500);
+        }, 5000);
     }
 
-    if (assignModal && event.target === assignModal) {
-        hideAssignTalentModal();
+    if (errorNotification) {
+        setTimeout(function() {
+            errorNotification.style.transition = 'opacity 0.5s ease-out';
+            errorNotification.style.opacity = '0';
+            setTimeout(function() {
+                errorNotification.remove();
+            }, 500);
+        }, 7000); // Keep error messages visible longer
     }
 
-    if (extensionModal && event.target === extensionModal) {
-        hideExtensionModal();
-    }
-
-    if (closureModal && event.target === closureModal) {
-        hideClosureRequestModal();
-    }
 });
 
-// Auto-dismiss notifications after 5 seconds
+// Auto-dismiss notifications and close modals on Escape key
 document.addEventListener('DOMContentLoaded', function() {
     const successNotification = document.getElementById('success-notification');
     const errorNotification = document.getElementById('error-notification');
@@ -1722,19 +1665,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Close modals on Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
-            const talentDetailsModal = document.getElementById('talentDetailsModal');
-            const assignModal = document.getElementById('assignTalentModal');
-            const extensionModal = document.getElementById('extensionModal');
-            const closureModal = document.getElementById('closureRequestModal');
-
+            const talentDetailsModal = document.getElementById('talent-details-modal');
             if (talentDetailsModal && !talentDetailsModal.classList.contains('hidden')) {
-                closeTalentDetailsModal();
-            } else if (assignModal && !assignModal.classList.contains('hidden')) {
-                hideAssignTalentModal();
-            } else if (extensionModal && !extensionModal.classList.contains('hidden')) {
-                hideExtensionModal();
-            } else if (closureModal && !closureModal.classList.contains('hidden')) {
-                hideClosureRequestModal();
+                closeModal('talent-details-modal');
             }
         }
     });

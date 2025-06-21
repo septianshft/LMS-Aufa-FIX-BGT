@@ -184,16 +184,16 @@
 
                     <!-- Action Buttons -->
                     <div class="flex space-x-2">
-                        <a href="{{ route('admin.projects.show', $project) }}"
-                           class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                            View Details
-                        </a>
-
                         @if($project->status === 'pending_admin')
-                            <button onclick="openApprovalModal({{ $project->id }})"
+                            <button onclick="window.location.href='{{ route('admin.projects.show', $project) }}'"
                                     class="flex-1 bg-green-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">
                                 Review
                             </button>
+                        @else
+                            <a href="{{ route('admin.projects.show', $project) }}"
+                               class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
+                                View Details
+                            </a>
                         @endif
 
                         @if($project->pendingExtensions->count() > 0)

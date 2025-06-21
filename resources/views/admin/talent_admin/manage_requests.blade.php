@@ -48,25 +48,17 @@
                                 class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200"
                                 onchange="document.getElementById('filterForm').submit();">
                             <option value="">Semua Status</option>
-
-                            <!-- Acceptance-based filters -->
-                            <optgroup label="Status Persetujuan">
-                                <option value="pending_review" {{ request('status') == 'pending_review' ? 'selected' : '' }}>Menunggu Review</option>
-                                <option value="talent_awaiting_admin" {{ request('status') == 'talent_awaiting_admin' ? 'selected' : '' }}>Talent Setuju - Menunggu Admin</option>
-                                <option value="admin_awaiting_talent" {{ request('status') == 'admin_awaiting_talent' ? 'selected' : '' }}>Admin Setuju - Menunggu Talent</option>
-                                <option value="both_accepted" {{ request('status') == 'both_accepted' ? 'selected' : '' }}>Kedua Pihak Setuju</option>
-                            </optgroup>
-
-                            <!-- Workflow status filters -->
-                            <optgroup label="Status Workflow">
-                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
-                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Disetujui</option>
-                                <option value="meeting_arranged" {{ request('status') == 'meeting_arranged' ? 'selected' : '' }}>Pertemuan Diatur</option>
-                                <option value="agreement_reached" {{ request('status') == 'agreement_reached' ? 'selected' : '' }}>Kesepakatan Tercapai</option>
-                                <option value="onboarded" {{ request('status') == 'onboarded' ? 'selected' : '' }}>Bergabung</option>
-                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
-                                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
-                            </optgroup>
+                            <option value="pending_review" {{ request('status') == 'pending_review' ? 'selected' : '' }}>Menunggu Review</option>
+                            <option value="talent_awaiting_admin" {{ request('status') == 'talent_awaiting_admin' ? 'selected' : '' }}>Talent Setuju - Menunggu Admin</option>
+                            <option value="admin_awaiting_talent" {{ request('status') == 'admin_awaiting_talent' ? 'selected' : '' }}>Admin Setuju - Menunggu Talent</option>
+                            <option value="both_accepted" {{ request('status') == 'both_accepted' ? 'selected' : '' }}>Kedua Pihak Setuju</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu</option>
+                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Disetujui</option>
+                            <option value="meeting_arranged" {{ request('status') == 'meeting_arranged' ? 'selected' : '' }}>Pertemuan Diatur</option>
+                            <option value="agreement_reached" {{ request('status') == 'agreement_reached' ? 'selected' : '' }}>Kesepakatan Tercapai</option>
+                            <option value="onboarded" {{ request('status') == 'onboarded' ? 'selected' : '' }}>Bergabung</option>
+                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Ditolak</option>
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai</option>
                         </select>
                     </div>
                     <div>
@@ -114,6 +106,7 @@
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Perekrut</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Talent</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Status</th>
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Project End Date</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Tanggal Diminta</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Terakhir Diperbarui</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Aksi</th>
@@ -172,6 +165,28 @@
                                                 </div>
                                             @endif
                                         </div>
+                                    </td>
+                                    <td class="py-6 px-4">
+                                        @if($request->project_end_date)
+                                            <div class="text-gray-900 font-medium text-sm">{{ $request->project_end_date->format('d M Y') }}</div>
+                                            <div class="text-gray-500 text-xs">
+                                                @if($request->project_end_date->isPast())
+                                                    <i class="fas fa-exclamation-triangle text-red-500 mr-1"></i>
+                                                    <span class="text-red-600 font-medium">Overdue</span>
+                                                @elseif($request->project_end_date->diffInDays() <= 7)
+                                                    <i class="fas fa-clock text-orange-500 mr-1"></i>
+                                                    <span class="text-orange-600 font-medium">Due Soon</span>
+                                                @else
+                                                    <i class="fas fa-calendar text-green-500 mr-1"></i>
+                                                    <span class="text-green-600">{{ $request->project_end_date->diffForHumans() }}</span>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <div class="text-gray-400 text-sm">
+                                                <i class="fas fa-minus-circle mr-1"></i>
+                                                Not specified
+                                            </div>
+                                        @endif
                                     </td>
                                     <td class="py-6 px-4">
                                         <div class="text-gray-900 font-medium text-sm">{{ $request->created_at->format('d M Y') }}</div>
@@ -312,14 +327,41 @@
                             </div>
 
                             <!-- Dates -->
-                            <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                            <div class="grid grid-cols-3 gap-3 mb-4 text-sm">
                                 <div class="bg-gray-50 p-3 rounded-xl">
                                     <div class="text-gray-500 text-xs font-medium uppercase tracking-wide">Diminta</div>
-                                    <div class="text-gray-900 font-semibold mt-1">{{ $request->created_at->format('d M Y H:i') }}</div>
+                                    <div class="text-gray-900 font-semibold mt-1">{{ $request->created_at->format('d M Y') }}</div>
+                                    <div class="text-gray-500 text-xs">{{ $request->created_at->format('H:i') }}</div>
                                 </div>
                                 <div class="bg-gray-50 p-3 rounded-xl">
                                     <div class="text-gray-500 text-xs font-medium uppercase tracking-wide">Diperbarui</div>
-                                    <div class="text-gray-900 font-semibold mt-1">{{ $request->updated_at->format('d M Y H:i') }}</div>
+                                    <div class="text-gray-900 font-semibold mt-1">{{ $request->updated_at->format('d M Y') }}</div>
+                                    <div class="text-gray-500 text-xs">{{ $request->updated_at->format('H:i') }}</div>
+                                </div>
+                                <div class="bg-gray-50 p-3 rounded-xl">
+                                    <div class="text-gray-500 text-xs font-medium uppercase tracking-wide">End Date</div>
+                                    @if($request->project_end_date)
+                                        <div class="text-gray-900 font-semibold mt-1">{{ $request->project_end_date->format('d M Y') }}</div>
+                                        <div class="text-xs mt-1">
+                                            @if($request->project_end_date->isPast())
+                                                <span class="text-red-600 font-medium">
+                                                    <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
+                                                </span>
+                                            @elseif($request->project_end_date->diffInDays() <= 7)
+                                                <span class="text-orange-600 font-medium">
+                                                    <i class="fas fa-clock mr-1"></i>Due Soon
+                                                </span>
+                                            @else
+                                                <span class="text-green-600">
+                                                    <i class="fas fa-calendar mr-1"></i>{{ $request->project_end_date->diffForHumans() }}
+                                                </span>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <div class="text-gray-400 font-medium mt-1">
+                                            <i class="fas fa-minus-circle mr-1"></i>Not set
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 

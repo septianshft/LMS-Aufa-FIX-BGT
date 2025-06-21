@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
@@ -46,131 +47,134 @@ class TalentAdminController extends Controller
         $skillAnalytics = $this->skillAnalytics->getSkillAnalytics();
         $conversionAnalytics = $this->conversionTracking->getConversionAnalytics();
 
-        // Optimized dashboard statistics with caching
-        $dashboardStats = Cache::remember('talent_admin_dashboard_stats', config('talent_performance.caching.analytics_ttl', 600), function() {
-            // Single optimized query for all statistics
-            $stats = DB::select('
-                SELECT
-                    -- Talent statistics (users with talent role and active status)
-                    COUNT(CASE WHEN ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1) AND u.is_active_talent = 1 THEN 1 END) as active_talents,
-                    COUNT(CASE WHEN ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1) AND u.available_for_scouting = 1 THEN 1 END) as available_talents,
-
-                    -- Recruiter statistics
-                    COUNT(CASE WHEN ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as active_recruiters,
-                    COUNT(CASE WHEN ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) THEN 1 END) as total_recruiters,
-
-                    -- Request statistics
-                    (SELECT COUNT(*) FROM talent_requests WHERE deleted_at IS NULL) as total_requests,
-                    (SELECT COUNT(*) FROM talent_requests WHERE status = "pending" AND deleted_at IS NULL) as pending_requests,
-                    (SELECT COUNT(*) FROM talent_requests WHERE status = "approved" AND deleted_at IS NULL) as approved_requests,
-                    (SELECT COUNT(*) FROM talent_requests WHERE status = "rejected" AND deleted_at IS NULL) as rejected_requests,
-
-                    -- Recent registrations (last 30 days) - only actual talents
-                    COUNT(CASE WHEN ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1) AND u.is_active_talent = 1 AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_talents,
-                    COUNT(CASE WHEN ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1) AND u.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as recent_recruiters
-
-                FROM users u
-                LEFT JOIN model_has_roles ur_talent ON u.id = ur_talent.model_id AND ur_talent.model_type = "App\\\\Models\\\\User" AND ur_talent.role_id = (SELECT id FROM roles WHERE name = "talent" LIMIT 1)
-                LEFT JOIN model_has_roles ur_rec ON u.id = ur_rec.model_id AND ur_rec.model_type = "App\\\\Models\\\\User" AND ur_rec.role_id = (SELECT id FROM roles WHERE name = "recruiter" LIMIT 1)
-            ')[0];
-
-            return [
-                'activeTalents' => (int)$stats->active_talents,
-                'totalTalents' => (int)$stats->active_talents,
-                'availableTalents' => (int)$stats->available_talents,
-                'activeRecruiters' => (int)$stats->active_recruiters,
-                'totalRecruiters' => (int)$stats->total_recruiters,
-                'totalRequests' => (int)$stats->total_requests,
-                'pendingRequests' => (int)$stats->pending_requests,
-                'approvedRequests' => (int)$stats->approved_requests,
-                'rejectedRequests' => (int)$stats->rejected_requests,
-                'recentTalents' => (int)$stats->recent_talents,
-                'recentRecruiters' => (int)$stats->recent_recruiters,
-            ];
-        });
-
-        // Extract cached values
-        extract($dashboardStats);
-
-        // Get recent activity with minimal cache time for real-time updates
-        $recentActivity = Cache::remember('talent_admin_recent_activity_' . $user->id, 5, function() {
+        // Simplified dashboard statistics using Eloquent queries for reliability
+        $dashboardStats = Cache::remember('talent_admin_dashboard_stats', 1800, function () {
             try {
+                // Use simple Eloquent queries that are more reliable
+                $totalTalents = Talent::count();
+                $activeTalents = Talent::where('is_active', true)->count();
+
+                // For available talents, check if they're not assigned to active projects
+                $assignedTalentIds = [];
+                if (Schema::hasTable('talent_assignments')) {
+                    $assignedTalentIds = DB::table('talent_assignments')
+                        ->join('projects', 'talent_assignments.project_id', '=', 'projects.id')
+                        ->where('projects.status', 'active')
+                        ->pluck('talent_assignments.talent_id')
+                        ->toArray();
+                }
+                $availableTalents = Talent::where('is_active', true)
+                    ->whereNotIn('id', $assignedTalentIds)
+                    ->count();
+
+                $totalRecruiters = Recruiter::count();
+                $activeRecruiters = Recruiter::where('is_active', true)->count();
+                $totalRequests = TalentRequest::count();
+                $pendingRequests = TalentRequest::where('status', 'pending')->count();
+                $approvedRequests = TalentRequest::where('status', 'approved')->count();
+
                 return [
-                    'latestTalents' => User::select(['id', 'name', 'email', 'created_at', 'avatar', 'pekerjaan', 'is_active_talent'])
-                        ->whereHas('roles', function($query) {
-                            $query->where('name', 'talent');
-                        })
-                        ->where('is_active_talent', true)
-                        ->orderBy('created_at', 'desc')
-                        ->limit(5)
-                        ->get(),
-
-                    'latestRecruiters' => User::select(['id', 'name', 'email', 'created_at', 'avatar', 'pekerjaan'])
-                        ->whereHas('roles', function($query) {
-                            $query->where('name', 'recruiter');
-                        })
-                        ->with('roles')
-                        ->orderBy('created_at', 'desc')
-                        ->limit(5)
-                        ->get(),
-
-                    'latestRequests' => TalentRequest::select([
-                            'id', 'project_title', 'status', 'created_at', 'updated_at',
-                            'recruiter_id', 'talent_user_id', 'talent_accepted', 'admin_accepted',
-                            'both_parties_accepted'
-                        ])
-                        ->with([
-                            'recruiter:id,user_id',
-                            'recruiter.user:id,name,avatar',
-                            'talentUser:id,name,avatar'
-                        ])
-                        ->whereNotNull('recruiter_id')
-                        ->whereNotNull('talent_user_id')
-                        ->where(function($query) {
-                            // Show requests that need admin attention
-                            $query->where('status', 'pending') // New requests
-                                  ->orWhere(function($subQuery) {
-                                      // Talent accepted, waiting for admin (regardless of status)
-                                      $subQuery->where('talent_accepted', true)
-                                               ->where('admin_accepted', false);
-                                  })
-                                  ->orWhere(function($subQuery) {
-                                      // Handle inconsistent status - if status is approved but admin_accepted is false
-                                      $subQuery->where('status', 'approved')
-                                               ->where('admin_accepted', false);
-                                  });
-                        })
-                        ->orderBy('created_at', 'desc')
-                        ->limit(10) // Show more since these are actionable items
-                        ->get()
+                    'totalTalents' => (int)$totalTalents,
+                    'activeTalents' => (int)$activeTalents,
+                    'availableTalents' => (int)$availableTalents,
+                    'totalRecruiters' => (int)$totalRecruiters,
+                    'activeRecruiters' => (int)$activeRecruiters,
+                    'totalRequests' => (int)$totalRequests,
+                    'pendingRequests' => (int)$pendingRequests,
+                    'approvedRequests' => (int)$approvedRequests,
                 ];
             } catch (\Exception $e) {
-                Log::error('Error loading recent activity for talent admin dashboard: ' . $e->getMessage());
+                Log::error('Dashboard stats query failed: ' . $e->getMessage());
                 return [
-                    'latestTalents' => collect([]),
-                    'latestRecruiters' => collect([]),
-                    'latestRequests' => collect([])
+                    'totalTalents' => 0,
+                    'activeTalents' => 0,
+                    'availableTalents' => 0,
+                    'totalRecruiters' => 0,
+                    'activeRecruiters' => 0,
+                    'totalRequests' => 0,
+                    'pendingRequests' => 0,
+                    'approvedRequests' => 0,
                 ];
             }
         });
 
-        // Extract recent activity
-        $latestTalents = $recentActivity['latestTalents'] ?? collect([]);
-        $latestRecruiters = $recentActivity['latestRecruiters'] ?? collect([]);
-        $latestRequests = $recentActivity['latestRequests'] ?? collect([]);
+        // Ensure it's always an array with default values
+        if (!is_array($dashboardStats)) {
+            $dashboardStats = [
+                'totalTalents' => 0,
+                'activeTalents' => 0,
+                'availableTalents' => 0,
+                'totalRecruiters' => 0,
+                'activeRecruiters' => 0,
+                'totalRequests' => 0,
+                'pendingRequests' => 0,
+                'approvedRequests' => 0,
+            ];
+        }
 
-        return view('talent_admin.dashboard', compact(
-            'user', 'title', 'roles', 'assignedKelas',
-            'activeTalents', 'totalTalents', 'availableTalents', 'activeRecruiters', 'totalRecruiters',
-            'totalRequests', 'pendingRequests', 'approvedRequests', 'rejectedRequests',
-            'recentTalents', 'recentRecruiters', 'latestTalents', 'latestRecruiters',
-            'latestRequests', 'skillAnalytics', 'conversionAnalytics'
-        ));
+        // Get recent activity with longer cache time for better performance
+        $recentActivity = Cache::remember('talent_admin_recent_activity_' . $user->id, 300, function () {
+            try {
+                return [
+                    'latestTalents' => Talent::with(['user:id,name,email'])->latest()->take(5)->get(['id', 'user_id', 'is_active', 'created_at']),
+                    'latestRecruiters' => Recruiter::with(['user:id,name,email'])->latest()->take(5)->get(['id', 'user_id', 'is_active', 'created_at']),
+                    'latestRequests' => TalentRequest::with(['talent.user:id,name', 'recruiter.user:id,name'])
+                        ->latest()->take(5)->get(['id', 'talent_id', 'recruiter_id', 'project_title', 'status', 'created_at']),
+                ];
+            } catch (\Exception $e) {
+                Log::error('Dashboard recent activity query failed: ' . $e->getMessage());
+                return [
+                    'latestTalents' => collect([]),
+                    'latestRecruiters' => collect([]),
+                    'latestRequests' => collect([]),
+                ];
+            }
+        });
+
+        // Ensure it's always an array with default collections
+        if (!is_array($recentActivity)) {
+            $recentActivity = [
+                'latestTalents' => collect([]),
+                'latestRecruiters' => collect([]),
+                'latestRequests' => collect([]),
+            ];
+        }
+
+        // Prepare data for the view with defaults to prevent errors
+        $viewData = [
+            'user' => $user,
+            'title' => $title,
+            'roles' => $roles,
+            'assignedKelas' => $assignedKelas,
+            'skillAnalytics' => $skillAnalytics,
+            'conversionAnalytics' => $conversionAnalytics,
+            'totalTalents' => $dashboardStats['totalTalents'] ?? 0,
+            'activeTalents' => $dashboardStats['activeTalents'] ?? 0,
+            'availableTalents' => $dashboardStats['availableTalents'] ?? 0,
+            'totalRecruiters' => $dashboardStats['totalRecruiters'] ?? 0,
+            'activeRecruiters' => $dashboardStats['activeRecruiters'] ?? 0,
+            'totalRequests' => $dashboardStats['totalRequests'] ?? 0,
+            'pendingRequests' => $dashboardStats['pendingRequests'] ?? 0,
+            'approvedRequests' => $dashboardStats['approvedRequests'] ?? 0,
+            'latestTalents' => $recentActivity['latestTalents'] ?? collect([]),
+            'latestRecruiters' => $recentActivity['latestRecruiters'] ?? collect([]),
+            'latestRequests' => $recentActivity['latestRequests'] ?? collect([]),
+            'recentProjects' => collect([]), // Add this for the dashboard view
+        ];
+
+        return view('talent_admin.dashboard', $viewData);
     }
 
     public function manageTalents()
     {
-        $talents = Talent::with('user')->orderBy('created_at', 'desc')->paginate(10);
+        // Optimize with selective loading and caching
+        $talents = Cache::remember('manage_talents_page', 120, function () {
+            return Talent::with(['user:id,name,email,avatar'])
+                ->select('id', 'user_id', 'is_active', 'created_at')
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+        });
+
         $title = 'Manage Talents';
         $roles = 'Talent Admin';
         $assignedKelas = [];
@@ -571,88 +575,37 @@ class TalentAdminController extends Controller
     public function getTalentDetails(Talent $talent)
     {
         try {
-            // Load talent with user relationship
-            $talent->load('user');
-
-            // Check if user exists
-            if (!$talent->user) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not found for this talent'
-                ], 404);
-            }
-
-            // Get talent skills safely
-            $talentSkills = [];
-            if ($talent->user->talent_skills) {
-                if (is_string($talent->user->talent_skills)) {
-                    $decoded = json_decode($talent->user->talent_skills, true);
-                    $talentSkills = is_array($decoded) ? $decoded : [];
-                } elseif (is_array($talent->user->talent_skills)) {
-                    $talentSkills = $talent->user->talent_skills;
+            // Eager load necessary relationships for a complete overview
+            $talent->load([
+                'user',
+                'talentRequests' => function ($query) {
+                    $query->with('recruiter.user:id,name')->select('id', 'recruiter_id', 'talent_user_id', 'project_title', 'status', 'created_at')->latest();
                 }
-            }
+            ]);
 
-            // Get user statistics
-            $stats = [
-                'completed_courses' => $talent->user->courseProgress()->where('progress', '>=', 100)->count(),
-                'certificates' => $talent->user->certificates()->count(),
-                'skill_count' => count($talentSkills),
-                'experience_years' => $talent->experience_years ?? 0
+            // Transform the data to match JavaScript expectations
+            $talentData = [
+                'id' => $talent->id,
+                'name' => $talent->user->name,
+                'email' => $talent->user->email,
+                'phone' => $talent->user->phone ?? null,
+                'location' => $talent->user->alamat ?? null,
+                'job' => $talent->user->pekerjaan ?? null,
+                'is_active' => $talent->is_active,
+                'avatar' => $talent->user->avatar ? asset('storage/' . $talent->user->avatar) : null,
+                'joined_date' => $talent->created_at->format('M d, Y'),
+                'skills' => $talent->user->getTalentSkillsArray() ?? [],
+                'portfolio' => [], // Can be extended later if needed
             ];
 
-            // Format skills for display - simplified structure
-            $formattedSkills = collect($talentSkills)->map(function($skill) {
-                if (is_array($skill)) {
-                    return [
-                        'name' => $skill['skill_name'] ?? ($skill['name'] ?? 'Unknown'),
-                        'proficiency' => $skill['proficiency'] ?? ($skill['level'] ?? 'intermediate'),
-                        'completed_date' => $skill['completed_date'] ?? ($skill['acquired_at'] ?? null)
-                    ];
-                }
-                return ['name' => (string)$skill, 'proficiency' => 'intermediate', 'completed_date' => null];
-            })->toArray();
-
-            // Get portfolio/projects if available
-            $portfolio = [];
-            if ($talent->portfolio) {
-                if (is_string($talent->portfolio)) {
-                    $decoded = json_decode($talent->portfolio, true);
-                    $portfolio = is_array($decoded) ? $decoded : [];
-                } elseif (is_array($talent->portfolio)) {
-                    $portfolio = $talent->portfolio;
-                }
-            }
-
-            return response()->json([
-                'success' => true,
-                'talent' => [
-                    'id' => $talent->id,
-                    'name' => $talent->user->name,
-                    'email' => $talent->user->email,
-                    'phone' => $talent->user->phone ?? null,
-                    'location' => $talent->user->location ?? null,
-                    'job' => $talent->user->pekerjaan ?? null,
-                    'bio' => $talent->user->bio ?? null,
-                    'experience_level' => $talent->experience_level ?? null,
-                    'avatar' => $talent->user->avatar ? asset('storage/' . $talent->user->avatar) : null,
-                    'is_active' => $talent->is_active,
-                    'joined_date' => $talent->created_at->format('M d, Y H:i'),
-                    'formatted_skills' => $formattedSkills,
-                    'portfolio' => $portfolio,
-                    'portfolio_url' => $talent->portfolio_url ?? null,
-                    'stats' => $stats
-                ]
-            ]);
+            return response()->json($talentData);
         } catch (\Exception $e) {
-            Log::error('Error in getTalentDetails: ' . $e->getMessage(), [
-                'talent_id' => $talent->id ?? 'unknown',
-                'trace' => $e->getTraceAsString()
-            ]);
-
+            Log::error("Error fetching talent details for talent ID {$talent->id}: " . $e->getMessage());
+            Log::error("Stack trace: " . $e->getTraceAsString());
             return response()->json([
                 'success' => false,
-                'message' => 'An error occurred while fetching talent details: ' . $e->getMessage()
+                'message' => 'An error occurred while retrieving talent details.',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
@@ -1653,4 +1606,176 @@ class TalentAdminController extends Controller
             'user'
         ));
     }
+
+    public function setTalentRedflag(Request $request, Talent $talent)
+    {
+        $request->validate([
+            'redflag_reason' => 'required|string|max:255',
+        ]);
+
+        $talent->redflagged = true;
+        $talent->redflag_reason = $request->redflag_reason;
+        $talent->save();
+
+        return redirect()->back()->with('success', 'Talent has been red-flagged.');
+    }
+
+    public function unsetTalentRedflag(Talent $talent)
+    {
+        $talent->redflagged = false;
+        $talent->redflag_reason = null;
+        $talent->save();
+
+        return redirect()->back()->with('success', 'Talent red flag has been unset.');
+    }
+
+    /**
+     * Get completed projects for a talent (for redflag management)
+     */
+    public function getTalentCompletedProjects($talentId)
+    {
+        try {
+            $talent = Talent::with('user')->findOrFail($talentId);
+
+            $completedProjects = TalentRequest::with(['recruiter.user', 'redflaggedBy'])
+                ->where('talent_id', $talentId)
+                ->where('status', 'completed')
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function($request) {
+                    return [
+                        'id' => $request->id,
+                        'project_title' => $request->project_title,
+                        'project_description' => $request->project_description,
+                        'completed_at' => $request->updated_at->format('M d, Y'),
+                        'recruiter_name' => $request->recruiter && $request->recruiter->user ? $request->recruiter->user->name : 'Unknown',
+                        'is_redflagged' => $request->is_redflagged,
+                        'redflag_reason' => $request->redflag_reason,
+                        'redflagged_at' => $request->redflagged_at ? $request->redflagged_at->format('M d, Y') : null,
+                        'redflagged_by_name' => $request->redflaggedBy ? $request->redflaggedBy->name : null
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'talent_name' => $talent->user->name,
+                'completed_projects' => $completedProjects
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting completed projects: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load completed projects'
+            ], 500);
+        }
+    }
+
+    /**
+     * Flag a specific project/request
+     */
+    public function flagProject(Request $request)
+    {
+        try {
+            $request->validate([
+                'project_id' => 'required|exists:talent_requests,id',
+                'redflag_reason' => 'required|string|max:1000'
+            ]);
+
+            $talentRequest = TalentRequest::findOrFail($request->project_id);
+
+            // Check if already flagged
+            if ($talentRequest->is_redflagged) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This project is already flagged'
+                ], 400);
+            }
+
+            // Only allow flagging of completed projects
+            if ($talentRequest->status !== 'completed') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only completed projects can be flagged'
+                ], 400);
+            }
+
+            // Flag the project
+            $talentRequest->update([
+                'is_redflagged' => true,
+                'redflag_reason' => $request->redflag_reason,
+                'redflagged_at' => now(),
+                'redflagged_by' => Auth::id()
+            ]);
+
+            Log::info('Project flagged', [
+                'project_id' => $talentRequest->id,
+                'talent_id' => $talentRequest->talent_id,
+                'flagged_by' => Auth::id(),
+                'reason' => $request->redflag_reason
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Project flagged successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error flagging project: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to flag project'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get redflag history for a talent (for talent admin)
+     */
+    public function getTalentRedflagHistory($talentId)
+    {
+        try {
+            $talent = Talent::with('user')->findOrFail($talentId);
+
+            // Get all completed talent requests for this talent with redflag information
+            $completedRequests = TalentRequest::with(['recruiter.user', 'redflaggedBy'])
+                ->where('talent_id', $talentId)
+                ->where('status', 'completed')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Get red-flagged projects
+            $redflaggedProjects = $completedRequests->where('is_redflagged', true)->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'project_title' => $request->project_title,
+                    'project_description' => $request->project_description,
+                    'redflag_reason' => $request->redflag_reason,
+                    'redflagged_at' => $request->redflagged_at ? $request->redflagged_at->format('M d, Y') : null,
+                    'redflagged_by_name' => $request->redflaggedBy ? $request->redflaggedBy->name : 'Unknown',
+                    'recruiter_name' => $request->recruiter && $request->recruiter->user ? $request->recruiter->user->name : 'Unknown'
+                ];
+            })->values();
+
+            // Calculate summary
+            $redflagSummary = $talent->getRedflagSummary();
+
+            return response()->json([
+                'success' => true,
+                'talent_name' => $talent->user->name,
+                'redflag_summary' => $redflagSummary,
+                'redflagged_projects' => $redflaggedProjects,
+                'total_completed' => $completedRequests->count(),
+                'total_redflagged' => $redflaggedProjects->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Redflag history error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load redflag history'
+            ], 500);
+        }
+    }
+
 }

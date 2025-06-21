@@ -10,13 +10,13 @@
     <div class="w-full bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl mt-8">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold mb-2">Welcome back, {{ $user->name }}! 👋</h1>
-                <p class="text-blue-100 text-lg">Ready to discover exceptional talent and build your dream team?</p>
+                <h1 class="text-3xl font-bold mb-2">Selamat datang kembali, {{ $user->name }}! 👋</h1>
+                <p class="text-blue-100 text-lg">Siap untuk menemukan bakat luar biasa dan membangun tim impian Anda?</p>
             </div>
             <div class="hidden md:block">
                 <div class="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
                     <i class="fas fa-star text-4xl text-yellow-300 mb-2"></i>
-                    <div class="text-sm font-medium">Recruiter Status</div>
+                    <div class="text-sm font-medium">Status Akun</div>
                     <div class="text-xs opacity-90">
                         {{ $user->is_active_talent ? 'Active' : 'Inactive' }}
                     </div>
@@ -34,8 +34,8 @@
                 <i class="fas fa-users text-xl text-white"></i>
             </div>
             <div>
-                <p class="text-sm font-semibold text-blue-600 uppercase">Available Talents</p>
-                <p class="text-gray-500 text-sm">Ready for collaboration</p>
+                <p class="text-sm font-semibold text-blue-600 uppercase">Kandidat terseida</p>
+                <p class="text-gray-500 text-sm">Siap untuk berkolaborasi</p>
             </div>
         </div>
 
@@ -43,7 +43,7 @@
             <div class="text-4xl font-bold text-gray-900 mb-1">
                 {{ $talents->total() }}
             </div>
-            <p class="text-gray-600">Active professionals</p>
+            <p class="text-gray-600">Kandidat aktif</p>
         </div>
 
         <div class="flex items-center justify-between pt-4 border-t border-gray-100">
@@ -51,21 +51,18 @@
                 <i class="fas fa-check-circle mr-2"></i>
                 <span class="font-medium">Ready to hire</span>
             </div>
-            <div class="inline-flex items-center px-3 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full">
-                <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                Live
-            </div>
-        </div>        </div>
+        </div>
+    </div>
 
         {{-- Account Status Card - 32% Width --}}
-        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+    <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-{{ $user->recruiter && $user->recruiter->is_active ? 'shield-check' : 'shield-exclamation' }} text-xl text-white"></i>
             </div>
             <div>
-                <p class="text-sm font-semibold text-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-600 uppercase">Account Status</p>
-                <p class="text-gray-500 text-sm">Your recruitment access</p>
+                <p class="text-sm font-semibold text-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-600 uppercase">Status Akun</p>
+                <p class="text-gray-500 text-sm">Akses rekrutmen Anda</p>
             </div>
         </div>
 
@@ -85,17 +82,18 @@
                 <div class="w-2 h-2 bg-{{ $user->recruiter && $user->recruiter->is_active ? 'emerald' : 'red' }}-500 rounded-full mr-2"></div>
                 {{ $user->recruiter && $user->recruiter->is_active ? 'Live' : 'Offline' }}
             </div>
-        </div>        </div>
+        </div>
+    </div>
 
         {{-- My Requests Card - 32% Width --}}
-        <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
+    <div class="w-[32%] bg-white rounded-2xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
         <div class="flex items-center mb-4">
             <div class="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mr-4">
                 <i class="fas fa-paper-plane text-xl text-white"></i>
             </div>
             <div>
-                <p class="text-sm font-semibold text-purple-600 uppercase">My Requests</p>
-                <p class="text-gray-500 text-sm">Collaboration requests</p>
+                <p class="text-sm font-semibold text-purple-600 uppercase">Permintaan saya</p>
+                <p class="text-gray-500 text-sm">Permintaan kolaborasi</p>
             </div>
         </div>
 
@@ -103,7 +101,7 @@
             <div class="text-4xl font-bold text-gray-900 mb-1">
                 {{ isset($myRequests) && (method_exists($myRequests, 'count') ? $myRequests->count() : (is_countable($myRequests) ? count($myRequests) : 0)) }}
             </div>
-            <p class="text-gray-600">Active submissions</p>
+            <p class="text-gray-600">Pengajuan aktif</p>
         </div>
 
         <div class="flex items-center justify-between pt-4 border-t border-gray-100">
@@ -115,7 +113,7 @@
                 <div class="w-2 h-2 bg-purple-500 rounded-full mr-2"></div>
                 Active
             </div>
-        </div>        </div>
+        </div>
     </div>
 
     {{-- Recent Requests Section - Full Width --}}
@@ -309,7 +307,12 @@
                             $overallScore = $scoreCount > 0 ? round($overallScore / $scoreCount) : 0;
                         @endphp
 
-                        <div class="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow talent-card relative" data-talent-id="{{ $talent->id }}">
+                        @php
+                            // Get redflag summary early for use in template
+                            $redflagSummary = $talent->getRedflagSummary();
+                        @endphp
+
+                        <div class="bg-white border rounded-xl p-6 hover:shadow-lg transition-shadow talent-card {{ $redflagSummary['has_redflags'] ? 'has-redflags' : '' }} relative" data-talent-id="{{ $talent->id }}">
                             <!-- Compare Checkbox (Hidden by default) -->
                             <div class="compare-checkbox hidden absolute top-4 right-4 z-10">
                                 @php
@@ -335,7 +338,11 @@
                                        data-talent-courses="{{ $metrics['progress_tracking']['completed_courses'] ?? 0 }}"
                                        data-talent-certificates="{{ $metrics['certifications']['total_certificates'] ?? 0 }}"
                                        data-talent-quiz-avg="{{ $metrics['quiz_performance']['average_score'] ?? 0 }}"
-                                       data-talent-skills="{{ $skillsJson }}">
+                                       data-talent-skills="{{ $skillsJson }}"
+                                       data-talent-redflag-count="{{ $redflagSummary['count'] }}"
+                                       data-talent-completed-projects="{{ $redflagSummary['total_completed'] }}"
+                                       data-talent-redflag-rate="{{ $redflagSummary['rate'] }}"
+                                       data-talent-has-redflags="{{ $redflagSummary['has_redflags'] ? 'true' : 'false' }}">
                             </div>
 
                             <!-- Profile -->
@@ -347,6 +354,19 @@
                                 <h3 class="font-bold text-lg text-gray-900">{{ $talent->user->name }}</h3>
                                 @if($talent->user->pekerjaan)
                                     <p class="text-gray-600 text-sm">{{ $talent->user->pekerjaan }}</p>
+                                @endif
+
+                                {{-- New Project-based Redflag System --}}
+                                @if($redflagSummary['has_redflags'])
+                                    <div class="mt-2 flex flex-col items-center space-y-1">
+                                        <span class="inline-flex items-center px-3 py-1 {{ $redflagSummary['badge_class'] }} text-xs font-semibold rounded-full shadow-sm">
+                                            <i class="fas fa-flag mr-1"></i>{{ $redflagSummary['display_text'] }}
+                                        </span>
+                                        <button onclick="showTalentRedflagHistory('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                                class="text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-all duration-200 border border-transparent hover:border-red-200">
+                                            <i class="fas fa-history mr-1"></i>View History
+                                        </button>
+                                    </div>
                                 @endif
                             </div>
 
@@ -435,7 +455,7 @@
                                             @endforeach
                                             @if(count($skills) > 3)
                                                 <div class="mt-2 text-center">
-                                                    <button onclick="showAllSkills('{{ $talent->id }}', '{{ $talent->user->name }}', {{ json_encode($skills) }})"
+                                                    <button onclick="showAllSkills('{{ $talent->id }}', '{{ $talent->user->name }}', {{ json_encode($skills) }}, {{ $talent->redflagged ? 'true' : 'false' }}, '{{ e($talent->redflag_reason ?? '') }}')"
                                                             class="text-xs text-blue-600 hover:text-blue-800 font-medium underline decoration-dotted hover:decoration-solid transition-all">
                                                         <i class="fas fa-eye mr-1"></i>See all {{ count($skills) }} skills
                                                     </button>
@@ -472,14 +492,14 @@
                             <div class="space-y-2">
                                 @if(!$existingRequest || in_array($existingRequest->status, ['rejected', 'completed']))
                                     @if(isset($talent->availability_status) && $talent->availability_status['available'])
-                                        <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}')"
+                                        <button onclick="openRequestModal('{{ $talent->id }}', '{{ $talent->user->name }}', {{ $redflagSummary['has_redflags'] ? 'true' : 'false' }}, '{{ $redflagSummary['count'] }}')"
                                                 class="w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors">
                                             <i class="fas fa-handshake mr-2"></i>Request Talent
                                         </button>
                                     @endif
                                 @endif
                                 <div class="grid grid-cols-2 gap-2">
-                                    <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}', {{ json_encode($metrics) }})"
+                                    <button onclick="viewScoutingReport('{{ $talent->id }}', '{{ $talent->user->name }}', {{ json_encode($metrics) }}, {{ $redflagSummary['has_redflags'] ? 'true' : 'false' }}, '{{ $redflagSummary['count'] }}')"
                                             class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
                                         <i class="fas fa-chart-line mr-1"></i>Report
                                     </button>
@@ -748,9 +768,13 @@ let currentTalentEmail = '';
 let currentRequestTalentId = '';
 let currentRequestTalentName = '';
 let currentSkillsModalTalentId = '';
+let currentSkillsModalTalentIsRedflagged = false;
+let currentSkillsModalTalentRedflagReason = '';
 
-function showAllSkills(talentId, talentName, skills) {
+function showAllSkills(talentId, talentName, skills, isRedflagged, redflagReason) {
     currentSkillsModalTalentId = talentId;
+    currentSkillsModalTalentIsRedflagged = isRedflagged;
+    currentSkillsModalTalentRedflagReason = redflagReason;
 
     // Update modal title
     document.getElementById('skillsModalTalentName').textContent = talentName;
@@ -823,7 +847,12 @@ function requestTalentFromSkillsModal() {
 
     // Wait for modal to close then open request modal
     setTimeout(() => {
-        openRequestModal(currentSkillsModalTalentId, document.getElementById('skillsModalTalentName').textContent);
+        openRequestModal(
+            currentSkillsModalTalentId,
+            document.getElementById('skillsModalTalentName').textContent,
+            currentSkillsModalTalentIsRedflagged,
+            currentSkillsModalTalentRedflagReason
+        );
     }, 300);
 }
 
@@ -838,7 +867,13 @@ function viewTalentDetails(name, email, profession, address, phone) {
     $('#talentDetailsModal').modal('show');
 }
 
-function openRequestModal(talentId, talentName) {
+function proceedWithRequest(talentId, talentName) {
+    // Close any existing warning modals
+    const warningModal = document.querySelector('.fixed.z-50[data-modal-type="redflag-warning"]');
+    if (warningModal) {
+        warningModal.remove();
+    }
+
     currentRequestTalentId = talentId;
     currentRequestTalentName = talentName;
 
@@ -848,9 +883,63 @@ function openRequestModal(talentId, talentName) {
 
     // Update modal title
     document.getElementById('talentRequestModalLabel').innerHTML =
-        '<div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-handshake text-white"></i></div>Request Talent: ' + talentName;
+        `<div class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mr-3"><i class="fas fa-handshake text-white"></i></div>Request Talent: ${talentName}`;
 
     $('#talentRequestModal').modal('show');
+}
+
+function openRequestModal(talentId, talentName, hasRedflags, redflagCount) {
+    if (hasRedflags) {
+        // Show a warning modal with new redflag information
+        const warningModalHtml = `
+        <div class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);" data-modal-type="redflag-warning">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl">
+                    <div class="text-center mb-4">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-flag text-red-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-900">Notice: Talent with Project Flags</h3>
+                        <p class="text-gray-600 mt-2">This talent has ${redflagCount} red-flagged project(s).</p>
+                    </div>
+
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                        <h6 class="font-semibold text-orange-900 mb-2">Project History:</h6>
+                        <p class="text-sm text-orange-800">${redflagCount} out of their completed projects have been flagged for quality or performance issues.</p>
+                        <button onclick="showTalentRedflagHistory('${talentId}', '${talentName}')" class="text-sm text-orange-700 hover:text-orange-900 underline mt-2">
+                            <i class="fas fa-history mr-1"></i>View detailed history
+                        </button>
+                    </div>
+
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-info-circle text-blue-600 mr-2 mt-0.5"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium mb-1">You can still proceed:</p>
+                                <p>This information is for your awareness. You can proceed with the request and discuss expectations during the meeting phase.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex gap-4">
+                        <button onclick="this.closest('.fixed').remove()"
+                                class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                            Cancel
+                        </button>
+                        <button onclick="proceedWithRequest('${talentId}', '${talentName.replace(/'/g, "\\'")}')"
+                                class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                            Proceed Anyway
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', warningModalHtml);
+    } else {
+        // If not red-flagged, open the request modal directly
+        proceedWithRequest(talentId, talentName);
+    }
 }
 
 function showTimeBlockingConflict(errorData) {
@@ -900,7 +989,7 @@ function showTimeBlockingConflict(errorData) {
                     ${blockingProjectsHtml}
 
                     <div class="mt-6 space-y-3">
-                        <button onclick="openRequestModal('${currentRequestTalentId}', '${currentRequestTalentName}')"
+                        <button onclick="proceedWithRequest('${currentRequestTalentId}', '${currentRequestTalentName.replace(/'/g, "\\'")}')"
                                 class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                             <i class="fas fa-calendar-plus mr-2"></i>Try Different Duration
                         </button>
@@ -1089,7 +1178,7 @@ function toggleViewMode() {
     }
 }
 
-function viewScoutingReport(talentId, talentName, metrics) {
+function viewScoutingReport(talentId, talentName, metrics, isRedflagged, redflagReason) {
     // Create a detailed scouting report modal
     const modal = document.createElement('div');
     modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
@@ -1178,7 +1267,7 @@ function viewScoutingReport(talentId, talentName, metrics) {
                 </div>
 
                 <div class="flex gap-4 pt-4">
-                    <button onclick="openRequestModal('${talentId}', '${talentName}')" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold">
+                    <button onclick="openRequestModal('${talentId}', '${talentName.replace(/'/g, "\\'")}', ${isRedflagged}, '${(redflagReason || '').replace(/'/g, "\\'")}')" class="flex-1 px-6 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold">
                         <i class="fas fa-handshake mr-2"></i>Request This Talent
                     </button>
                     <button onclick="this.closest('.fixed').remove()" class="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 transition-colors font-semibold">
@@ -1550,7 +1639,9 @@ function updateCompareSelection() {
             courses: cb.dataset.talentCourses,
             certificates: cb.dataset.talentCertificates,
             quizAvg: cb.dataset.talentQuizAvg,
-            skills: skills
+            skills: skills,
+            redflagged: cb.dataset.talentRedflagged === 'true',
+            redflagReason: cb.dataset.talentRedflagReason
         };
     });
 
@@ -1727,11 +1818,11 @@ function generateComparisonTable() {
                         ${selectedTalents.map(talent => `
                             <td class="border border-gray-200 p-4 text-center">
                                 <div class="flex flex-col gap-2">
-                                    <button onclick="openRequestModal('${talent.id}', '${talent.name}')"
+                                    <button onclick="openRequestModal('${talent.id}', '${talent.name.replace(/'/g, "\\'")}', ${talent.redflagged}, '${(talent.redflagReason || '').replace(/'/g, "\\'")}')"
                                             class="px-3 py-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm">
                                         <i class="fas fa-handshake mr-1"></i>Request
                                     </button>
-                                    <button onclick="viewScoutingReport('${talent.id}', '${talent.name}', {
+                                    <button onclick="viewScoutingReport('${talent.id}', '${talent.name.replace(/'/g, "\\'")}', {
                                         progress_tracking: { completed_courses: ${talent.courses} },
                                         certifications: { total_certificates: ${talent.certificates} },
                                         quiz_performance: { average_score: ${talent.quizAvg} },
@@ -1908,6 +1999,184 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
         submitButton.disabled = false;
         submitButton.innerHTML = originalText;
     });
+});
+
+// Project-based Redflag Modal Functions
+function showTalentRedflagHistory(talentId, talentName) {
+    // Show loading
+    showNotification('Loading project history...', 'info');
+
+    // Fetch redflag history via AJAX
+    fetch(`/recruiter/talent/${talentId}/redflag-history`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayRedflagHistoryModal(talentName, data.redflag_summary, data.redflagged_projects);
+            } else {
+                showNotification('Failed to load project history', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading project history', 'error');
+        });
+}
+
+function displayRedflagHistoryModal(talentName, summary, redflaggedProjects) {
+    const modalHtml = `
+    <div id="redflagHistoryModal" class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+                <div class="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-flag mr-2"></i>Project History for ${talentName}
+                    </h3>
+                    <button onclick="closeRedflagHistoryModal()"
+                            class="absolute top-4 right-4 text-white hover:text-gray-200 text-xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                    <!-- Summary -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">Summary</h4>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-blue-600">${summary.total_completed}</div>
+                                <div class="text-sm text-gray-600">Total Projects</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-red-600">${summary.count}</div>
+                                <div class="text-sm text-gray-600">Red-flagged</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-orange-600">${summary.rate}%</div>
+                                <div class="text-sm text-gray-600">Flag Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Red-flagged Projects List -->
+                    <h4 class="font-semibold text-gray-900 mb-4">Red-flagged Projects</h4>
+                    ${redflaggedProjects.length > 0 ? `
+                        <div class="space-y-4">
+                            ${redflaggedProjects.map(project => `
+                                <div class="border border-red-200 bg-red-50 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h5 class="font-medium text-gray-900">${project.project_title}</h5>
+                                        <span class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full">
+                                            ${project.redflagged_at}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-2">${project.project_description.substring(0, 100)}${project.project_description.length > 100 ? '...' : ''}</p>
+                                    <div class="text-sm text-red-700">
+                                        <strong>Flag reason:</strong> ${project.redflag_reason || 'No specific reason provided'}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-2">
+                                        Flagged by: ${project.redflagged_by_name} | Recruiter: ${project.recruiter_name}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                            <p>No red-flagged projects found.</p>
+                        </div>
+                    `}
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 border-t flex justify-end">
+                    <button onclick="closeRedflagHistoryModal()"
+                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRedflagHistoryModal() {
+    const modal = document.getElementById('redflagHistoryModal');
+    if (modal) {
+        modal.remove();
+    }
+    document.body.style.overflow = '';
+}
+
+// Legacy function - kept for backward compatibility but will be deprecated
+function showRedFlagDetails(talentName, reason, flagDate) {
+    showNotification('This feature has been updated. Please use the "View History" button for detailed project information.', 'info');
+}
+
+function contactTalentAdmin() {
+    // Create contact information alert
+    const message = `To inquire about this talent's red flag status, please contact:\n\n` +
+                   `Talent Administration\n` +
+                   `Email: talent-admin@webpelatihan.com\n` +
+                   `Phone: +62-XXX-XXXX-XXXX\n\n` +
+                   `Please include the talent's name in your inquiry.`;
+
+    if (confirm(message + '\n\nWould you like to copy the email address?')) {
+        // Copy email to clipboard if supported
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('talent-admin@webpelatihan.com').then(() => {
+                showNotification('Email address copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Please manually copy: talent-admin@webpelatihan.com', 'info');
+            });
+        } else {
+            showNotification('Please manually copy: talent-admin@webpelatihan.com', 'info');
+        }
+    }
+}
+
+// Enhanced notification function for red flag interactions
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification fixed top-4 right-4 z-50 px-6 py-4 rounded-xl shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-100 border border-green-400 text-green-700' :
+        type === 'warning' ? 'bg-yellow-100 border border-yellow-400 text-yellow-700' :
+        type === 'error' ? 'bg-red-100 border border-red-400 text-red-700' :
+        'bg-blue-100 border border-blue-400 text-blue-700'
+    }`;
+
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${
+                type === 'success' ? 'check-circle' :
+                type === 'warning' ? 'exclamation-triangle' :
+                type === 'error' ? 'exclamation-circle' : 'info-circle'
+            } mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 5000);
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const redFlagModal = document.getElementById('redFlagModal');
+        if (redFlagModal && !redFlagModal.classList.contains('hidden')) {
+            closeRedFlagModal();
+        }
+    }
 });
 </script>
 
@@ -2337,6 +2606,70 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
         padding: 0.5rem;
     }
 }
+
+/* Red Flag UI Enhancements */
+.red-flag-badge {
+    @apply inline-flex items-center px-3 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full border border-red-200;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
+}
+
+.red-flag-details-btn {
+    @apply inline-flex items-center text-xs text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-all duration-200;
+    border: 1px solid transparent;
+}
+
+.red-flag-details-btn:hover {
+    border-color: rgba(220, 38, 38, 0.2);
+    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.1);
+}
+
+/* Red Flag Modal Enhancements */
+#redFlagModal .modal-panel {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Notification styling */
+.notification {
+    animation: notificationSlideIn 0.3s ease-out;
+}
+
+@keyframes notificationSlideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Talent card red flag indicator */
+.talent-card.red-flagged {
+    @apply border-red-200;
+}
+
+.talent-card.red-flagged::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #ef4444, #dc2626);
+    border-radius: 12px 12px 0 0;
+}
 </style>
 
 <!-- Comparison Panel (Fixed at Bottom) -->
@@ -2391,6 +2724,92 @@ document.getElementById('talentRequestForm').addEventListener('submit', function
         <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
             <div id="comparisonContent">
                 <!-- Comparison content will be populated here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Red Flag Details Modal -->
+<div id="redFlagModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="redFlagModalTitle" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" onclick="closeRedFlagModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full modal-panel">
+            <!-- Modal Header -->
+            <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-red-500/30 rounded-full p-2">
+                            <i class="fas fa-flag text-red-200 text-lg"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-white" id="redFlagModalTitle">Red Flag Details</h3>
+                    </div>
+                    <button type="button" class="text-red-200 hover:text-white transition-colors" onclick="closeRedFlagModal()">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-6">
+                <div class="space-y-4">
+                    <!-- Talent Info -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <div class="bg-red-100 rounded-full p-2">
+                                <i class="fas fa-user text-red-600"></i>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-600">Talent Name</div>
+                                <div class="font-semibold text-gray-900" id="redFlagTalentName">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Flag Status -->
+                    <div class="border-l-4 border-red-500 pl-4">
+                        <div class="text-sm text-gray-600 mb-1">Account Status</div>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-3 py-1 bg-red-500 text-white text-sm font-medium rounded-full shadow-sm">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>Red Flagged
+                            </span>
+                            <span class="text-xs text-gray-500" id="redFlagDate">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Reason -->
+                    <div>
+                        <div class="text-sm font-medium text-gray-700 mb-2">Reason for Red Flag</div>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <p class="text-red-800" id="redFlagReason">-</p>
+                        </div>
+                    </div>
+
+                    <!-- Warning Notice -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5"></i>
+                            <div class="text-sm text-yellow-800">
+                                <div class="font-medium mb-1">Important Notice</div>
+                                <p>This talent has been flagged by the administration. Please consider this information when making collaboration decisions. Contact the talent admin for more details if needed.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <button onclick="contactTalentAdmin()" class="text-blue-600 hover:text-blue-700 text-sm font-medium underline">
+                        <i class="fas fa-envelope mr-1"></i>Contact Talent Admin
+                    </button>
+                    <button type="button" onclick="closeRedFlagModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>

@@ -196,25 +196,19 @@
                     <td>{{ $request->talent->user->portfolio_url }}</td>
                 </tr>
                 @endif
-                @if($request->talent->user->talent_skills)
+                @if(isset($request->talent_skills) && count($request->talent_skills) > 0)
                 <tr>
                     <th>Skills</th>
                     <td>
-                        @php
-                            $skills = is_string($request->talent->user->talent_skills)
-                                ? json_decode($request->talent->user->talent_skills, true)
-                                : $request->talent->user->talent_skills;
-                        @endphp
-                        @if(is_array($skills))
-                            @foreach($skills as $skill)
-                                @if(is_array($skill))
-                                    {{ $skill['skill_name'] ?? $skill['name'] ?? 'Unknown' }}@if(!$loop->last), @endif
-                                @else
-                                    {{ $skill }}@if(!$loop->last), @endif
-                                @endif
-                            @endforeach
-                        @endif
+                        @foreach($request->talent_skills as $skill)
+                            {{ is_array($skill) ? ($skill['skill_name'] ?? $skill['name'] ?? 'Unknown') : (is_string($skill) ? $skill : 'Unknown') }}@if(!$loop->last), @endif
+                        @endforeach
                     </td>
+                </tr>
+                @else
+                <tr>
+                    <th>Skills</th>
+                    <td><span>No skills listed</span></td>
                 </tr>
                 @endif
                 @if($request->talent->user->talent_bio)

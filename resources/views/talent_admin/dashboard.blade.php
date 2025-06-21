@@ -41,7 +41,7 @@
     </div>
 
     <!-- Overview Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <!-- Total Talents Card -->
         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover-lift">
             <div class="bg-gradient-to-br from-blue-500 to-blue-700 p-6">
@@ -50,6 +50,7 @@
                         <div class="text-3xl font-bold">{{ $totalTalents }}</div>
                         <div class="text-blue-100 text-sm font-medium">Total Talent</div>
                     </div>
+                    <i class="fas fa-users text-blue-200 text-4xl"></i>
                 </div>
             </div>
             <div class="p-4 bg-blue-50">
@@ -68,6 +69,7 @@
                         <div class="text-3xl font-bold">{{ $totalRecruiters }}</div>
                         <div class="text-indigo-100 text-sm font-medium">Total Perekrut</div>
                     </div>
+                    <i class="fas fa-building text-indigo-200 text-4xl"></i>
                 </div>
             </div>
             <div class="p-4 bg-indigo-50">
@@ -77,25 +79,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- Total Requests Card -->
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover-lift">
-            <div class="bg-gradient-to-br from-green-500 to-green-700 p-6">
-                <div class="flex items-center justify-between">
-                    <div class="text-white">
-                        <div class="text-3xl font-bold">{{ $totalRequests }}</div>
-                        <div class="text-green-100 text-sm font-medium">Total Permintaan</div>
-                    </div>
-                </div>
-            </div>
-            <div class="p-4 bg-green-50">
-                <div class="flex items-center text-green-700 text-sm">
-                    <i class="fas fa-thumbs-up mr-2"></i>
-                    <span>Disetujui: {{ $approvedRequests }}</span>
-                </div>
-            </div>
-        </div>
-
         <!-- Pending Requests Card -->
         <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover-lift">
             <div class="bg-gradient-to-br from-orange-500 to-orange-700 p-6">
@@ -104,6 +87,7 @@
                         <div class="text-3xl font-bold">{{ $pendingRequests }}</div>
                         <div class="text-orange-100 text-sm font-medium">Permintaan Tertunda</div>
                     </div>
+                    <i class="fas fa-hourglass-half text-orange-200 text-4xl"></i>
                 </div>
             </div>
             <div class="p-4 bg-orange-50">
@@ -304,6 +288,113 @@
         </div>
     </div>
 
+    <!-- Recent Project Requests Section -->
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 mb-8">
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-t-2xl p-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">Permintaan Proyek Terbaru</h3>
+                        <p class="text-purple-100 text-sm">Proyek terbaru yang diajukan oleh perekrut</p>
+                    </div>
+                </div>
+                <a href="{{ route('admin.projects.index') }}" class="px-4 py-2 bg-white text-purple-600 rounded-xl hover:bg-purple-50 transition-all duration-200 font-medium text-sm shadow-sm border border-white border-opacity-30">
+                    <i class="fas fa-eye mr-2"></i>Lihat Semua Proyek
+                </a>
+            </div>
+        </div>
+        <div class="p-6">
+            @php
+                // Get recent projects (you may need to pass this from the controller)
+                $recentProjects = $recentProjects ?? collect([]);
+            @endphp
+
+            @forelse($recentProjects as $project)
+                <div class="flex items-start p-4 mb-4 bg-gray-50 rounded-xl hover:bg-white hover:shadow-lg transition-all duration-200 border border-gray-100">
+                    <div class="mr-4 mt-1">
+                        @if($project->recruiter && $project->recruiter->user && $project->recruiter->user->avatar)
+                            <img class="w-12 h-12 rounded-xl object-cover shadow-md" src="{{ asset('storage/' . $project->recruiter->user->avatar) }}"
+                                 alt="{{ $project->recruiter->user->name }}">
+                        @else
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
+                                <i class="fas fa-project-diagram text-white"></i>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-start justify-between mb-2">
+                            <div>
+                                <h4 class="font-semibold text-gray-900 mb-1">{{ $project->title }}</h4>
+                                <p class="text-gray-600 text-sm">
+                                    <i class="fas fa-building mr-1"></i>
+                                    {{ $project->recruiter && $project->recruiter->user ? $project->recruiter->user->name : 'Unknown Recruiter' }}
+                                </p>
+                            </div>
+                            <div class="flex flex-col items-end">
+                                <span class="text-gray-500 text-xs mb-2">{{ $project->created_at ? $project->created_at->diffForHumans() : 'Unknown time' }}</span>
+                                <span class="@if($project->status === 'pending_admin') bg-yellow-100 text-yellow-800 @elseif($project->status === 'approved') bg-green-100 text-green-800 @elseif($project->status === 'active') bg-blue-100 text-blue-800 @elseif($project->status === 'completed') bg-gray-100 text-gray-800 @elseif($project->status === 'cancelled') bg-red-100 text-red-800 @elseif($project->status === 'overdue') bg-red-100 text-red-800 @elseif($project->status === 'closure_requested') bg-purple-100 text-purple-800 @else bg-gray-100 text-gray-800 @endif px-2 py-1 rounded-full text-xs font-medium">
+                                    {{ ucwords(str_replace('_', ' ', $project->status)) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1 mb-3 text-sm text-gray-600">
+                            <div class="flex items-center justify-between">
+                                <span>Budget:</span>
+                                <span class="font-medium">
+                                    @if($project->overall_budget_min && $project->overall_budget_max)
+                                        Rp {{ number_format($project->overall_budget_min, 0, ',', '.') }} - Rp {{ number_format($project->overall_budget_max, 0, ',', '.') }}
+                                    @elseif($project->overall_budget_min)
+                                        From Rp {{ number_format($project->overall_budget_min, 0, ',', '.') }}
+                                    @elseif($project->overall_budget_max)
+                                        Up to Rp {{ number_format($project->overall_budget_max, 0, ',', '.') }}
+                                    @else
+                                        Not specified
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Duration:</span>
+                                <span class="font-medium">
+                                    @if($project->estimated_duration_days)
+                                        {{ $project->estimated_duration_days }} days
+                                    @else
+                                        TBD
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Industry:</span>
+                                <span class="font-medium">{{ $project->industry ?: 'Not specified' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div class="text-xs text-gray-500">
+                                <i class="fas fa-users mr-1"></i>
+                                {{ $project->assignments->count() }} assigned talents
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{{ route('projects.show', $project) }}"
+                                   class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all duration-200 text-sm">
+                                    <i class="fas fa-eye mr-1"></i>Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-project-diagram text-gray-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-700 mb-2">Belum ada proyek terbaru</h4>
+                    <p class="text-gray-500">Belum ada proyek yang diajukan oleh perekrut.</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+
     <!-- Recent Users Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Recent Talents -->
@@ -321,9 +412,9 @@
                     @if($talent && is_object($talent))
                     <div class="flex items-center p-3 mb-3 rounded-xl hover:bg-gray-50 transition-all duration-200">
                         <div class="mr-3">
-                            @if($talent->avatar)
-                                <img class="w-11 h-11 rounded-xl object-cover shadow-md" src="{{ asset('storage/' . $talent->avatar) }}"
-                                     alt="{{ $talent->name }}">
+                            @if($talent->user && $talent->user->avatar)
+                                <img class="w-11 h-11 rounded-xl object-cover shadow-md" src="{{ asset('storage/' . $talent->user->avatar) }}"
+                                     alt="{{ $talent->user->name }}">
                             @else
                                 <div class="w-11 h-11 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center shadow-md">
                                     <i class="fas fa-user text-white"></i>
@@ -331,16 +422,16 @@
                             @endif
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-semibold text-gray-900">{{ $talent->name ?? 'Unknown User' }}</h4>
+                            <h4 class="font-semibold text-gray-900">{{ optional($talent->user)->name ?? 'Unknown User' }}</h4>
                             <p class="text-gray-500 text-sm">
                                 <i class="fas fa-briefcase mr-1"></i>
-                                {{ $talent->pekerjaan ?? 'Posisi tidak ditentukan' }}
+                                {{ optional($talent->user)->pekerjaan ?? 'Posisi tidak ditentukan' }}
                             </p>
                         </div>
                         <div>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ ($talent->is_active_talent ?? false) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                <i class="fas fa-{{ ($talent->is_active_talent ?? false) ? 'check-circle' : 'pause-circle' }} mr-1"></i>
-                                {{ ($talent->is_active_talent ?? false) ? 'Aktif' : 'Tidak Aktif' }}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ ($talent->is_active ?? false) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                <i class="fas fa-{{ ($talent->is_active ?? false) ? 'check-circle' : 'pause-circle' }} mr-1"></i>
+                                {{ ($talent->is_active ?? false) ? 'Aktif' : 'Tidak Aktif' }}
                             </span>
                         </div>
                     </div>
@@ -369,9 +460,9 @@
                     @if($recruiter && is_object($recruiter))
                     <div class="flex items-center p-3 mb-3 rounded-xl hover:bg-gray-50 transition-all duration-200">
                         <div class="mr-3">
-                            @if($recruiter->avatar)
-                                <img class="w-11 h-11 rounded-xl object-cover shadow-md" src="{{ asset('storage/' . $recruiter->avatar) }}"
-                                     alt="{{ $recruiter->name }}">
+                            @if($recruiter->user && $recruiter->user->avatar)
+                                <img class="w-11 h-11 rounded-xl object-cover shadow-md" src="{{ asset('storage/' . $recruiter->user->avatar) }}"
+                                     alt="{{ $recruiter->user->name }}">
                             @else
                                 <div class="w-11 h-11 bg-gradient-to-br from-gray-400 to-gray-600 rounded-xl flex items-center justify-center shadow-md">
                                     <i class="fas fa-building text-white"></i>
@@ -379,24 +470,16 @@
                             @endif
                         </div>
                         <div class="flex-1">
-                            <h4 class="font-semibold text-gray-900">{{ $recruiter->name ?? 'Unknown User' }}</h4>
+                            <h4 class="font-semibold text-gray-900">{{ optional($recruiter->user)->name ?? 'Unknown User' }}</h4>
                             <p class="text-gray-500 text-sm">
                                 <i class="fas fa-building mr-1"></i>
-                                {{ $recruiter->company_name ?? $recruiter->pekerjaan ?? 'Perusahaan tidak ditentukan' }}
+                                {{ $recruiter->company_name ?? optional($recruiter->user)->pekerjaan ?? 'Perusahaan tidak ditentukan' }}
                             </p>
                         </div>
                         <div>
-                            @php
-                                // Check if user has recruiter role safely
-                                try {
-                                    $isActiveRecruiter = method_exists($recruiter, 'hasRole') ? $recruiter->hasRole('recruiter') : true;
-                                } catch (Exception $e) {
-                                    $isActiveRecruiter = true; // Default to active if we can't check
-                                }
-                            @endphp
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $isActiveRecruiter ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                <i class="fas fa-{{ $isActiveRecruiter ? 'check-circle' : 'pause-circle' }} mr-1"></i>
-                                {{ $isActiveRecruiter ? 'Aktif' : 'Tidak Aktif' }}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ ($recruiter->is_active ?? false) ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
+                                <i class="fas fa-{{ ($recruiter->is_active ?? false) ? 'check-circle' : 'pause-circle' }} mr-1"></i>
+                                {{ ($recruiter->is_active ?? false) ? 'Aktif' : 'Tidak Aktif' }}
                             </span>
                         </div>
                     </div>

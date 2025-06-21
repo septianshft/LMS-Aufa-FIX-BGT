@@ -151,7 +151,7 @@
 
      <!-- Heading -->
      <div class="sidebar-heading">
-         {{ $roles }} Menu
+         Menu
      </div>
 
      {{-- ADMIN --}}

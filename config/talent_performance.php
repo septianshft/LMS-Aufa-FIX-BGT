@@ -17,10 +17,12 @@ return [
     ],
 
     'caching' => [
-        'talent_availability_ttl' => env('TALENT_AVAILABILITY_CACHE_TTL', 300), // 5 minutes
-        'analytics_ttl' => env('ANALYTICS_CACHE_TTL', 600), // 10 minutes
-        'top_talents_ttl' => env('TOP_TALENTS_CACHE_TTL', 300), // 5 minutes
-        'skill_analytics_ttl' => env('SKILL_ANALYTICS_CACHE_TTL', 1800), // 30 minutes
+        'talent_availability_ttl' => env('TALENT_AVAILABILITY_CACHE_TTL', 600), // 10 minutes
+        'analytics_ttl' => env('ANALYTICS_CACHE_TTL', 1800), // 30 minutes
+        'top_talents_ttl' => env('TOP_TALENTS_CACHE_TTL', 600), // 10 minutes
+        'skill_analytics_ttl' => env('SKILL_ANALYTICS_CACHE_TTL', 3600), // 1 hour
+        'dashboard_ttl' => env('DASHBOARD_CACHE_TTL', 1800), // 30 minutes
+        'manage_talents_ttl' => env('MANAGE_TALENTS_CACHE_TTL', 300), // 5 minutes
     ],
 
     'search' => [

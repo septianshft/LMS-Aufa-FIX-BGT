@@ -28,6 +28,46 @@
             </div>
         </div>
 
+        {{-- Red Flag Alert --}}
+        @if($talent && $talent->redflagged)
+            <div class="bg-gradient-to-r from-red-600 to-red-700 rounded-2xl p-6 text-white shadow-xl border-l-4 border-red-400">
+                <div class="flex items-start space-x-4">
+                    <div class="flex-shrink-0">
+                        <div class="bg-red-500/30 backdrop-blur-sm rounded-full p-3">
+                            <i class="fas fa-exclamation-triangle text-2xl text-red-200"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-xl font-bold mb-2 flex items-center">
+                            <i class="fas fa-flag mr-2"></i>
+                            Account Status Alert
+                        </h3>
+                        <p class="text-red-100 mb-2">
+                            Your talent account has been flagged and requires attention. This may affect your ability to access certain opportunities.
+                        </p>
+                        @if($talent->redflag_reason)
+                            <div class="bg-red-500/20 backdrop-blur-sm rounded-lg p-3 mt-3">
+                                <div class="text-sm font-medium text-red-200 mb-1">Reason:</div>
+                                <div class="text-red-100">{{ $talent->redflag_reason }}</div>
+                            </div>
+                        @endif
+                        <div class="mt-4">
+                            <p class="text-red-200 text-sm">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Please contact the talent administrator for assistance with resolving this issue.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <button onclick="showContactModal()" class="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-lg px-4 py-2 text-sm font-medium transition-colors">
+                            <i class="fas fa-envelope mr-1"></i>
+                            Contact Admin
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Quick Stats --}}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {{-- Profile Completeness --}}
@@ -47,11 +87,14 @@
                 </div>
             </div>
 
-            {{-- Active Opportunities --}}
-            <div class="bg-white rounded-xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
+            {{-- Active Opportunities (with warning if red-flagged) --}}
+            <div class="bg-white rounded-xl p-6 shadow-lg border {{ $talent && $talent->redflagged ? 'border-yellow-200' : 'border-gray-100' }} hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="bg-green-100 p-3 rounded-lg">
+                    <div class="bg-green-100 p-3 rounded-lg {{ $talent && $talent->redflagged ? 'relative' : '' }}">
                         <i class="fas fa-briefcase text-green-600 text-xl"></i>
+                        @if($talent && $talent->redflagged)
+                            <div class="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        @endif
                     </div>
                     <div class="text-right">
                         <div class="text-2xl font-bold text-gray-800">{{ $jobOpportunities->count() }}</div>
@@ -59,8 +102,10 @@
                     </div>
                 </div>
                 <div class="text-sm font-medium text-gray-700">Job Opportunities</div>
-                <div class="text-xs text-green-600 font-medium">
-                    @if($jobOpportunities->where('created_at', '>=', now()->subDays(7))->count() > 0)
+                <div class="text-xs {{ $talent && $talent->redflagged ? 'text-yellow-600' : 'text-green-600' }} font-medium">
+                    @if($talent && $talent->redflagged)
+                        Account flagged - contact support
+                    @elseif($jobOpportunities->where('created_at', '>=', now()->subDays(7))->count() > 0)
                         +{{ $jobOpportunities->where('created_at', '>=', now()->subDays(7))->count() }} new this week
                     @else
                         Check back for new opportunities
@@ -112,6 +157,30 @@
                         </div>
                     </div>
                     <div class="p-6 space-y-4">
+                        @if($talent && $talent->redflagged)
+                            {{-- Warning message for red-flagged talents - they can still see opportunities --}}
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                                <div class="flex items-start space-x-3">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 text-lg mt-1"></i>
+                                    <div class="flex-1">
+                                        <h4 class="text-sm font-semibold text-yellow-800 mb-1">Account Status Notice</h4>
+                                        <p class="text-yellow-700 text-sm mb-2">
+                                            Your account has been flagged. While you can still view and respond to opportunities,
+                                            please contact support to resolve any issues.
+                                        </p>
+                                        @if($talent->redflag_reason)
+                                            <div class="text-xs text-yellow-600 italic">
+                                                Reason: {{ $talent->redflag_reason }}
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <button onclick="showContactModal()" class="text-yellow-700 hover:text-yellow-800 text-xs underline whitespace-nowrap">
+                                        Contact Support
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+
                         @forelse($jobOpportunities->take(3) as $opportunity)
                             <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all
                                 @if(isset($opportunity['is_pre_approved']) && $opportunity['is_pre_approved'])
@@ -299,6 +368,24 @@
                         <h2 class="text-lg font-bold text-gray-800">⚡ Quick Actions</h2>
                     </div>
                     <div class="p-6 space-y-3">
+                        {{-- Red Flag Status Action --}}
+                        @if($talent && $talent->redflagged)
+                            <div class="p-3 rounded-lg bg-red-50 border border-red-200">
+                                <div class="flex items-center">
+                                    <div class="bg-red-100 p-2 rounded-lg">
+                                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                    </div>
+                                    <div class="ml-3 flex-1">
+                                        <div class="text-sm font-medium text-red-800">Account Flagged</div>
+                                        <div class="text-xs text-red-600">Resolve to continue</div>
+                                    </div>
+                                    <button onclick="showContactModal()" class="text-red-600 hover:text-red-700 text-xs underline">
+                                        Contact
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+
                         <a href="{{ route('profile.edit') }}" class="flex items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group">
                             <div class="bg-blue-100 p-2 rounded-lg group-hover:bg-blue-200 transition-colors">
                                 <i class="fas fa-user-edit text-blue-600"></i>
@@ -1048,6 +1135,28 @@ function handleResumeUpload(input) {
 
         // Here you would typically upload the file to your server
         showAlert('Resume upload feature will be implemented soon!', 'info');
+    }
+}
+
+// Show contact modal for red-flagged talents
+function showContactModal() {
+    // Create a simple alert or modal for contacting admin
+    const message = `For assistance with your account status, please contact our support team:\n\n` +
+                   `Email: talent-support@webpelatihan.com\n` +
+                   `Phone: +62-XXX-XXXX-XXXX\n\n` +
+                   `Please include your name and describe any questions you may have about your account.`;
+
+    if (confirm(message + '\n\nWould you like to copy the email address to your clipboard?')) {
+        // Copy email to clipboard if supported
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText('talent-support@webpelatihan.com').then(() => {
+                showAlert('Email address copied to clipboard!', 'success');
+            }).catch(() => {
+                showAlert('Please manually copy: talent-support@webpelatihan.com', 'info');
+            });
+        } else {
+            showAlert('Please manually copy: talent-support@webpelatihan.com', 'info');
+        }
     }
 }
 </script>

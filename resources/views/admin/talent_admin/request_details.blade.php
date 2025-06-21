@@ -60,7 +60,9 @@
                                 <p class="text-muted">{{ $talentRequest->collaboration_type ?? 'Not specified' }}</p>
                             </div>
                         </div>
-                    </div>                    @if($talentRequest->budget_range || $talentRequest->project_duration)
+                    </div>
+
+                    @if($talentRequest->budget_range || $talentRequest->project_duration || $talentRequest->project_start_date || $talentRequest->project_end_date)
                     <div class="row">
                         @if($talentRequest->budget_range)
                         <div class="col-md-6">
@@ -81,17 +83,46 @@
                     </div>
                     @endif
 
+                    @if($talentRequest->project_start_date || $talentRequest->project_end_date)
+                    <div class="row">
+                        @if($talentRequest->project_start_date)
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Project Start Date:</label>
+                                <p class="text-muted">
+                                    {{ optional($talentRequest->project_start_date)->format('F d, Y') ?? 'Not specified' }}
+                                </p>
+                            </div>
+                        </div>
+                        @endif
+                        @if($talentRequest->project_end_date)
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="font-weight-bold">Project End Date:</label>
+                                <p class="text-muted">
+                                    {{ optional($talentRequest->project_end_date)->format('F d, Y') ?? 'Not specified' }}
+                                </p>
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                    @endif
+
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="font-weight-bold">Request Date:</label>
-                                <p class="text-muted">{{ $talentRequest->created_at->format('F d, Y \a\t H:i') }}</p>
+                                <p class="text-muted">
+                                    {{ optional($talentRequest->created_at)->format('F d, Y \a\t H:i') ?? 'Not available' }}
+                                </p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="font-weight-bold">Last Updated:</label>
-                                <p class="text-muted">{{ $talentRequest->updated_at->format('F d, Y \a\t H:i') }}</p>
+                                <p class="text-muted">
+                                    {{ optional($talentRequest->updated_at)->format('F d, Y \a\t H:i') ?? 'Not available' }}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -132,7 +163,8 @@
                 <div class="card-header py-3">
                     <h6 class="m-0 font-weight-bold text-warning">Quick Actions</h6>
                 </div>
-                <div class="card-body">                    @if($talentRequest->status !== 'rejected' && $talentRequest->status !== 'completed')
+                <div class="card-body">
+                    @if($talentRequest->status !== 'rejected' && $talentRequest->status !== 'completed')
                         <div class="d-grid gap-2 mb-3">
                             @if($talentRequest->status == 'pending')
                             <button type="button" class="btn btn-success btn-sm" onclick="updateStatus({{ $talentRequest->id }}, 'approved')">
@@ -333,7 +365,9 @@
                         <div class="col-sm-3"><strong>Skills:</strong></div>
                         <div class="col-sm-9">
                             @php
-                                $skills = $talentRequest->talent->user->getTalentSkillsArray();
+                                $talent = $talentRequest->talent ?? null;
+                                $user = optional($talent)->user ?? null;
+                                $skills = $user ? (method_exists($user, 'getTalentSkillsArray') ? $user->getTalentSkillsArray() : []) : [];
                                 $skillCount = count($skills);
                             @endphp
                             @if($skillCount > 0)
@@ -373,7 +407,7 @@
             <div class="card shadow mb-4">
                 <div class="card-header py-3 bg-success text-white">
                     <h6 class="m-0 font-weight-bold">
-                        <i class="fas fa-check-circle mr-2"></i>
+                        <i class="fas fa-check-circle me-2"></i>
                         Completion Details
                     </h6>
                 </div>
@@ -382,13 +416,21 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="font-weight-bold">Completed At:</label>
-                                <p class="text-muted">{{ $talentRequest->workflow_completed_at->format('d M Y, H:i') }}</p>
+                                <p class="text-muted">
+                                    {{ optional($talentRequest->workflow_completed_at)->format('d M Y, H:i') ?? 'Not available' }}
+                                </p>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label class="font-weight-bold">Duration:</label>
-                                <p class="text-muted">{{ $talentRequest->created_at->diffForHumans($talentRequest->workflow_completed_at, true) }}</p>
+                                <p class="text-muted">
+                                    @if($talentRequest->created_at && $talentRequest->workflow_completed_at)
+                                        {{ $talentRequest->created_at->diffForHumans($talentRequest->workflow_completed_at, true) }}
+                                    @else
+                                        Not available
+                                    @endif
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -398,7 +440,7 @@
                         <div class="col-12">
                             <div class="alert alert-info">
                                 <div class="d-flex align-items-center">
-                                    <i class="fas fa-info-circle mr-3"></i>
+                                    <i class="fas fa-info-circle me-3"></i>
                                     <div>
                                         <strong>Automatic Completion</strong><br>
                                         This talent request was automatically marked as completed due to project closure approval.
@@ -416,7 +458,7 @@
                         <div class="col-12">
                             <div class="alert alert-success">
                                 <div class="d-flex align-items-center">
-                                    <i class="fas fa-user-check mr-3"></i>
+                                    <i class="fas fa-user-check me-3"></i>
                                     <div>
                                         <strong>Talent Availability</strong><br>
                                         This talent is now available for new recruitment requests.
@@ -438,11 +480,17 @@
 function updateStatus(requestId, status) {
     // Prevent unauthorized meeting arrangement
     if (status === 'meeting_arranged') {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfToken) {
+            showAlert('CSRF token not found. Please refresh the page.', 'danger');
+            return;
+        }
+
         // First check if both parties have accepted via AJAX
         fetch(`/talent-admin/request/${requestId}/can-arrange-meeting`, {
             method: 'GET',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken.getAttribute('content')
             }
         })
         .then(response => response.json())
@@ -478,11 +526,17 @@ function performStatusUpdate(requestId, status) {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
     });
 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfToken) {
+        showAlert('CSRF token not found. Please refresh the page.', 'danger');
+        return;
+    }
+
     fetch(`/talent-admin/request/${requestId}/status`, {
         method: 'PATCH',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': csrfToken.getAttribute('content')
         },
         body: JSON.stringify({ status: status })
     })
@@ -535,11 +589,17 @@ function acceptAsAdmin(requestId) {
         return;
     }
 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    if (!csrfToken) {
+        showAlert('CSRF token not found. Please refresh the page.', 'danger');
+        return;
+    }
+
     fetch(`/talent-admin/request/${requestId}/admin-accept`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            'X-CSRF-TOKEN': csrfToken.getAttribute('content')
         }
     })
     .then(response => response.json())

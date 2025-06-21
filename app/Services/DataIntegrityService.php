@@ -108,10 +108,7 @@ class DataIntegrityService
 
             // Check if talent skills are properly formatted
             if ($user->talent_skills) {
-                $skills = is_string($user->talent_skills)
-                    ? json_decode($user->talent_skills, true)
-                    : $user->talent_skills;
-
+                $skills = $user->getTalentSkillsArray();
                 if (!is_array($skills)) {
                     $issues[] = "User {$user->id}: talent_skills is not properly formatted as array";
                 }
@@ -271,23 +268,11 @@ class DataIntegrityService
         $users = User::whereNotNull('talent_skills')->get();
 
         foreach ($users as $user) {
-            if (empty($user->talent_skills)) {
+            $skills = $user->getTalentSkillsArray();
+            if (empty($skills)) {
                 $skillStats['empty_skills']++;
                 continue;
             }
-
-            // Check JSON validity
-            if (is_string($user->talent_skills)) {
-                $skills = json_decode($user->talent_skills, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    $skillStats['invalid_json']++;
-                    $issues[] = "User {$user->id}: invalid JSON in talent_skills";
-                    continue;
-                }
-            } else {
-                $skills = $user->talent_skills;
-            }
-
             if (is_array($skills)) {
                 $skillStats['users_with_skills']++;
 

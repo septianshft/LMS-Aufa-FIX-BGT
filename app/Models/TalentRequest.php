@@ -41,7 +41,12 @@ class TalentRequest extends Model
         // Project-centric system fields
         'project_id',
         'migrated_to_project_system',
-        'legacy_talent_request_id'
+        'legacy_talent_request_id',
+        // Per-request redflag fields
+        'is_redflagged',
+        'redflag_reason',
+        'redflagged_at',
+        'redflagged_by'
     ];
 
     protected $casts = [
@@ -60,7 +65,10 @@ class TalentRequest extends Model
         'is_blocking_talent' => 'boolean',
         'deleted_at' => 'datetime',
         // Project-centric system casts
-        'migrated_to_project_system' => 'boolean'
+        'migrated_to_project_system' => 'boolean',
+        // Per-request redflag casts
+        'is_redflagged' => 'boolean',
+        'redflagged_at' => 'datetime'
     ];
 
     // Relationships
@@ -92,6 +100,14 @@ class TalentRequest extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    /**
+     * Relationship to the admin who red-flagged this request
+     */
+    public function redflaggedBy()
+    {
+        return $this->belongsTo(User::class, 'redflagged_by');
     }
 
     // Helper method to get talent user (either from direct reference or through talent)
@@ -473,9 +489,9 @@ class TalentRequest extends Model
             $date = $startDate->copy();
 
             if (isset($mapping['weeks'])) {
-                $date->addWeeks($mapping['weeks']);
+                $date->addWeeks((int)$mapping['weeks']);
             } elseif (isset($mapping['months'])) {
-                $date->addMonths($mapping['months']);
+                $date->addMonths((int)$mapping['months']);
             }
 
             return $date;

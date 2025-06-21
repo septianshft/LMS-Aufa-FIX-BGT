@@ -33,7 +33,7 @@ class TalentMatchingService
                 $skills = is_array($filters['skills']) ? $filters['skills'] : [$filters['skills']];
                 $query->where(function($q) use ($skills) {
                     foreach ($skills as $skill) {
-                        $q->orWhereRaw('JSON_UNQUOTE(JSON_EXTRACT(talent_skills, "$[*].name")) LIKE ?', ['%' . $skill . '%']);
+                        $q->orWhereJsonContains('talent_skills', [['skill_name' => $skill]]);
                     }
                 });
             }
@@ -95,7 +95,7 @@ class TalentMatchingService
             $talents = $query->get();
 
             $matchedTalents = $talents->map(function($user) use ($requiredSkills) {
-                $userSkills = collect($user->talent_skills ?? []);
+                $userSkills = collect($user->getTalentSkillsArray());
                 $matchScore = $this->calculateMatchScore($userSkills, $requiredSkills);
 
                 if ($matchScore > 0) {
@@ -144,7 +144,7 @@ class TalentMatchingService
      */
     private function buildOptimizedTalentProfile(User $user): array
     {
-        $skills = collect($user->talent_skills ?? []);
+        $skills = collect($user->getTalentSkillsArray());
 
         // Get cached availability status for better performance
         $availability = TalentRequest::getCachedTalentAvailability($user->id);
@@ -320,7 +320,7 @@ class TalentMatchingService
      */
     private function calculateRecommendationScore($user): float
     {
-        $skills = collect($user->talent_skills ?? []);
+        $skills = collect($user->getTalentSkillsArray());
         $skillCount = $skills->count();
         $levelVariety = count(array_unique($skills->pluck('level')->toArray()));
         $recentActivity = $user->updated_at->diffInDays(now());

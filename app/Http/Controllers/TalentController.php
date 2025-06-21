@@ -30,6 +30,9 @@ class TalentController extends Controller
         $roles = 'Talent';
         $assignedKelas = [];
 
+        // Get talent data for redflag status
+        $talent = $user->talent;
+
         // Get real talent statistics
         $talentStats = $this->getTalentDashboardStats($user);
 
@@ -55,7 +58,7 @@ class TalentController extends Controller
         $jobHistory = $this->getJobHistory($user);
 
         return view('admin.talent.dashboard', compact(
-            'user', 'title', 'roles', 'assignedKelas',
+            'user', 'title', 'roles', 'assignedKelas', 'talent',
             'talentStats', 'skillAnalytics', 'userSkills',
             'recentRequests', 'jobOpportunities', 'recentActivity',
             'profileCompleteness', 'jobHistory'

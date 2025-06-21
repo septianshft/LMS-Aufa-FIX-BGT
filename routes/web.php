@@ -172,6 +172,13 @@ Route::middleware('auth')->group(function () {
 
     // Talent Admin Routes
     Route::middleware('role:talent_admin')->group(function () {
+        Route::patch('talent-admin/talent/{talent}/set-redflag', [TalentAdminController::class, 'setTalentRedflag'])->name('talent_admin.set_talent_redflag');
+        Route::patch('talent-admin/talent/{talent}/unset-redflag', [TalentAdminController::class, 'unsetTalentRedflag'])->name('talent_admin.unset_talent_redflag');
+
+        // New project-based redflag routes
+        Route::get('talent-admin/talents/{talent}/completed-projects', [TalentAdminController::class, 'getTalentCompletedProjects'])->name('talent_admin.talent_completed_projects');
+        Route::post('talent-admin/projects/redflag', [TalentAdminController::class, 'flagProject'])->name('talent_admin.flag_project');
+        Route::get('talent-admin/talents/{talent}/redflag-history', [TalentAdminController::class, 'getTalentRedflagHistory'])->name('talent_admin.talent_redflag_history');
         Route::get('talent-admin/dashboard', [TalentAdminController::class, 'dashboard'])->name('talent_admin.dashboard');
         Route::get('talent-admin/manage-talents', [TalentAdminController::class, 'manageTalents'])->name('talent_admin.manage_talents');
         Route::get('talent-admin/manage-recruiters', [TalentAdminController::class, 'manageRecruiters'])->name('talent_admin.manage_recruiters');
@@ -236,6 +243,7 @@ Route::middleware('auth')->group(function () {
         Route::get('recruiter/my-requests', [RecruiterController::class, 'myRequests'])->name('recruiter.my_requests');
         Route::get('recruiter/request-details/{request}', [RecruiterController::class, 'requestDetails'])->name('recruiter.request_details');
         Route::get('recruiter/scouting-report/{talent}', [RecruiterController::class, 'getScoutingReport'])->name('recruiter.scouting_report');
+        Route::get('recruiter/talent/{talent}/redflag-history', [RecruiterController::class, 'getTalentRedflagHistory'])->name('recruiter.talent_redflag_history');
 
         // Enhanced Analytics & Recommendations API
         Route::prefix('recruiter/api')->name('recruiter.api.')->group(function () {
@@ -467,4 +475,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 });
 
+
+// Include custom routes for Talent Admin PDF export
+require __DIR__.'/custom_talent_admin_export.php';
 require __DIR__.'/auth.php';

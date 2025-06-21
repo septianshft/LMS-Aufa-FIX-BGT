@@ -52,6 +52,7 @@
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Talent</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Email</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Status</th>
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Redflag</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Joined</th>
                                 <th class="text-left py-4 px-4 font-semibold text-gray-700 text-sm">Actions</th>
                             </tr>
@@ -91,6 +92,36 @@
                                                 Inactive
                                             </span>
                                         @endif
+                                    </td>
+                                    <td class="py-6 px-4">
+                                        @php
+                                            $redflagSummary = $talent->getRedflagSummary();
+                                        @endphp
+                                        <div class="space-y-2">
+                                            @if($redflagSummary['has_redflags'])
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                                    <i class="fas fa-flag mr-1"></i>
+                                                    {{ $redflagSummary['display_text'] }}
+                                                </span>
+                                                <div class="text-xs text-red-700">Rate: {{ $redflagSummary['rate'] }}%</div>
+                                                <button onclick="viewProjectRedflags({{ $talent->id }}, '{{ $talent->user->name }}')"
+                                                        class="text-xs text-blue-600 hover:text-blue-800 underline">
+                                                    <i class="fas fa-list mr-1"></i>View Projects
+                                                </button>
+                                            @else
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                                    <i class="fas fa-check-circle mr-1"></i>
+                                                    No Flags
+                                                </span>
+                                                <div class="text-xs text-gray-500">{{ $redflagSummary['total_completed'] }} completed projects</div>
+                                            @endif
+
+                                            <!-- New Project Redflag Button -->
+                                            <button onclick="openProjectRedflagModal({{ $talent->id }}, '{{ $talent->user->name }}')"
+                                                    class="block w-full text-xs text-white bg-orange-600 hover:bg-orange-700 px-2 py-1 rounded transition-colors">
+                                                <i class="fas fa-flag mr-1"></i>Flag Project
+                                            </button>
+                                        </div>
                                     </td>
                                     <td class="py-6 px-4">
                                         <div class="text-gray-900 font-medium text-sm">{{ $talent->created_at->format('M d, Y') }}</div>
@@ -453,6 +484,282 @@ document.getElementById('talentDetailsModal').addEventListener('click', function
         closeTalentModal();
     }
 });
+
+// Project-based Redflag Functions
+function openProjectRedflagModal(talentId, talentName) {
+    fetch(`/talent-admin/talents/${talentId}/completed-projects`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showProjectRedflagModal(talentId, talentName, data.completed_projects);
+            } else {
+                alert('Failed to load completed projects');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading completed projects');
+        });
+}
+
+function showProjectRedflagModal(talentId, talentName, completedProjects) {
+    const modalHtml = `
+    <div id="projectRedflagModal" class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+                <div class="bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-white">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-flag mr-2"></i>Flag Project for ${talentName}
+                    </h3>
+                    <button onclick="closeProjectRedflagModal()"
+                            class="absolute top-4 right-4 text-white hover:text-gray-200 text-xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6">
+                    <p class="text-gray-600 mb-4">Select a completed project to flag:</p>
+
+                    ${completedProjects.length > 0 ? `
+                        <div class="space-y-3 max-h-60 overflow-y-auto">
+                            ${completedProjects.map(project => `
+                                <div class="border rounded-lg p-4 hover:bg-gray-50 cursor-pointer project-item"
+                                     onclick="selectProject(${project.id}, '${project.project_title}', ${project.is_redflagged})">
+                                    <div class="flex justify-between items-start">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-900">${project.project_title}</h4>
+                                            <p class="text-sm text-gray-600 mt-1">${project.project_description.substring(0, 100)}${project.project_description.length > 100 ? '...' : ''}</p>
+                                            <div class="text-xs text-gray-500 mt-2">
+                                                Completed: ${project.completed_at} | Recruiter: ${project.recruiter_name}
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            ${project.is_redflagged ?
+                                                '<span class="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full">Already Flagged</span>' :
+                                                '<span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Not Flagged</span>'
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+
+                        <div id="redflagForm" class="mt-6 hidden">
+                            <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                                <h5 class="font-medium text-orange-900 mb-2">Flag Project: <span id="selectedProjectTitle"></span></h5>
+                                <form id="projectRedflagForm">
+                                    <input type="hidden" id="selectedProjectId" name="project_id">
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Reason for flagging:</label>
+                                        <textarea name="redflag_reason" id="redflag_reason" rows="3"
+                                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                                                  placeholder="Please provide a detailed reason for flagging this project..."
+                                                  required></textarea>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                            <i class="fas fa-flag mr-1"></i>Flag Project
+                                        </button>
+                                        <button type="button" onclick="hideRedflagForm()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    ` : `
+                        <div class="text-center py-8">
+                            <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                            <p class="text-gray-500">No completed projects found for this talent.</p>
+                        </div>
+                    `}
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 border-t flex justify-end">
+                    <button onclick="closeProjectRedflagModal()"
+                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+
+    // Setup form submission
+    document.getElementById('projectRedflagForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitProjectRedflag();
+    });
+}
+
+function selectProject(projectId, projectTitle, isRedflagged) {
+    if (isRedflagged) {
+        alert('This project is already flagged. You can remove the flag by contacting the system administrator.');
+        return;
+    }
+
+    document.getElementById('selectedProjectId').value = projectId;
+    document.getElementById('selectedProjectTitle').textContent = projectTitle;
+    document.getElementById('redflagForm').classList.remove('hidden');
+
+    // Highlight selected project
+    document.querySelectorAll('.project-item').forEach(item => {
+        item.classList.remove('border-orange-500', 'bg-orange-50');
+    });
+    event.currentTarget.classList.add('border-orange-500', 'bg-orange-50');
+}
+
+function hideRedflagForm() {
+    document.getElementById('redflagForm').classList.add('hidden');
+    document.getElementById('redflag_reason').value = '';
+
+    // Remove highlighting
+    document.querySelectorAll('.project-item').forEach(item => {
+        item.classList.remove('border-orange-500', 'bg-orange-50');
+    });
+}
+
+function submitProjectRedflag() {
+    const formData = new FormData(document.getElementById('projectRedflagForm'));
+
+    fetch('/talent-admin/projects/redflag', {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Project flagged successfully!');
+            closeProjectRedflagModal();
+            location.reload(); // Refresh to show updated redflag status
+        } else {
+            alert('Failed to flag project: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error flagging project');
+    });
+}
+
+function closeProjectRedflagModal() {
+    const modal = document.getElementById('projectRedflagModal');
+    if (modal) {
+        modal.remove();
+    }
+    document.body.style.overflow = '';
+}
+
+function viewProjectRedflags(talentId, talentName) {
+    fetch(`/talent-admin/talents/${talentId}/redflag-history`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showRedflagHistoryModal(talentName, data.redflag_summary, data.redflagged_projects);
+            } else {
+                alert('Failed to load redflag history');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading redflag history');
+        });
+}
+
+function showRedflagHistoryModal(talentName, summary, redflaggedProjects) {
+    const modalHtml = `
+    <div id="redflagHistoryModal" class="fixed inset-0 z-50 overflow-y-auto" style="background: rgba(0,0,0,0.5);">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+                <div class="bg-gradient-to-r from-red-500 to-pink-500 px-6 py-4 text-white">
+                    <h3 class="text-xl font-bold flex items-center">
+                        <i class="fas fa-history mr-2"></i>Redflag History for ${talentName}
+                    </h3>
+                    <button onclick="closeRedflagHistoryModal()"
+                            class="absolute top-4 right-4 text-white hover:text-gray-200 text-xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                    <!-- Summary -->
+                    <div class="mb-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">Summary</h4>
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-2xl font-bold text-blue-600">${summary.total_completed}</div>
+                                <div class="text-sm text-gray-600">Total Projects</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-red-600">${summary.count}</div>
+                                <div class="text-sm text-gray-600">Red-flagged</div>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-bold text-orange-600">${summary.rate}%</div>
+                                <div class="text-sm text-gray-600">Flag Rate</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Red-flagged Projects List -->
+                    <h4 class="font-semibold text-gray-900 mb-4">Red-flagged Projects</h4>
+                    ${redflaggedProjects.length > 0 ? `
+                        <div class="space-y-4">
+                            ${redflaggedProjects.map(project => `
+                                <div class="border border-red-200 bg-red-50 rounded-lg p-4">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h5 class="font-medium text-gray-900">${project.project_title}</h5>
+                                        <span class="text-xs px-2 py-1 bg-red-100 text-red-800 rounded-full">
+                                            ${project.redflagged_at}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-gray-700 mb-2">${project.project_description.substring(0, 100)}${project.project_description.length > 100 ? '...' : ''}</p>
+                                    <div class="text-sm text-red-700">
+                                        <strong>Flag reason:</strong> ${project.redflag_reason || 'No specific reason provided'}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-2">
+                                        Flagged by: ${project.redflagged_by_name} | Recruiter: ${project.recruiter_name}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                            <p>No red-flagged projects found.</p>
+                        </div>
+                    `}
+                </div>
+
+                <div class="bg-gray-50 px-6 py-4 border-t flex justify-end">
+                    <button onclick="closeRedflagHistoryModal()"
+                            class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRedflagHistoryModal() {
+    const modal = document.getElementById('redflagHistoryModal');
+    if (modal) {
+        modal.remove();
+    }
+    document.body.style.overflow = '';
+}
 </script>
 
 <style>

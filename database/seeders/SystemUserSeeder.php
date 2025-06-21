@@ -12,30 +12,17 @@ use Spatie\Permission\Models\Role;
 class SystemUserSeeder extends Seeder
 {
     /**
-     * Seed minimal core system users for trainee-to-talent conversion testing.
-     * Only essential system accounts - no sample talents.
+     * Seed essential system users: trainee, recruiter, and talent admin only.
      */
     public function run(): void
     {
         $this->command->info('👥 Creating essential system users...');
 
         // ===============================================
-        // ESSENTIAL SYSTEM ACCOUNTS ONLY
+        // ESSENTIAL ACCOUNTS ONLY
         // ===============================================
 
-        // LMS Admin - Full LMS access only
-        $adminUser = User::firstOrCreate([
-            'email' => 'admin@lms.test'
-        ], [
-            'name' => 'LMS Administrator',
-            'pekerjaan' => 'System Administrator',
-            'avatar' => null,
-            'password' => bcrypt('password123'),
-        ]);
-        $adminUser->assignRole('admin');
-        $this->command->info('   ✓ LMS Admin created: admin@lms.test');
-
-        // Talent Admin - Talent system management only
+        // Talent Admin - Talent system management
         $talentAdminUser = User::firstOrCreate([
             'email' => 'talent.admin@scout.test'
         ], [
@@ -54,7 +41,7 @@ class SystemUserSeeder extends Seeder
         ]);
         $this->command->info('   ✓ Talent Admin created: talent.admin@scout.test');
 
-        // Recruiter - Talent discovery only
+        // Recruiter - Talent discovery and project management
         $recruiterUser = User::firstOrCreate([
             'email' => 'recruiter@scout.test'
         ], [
@@ -69,11 +56,17 @@ class SystemUserSeeder extends Seeder
         Recruiter::firstOrCreate([
             'user_id' => $recruiterUser->id
         ], [
+            'company_name' => 'Tech Solutions Inc.',
+            'industry' => 'Technology',
+            'company_size' => '50-100',
+            'website' => 'https://techsolutions.com',
+            'company_description' => 'Leading technology consulting firm',
+            'phone' => '+1-555-0123',
+            'address' => '123 Tech Street, Silicon Valley',
             'is_active' => true
         ]);
         $this->command->info('   ✓ Recruiter created: recruiter@scout.test');
 
-        $this->command->info('ℹ️  Note: No sample talents created - use TraineeSeeder for conversion testing');
         $this->command->info('✅ Essential system users created successfully!');
     }
 }

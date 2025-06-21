@@ -14,21 +14,11 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        //
-
-        $adminRole = Role::firstOrCreate([
-            'name' => 'admin'
-        ]);
-
+        // Create essential roles only
         $traineeRole = Role::firstOrCreate([
             'name' => 'trainee'
         ]);
 
-        $trainerRole = Role::firstOrCreate([
-            'name' => 'trainer'
-        ]);
-
-        // New talent scouting roles
         $talentAdminRole = Role::firstOrCreate([
             'name' => 'talent_admin'
         ]);
@@ -41,17 +31,13 @@ class RolePermissionSeeder extends Seeder
             'name' => 'recruiter'
         ]);
 
-        //akun admin
-
-        $userAdmin = User::firstOrCreate([
-            'email' => 'admin@admin.com'
-        ], [
-            'name' => 'admin',
-            'pekerjaan' => 'admin',
-            'avatar' => 'images/default-avatar.png',
-            'password' => bcrypt('123123123'),
+        // LMS roles (keep for LMS system)
+        $adminRole = Role::firstOrCreate([
+            'name' => 'admin'
         ]);
 
-        $userAdmin->assignRole($adminRole);
+        $trainerRole = Role::firstOrCreate([
+            'name' => 'trainer'
+        ]);
     }
 }

@@ -29,7 +29,7 @@ class ProjectAdminController extends Controller
             'assignments.talent.user',
             'extensions',
             'pendingExtensions'
-        ]);        // Apply status filter
+        ])->latest();        // Apply status filter
         if ($request->has('status') && $request->status) {
             switch ($request->status) {
                 case 'pending':
@@ -49,16 +49,14 @@ class ProjectAdminController extends Controller
                 default:
                     break;
             }
-        }        $projects = $query->orderBy('created_at', 'desc')->paginate(12);
+        }        $projects = $query->paginate(10);
 
         $pendingCount = Project::where('status', 'pending_admin')->count();
         $activeCount = Project::where('status', 'active')->count();
         $closureRequestCount = Project::where('status', 'closure_requested')->count();
         $title = 'Project Management';
-        $roles = 'Talent Admin';
-        $assignedKelas = [];
 
-        return view('admin.projects.index', compact('projects', 'pendingCount', 'activeCount', 'closureRequestCount', 'user', 'title', 'roles', 'assignedKelas'));
+        return view('admin.projects.index', compact('projects', 'pendingCount', 'activeCount', 'closureRequestCount', 'title'));
     }    /**
      * Show project details for admin review
      */
@@ -359,7 +357,9 @@ class ProjectAdminController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('admin.projects.all', compact('projects'));
+        $title = 'All Projects';
+
+        return view('admin.projects.all', compact('projects', 'title'));
     }
 
     /**
@@ -389,7 +389,9 @@ class ProjectAdminController extends Controller
             ->limit(20)
             ->get();
 
-        return view('admin.projects.analytics', compact('stats', 'recentActivity'));
+        $title = 'Project Analytics';
+
+        return view('admin.projects.analytics', compact('stats', 'recentActivity', 'title'));
     }
 
     /**

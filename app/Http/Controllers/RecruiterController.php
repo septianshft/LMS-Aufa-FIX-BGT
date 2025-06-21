@@ -651,7 +651,7 @@ class RecruiterController extends Controller
 
         // Skill match bonus based on recruiter's request history
         $recruiterSkillPreferences = $this->getRecruiterSkillPreferences($recruiter->id);
-        $talentSkills = $talent->user->talent_skills ?? [];
+        $talentSkills = $talent->user ? $talent->user->getTalentSkillsArray() : [];
 
         $skillMatches = array_intersect($recruiterSkillPreferences,
             array_column($talentSkills, 'name'));
@@ -719,6 +719,14 @@ class RecruiterController extends Controller
                 ->where('recruiter_id', $recruiter->id)
                 ->orderBy('created_at', 'desc')
                 ->get();
+
+            // Attach standardized talentSkills array to each request for safe Blade usage
+            $requests->transform(function ($request) {
+                // Prefer direct user reference if available, else fallback to talent->user
+                $talentUser = $request->talentUser ?? ($request->talent ? $request->talent->user : null);
+                $request->talentSkills = $talentUser ? $talentUser->getTalentSkillsArray() : [];
+                return $request;
+            });
 
             $data = [
                 'recruiter' => $recruiter,
@@ -791,6 +799,61 @@ class RecruiterController extends Controller
                 'error' => 'Failed to generate PDF',
                 'message' => 'Please contact support if this issue persists.',
                 'debug' => app()->isLocal() ? $e->getMessage() : null
+            ], 500);
+        }
+    }
+
+    /**
+     * Get redflag history for a specific talent
+     */
+    public function getTalentRedflagHistory($talentId)
+    {
+        try {
+            $recruiter = Auth::user()->recruiter;
+
+            if (!$recruiter) {
+                return response()->json(['error' => 'Recruiter profile not found'], 404);
+            }
+
+            $talent = Talent::with('user')->findOrFail($talentId);
+
+            // Get all completed talent requests for this talent with redflag information
+            $completedRequests = TalentRequest::with(['recruiter.user', 'redflaggedBy'])
+                ->where('talent_id', $talentId)
+                ->where('status', 'completed')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Get red-flagged projects
+            $redflaggedProjects = $completedRequests->where('is_redflagged', true)->map(function($request) {
+                return [
+                    'id' => $request->id,
+                    'project_title' => $request->project_title,
+                    'project_description' => $request->project_description,
+                    'redflag_reason' => $request->redflag_reason,
+                    'redflagged_at' => $request->redflagged_at ? $request->redflagged_at->format('M d, Y') : null,
+                    'redflagged_by_name' => $request->redflaggedBy ? $request->redflaggedBy->name : 'Unknown',
+                    'recruiter_name' => $request->recruiter && $request->recruiter->user ? $request->recruiter->user->name : 'Unknown'
+                ];
+            })->values();
+
+            // Calculate summary
+            $redflagSummary = $talent->getRedflagSummary();
+
+            return response()->json([
+                'success' => true,
+                'talent_name' => $talent->user->name,
+                'redflag_summary' => $redflagSummary,
+                'redflagged_projects' => $redflaggedProjects,
+                'total_completed' => $completedRequests->count(),
+                'total_redflagged' => $redflaggedProjects->count()
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Redflag history error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load redflag history'
             ], 500);
         }
     }

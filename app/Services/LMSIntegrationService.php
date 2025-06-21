@@ -55,9 +55,7 @@ class LMSIntegrationService
         }
 
         $user = \App\Models\User::find($userId);
-        $skills = is_string($user->talent_skills)
-            ? json_decode($user->talent_skills, true)
-            : ($user->talent_skills ?? []);
+        $skills = $user ? $user->getTalentSkillsArray() : [];
 
         return [
             'skills' => $skills,

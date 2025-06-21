@@ -405,19 +405,8 @@ class AdvancedSkillAnalyticsService
      */
     private function getTalentSkills(User $talent): array
     {
-        $talentSkills = $talent->talent_skills;
-
-        if (is_string($talentSkills)) {
-            $decoded = json_decode($talentSkills, true);
-            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-                return $this->normalizeTalentSkills($decoded);
-            }
-            return [];
-        } elseif (is_array($talentSkills)) {
-            return $this->normalizeTalentSkills($talentSkills);
-        }
-
-        return [];
+        $skills = $talent->getTalentSkillsArray();
+        return $this->normalizeTalentSkills($skills);
     }
 
     /**
